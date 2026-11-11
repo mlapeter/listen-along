@@ -11,8 +11,8 @@ The audio is the same song.wav the pictures were measured from (transcoded to AA
 The page crops each picture to its measured panels (no lyric lane, no lyric lines), tiles the 15 s windows
 side by side and scrolls them under a fixed playhead driven by audio.currentTime. A run with the harmony picture
 gets a notes track under the instrument tracks; a run with close-ups gets a bracket over each one's span and a
-lens that opens under the strip while the playhead is inside it (the close-up's lead panel and piano roll, and its
-timbre panel if it was made with --timbre, beside what was asked and what was seen).
+card of text over the right of the strip (what was asked and what was seen), which comes up when the playhead
+reaches the close-up and stays for about as long as it takes to read, or until the next close-up.
 
     ./venv3/bin/python v3/score.py runs/<run> --second runs/<second run>
 
@@ -52,6 +52,7 @@ import html
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 
@@ -92,13 +93,6 @@ NOTES = [
     ("notes", "notes of the band", "green line = bass, cyan = the voice", "harmony", 0.75),
     ("bassnotes", "bass alone", "", "harmony", 0.25),
 ]
-LOOK = [
-    # the lens: the lead panel and the piano roll (their shares add up to 1), and under them the timbre panel of a
-    # look made with --timbre. The band stems and the bass panel are on the strip above.
-    ("lead", "lead voice", "cyan line = pitch", "voice", 0.40),
-    ("notes", "notes of the band", "green line = bass", "harmony", 0.60),
-    ("timbre", "the voice's harmonics", "narrow filters", "timbre", 0.45),
-]
 # Lead panel frequency ticks as fractions of the cropped lead panel (read off the rendered axis: Hz -> y pixel
 # in a panel cropped to rows 72..437).
 LEAD_TICKS = [(txt, (py - 72) / (437 - 72)) for txt, py in
@@ -108,7 +102,7 @@ TIMBRE_TICKS = {"400": "400", "800": "800", "1600": "1.6k"}     # labelled rows 
 
 STRIP_H = 640          # pixel height of the instrument tile written per window (the page scales it down)
 NOTES_H = 440          # ... of the notes tile
-LOOK_H = 560           # ... of a close-up's tile, per unit of share (its lead panel and piano roll)
+
 
 
 def load_geometry(folder):
@@ -135,21 +129,27 @@ def geometry_for(path, name, candidates):
              f"another size, and the hardcoded rows are for the two-picture layout only")
 
 
+def need(ok, msg):
+    """A guard that also holds under python -O."""
+    if not ok:
+        sys.exit("score.py: " + msg)
+
+
 def crop_box(pic, pid):
     """The pixel box of panel `pid` in a picture, its caption rows left out. Refuses a lyric-bearing panel, any
     overlap with one, and anything at or below the first one (the lyric lines have no box of their own)."""
     p = next((q for q in pic["panels"] if q["id"] == pid), None)
     if p is None:
         sys.exit(f"the picture has no panel '{pid}' (it has: {', '.join(q['id'] for q in pic['panels'])})")
-    assert not LYRIC_ID.search(pid), f"panel '{pid}' holds lyric text and is never cropped"
+    need(not LYRIC_ID.search(pid), f"panel '{pid}' holds lyric text and is never cropped")
     box = (p["x0"], p["y0"] + p.get("cap", CAPTION.get(pid, 0)), p["x1"], p["y1"])
-    assert box[2] > box[0] and box[3] > box[1], f"empty crop for panel '{pid}'"
+    need(box[2] > box[0] and box[3] > box[1], f"empty crop for panel '{pid}'")
     lyric = [q for q in pic["panels"] if LYRIC_ID.search(q["id"])]
     for q in lyric:
         apart = box[3] <= q["y0"] or box[1] >= q["y1"] or box[2] <= q["x0"] or box[0] >= q["x1"]
-        assert apart, f"the crop of panel '{pid}' overlaps the lyric panel '{q['id']}'"
+        need(apart, f"the crop of panel '{pid}' overlaps the lyric panel '{q['id']}'")
     if lyric:
-        assert box[3] <= min(q["y0"] for q in lyric), f"the crop of panel '{pid}' reaches below a lyric panel"
+        need(box[3] <= min(q["y0"] for q in lyric), f"the crop of panel '{pid}' reaches below a lyric panel")
     return box
 
 
@@ -160,7 +160,7 @@ def stack(spec, pics, geoms, height):
     boxes = {t[0]: crop_box(geoms[t[3]], t[0]) for t in spec}
     for name, im in pics.items():
         g = geoms[name]
-        assert im.size == (g["w"], g["h"]), f"a {name} picture is {im.size}, its geometry says {g['w']} x {g['h']}"
+        need(im.size == (g["w"], g["h"]), f"a {name} picture is {im.size}, its geometry says {g['w']} x {g['h']}")
     wd = round(max(b[2] - b[0] for b in boxes.values()))
     total = sum(t[4] for t in spec)
     hs = [round(height * t[4] / total) for t in spec]
@@ -202,7 +202,7 @@ def composite_windows(out, sub, nwin, spec, src, geoms):
     for k in range(nwin):
         pics = {n: Image.open(src(k, n)).convert("RGB") for n in names}
         strip, tracks, boxes = stack(spec, pics, geoms, STRIP_H if sub == "w" else NOTES_H)
-        strip.save(os.path.join(out, sub, f"{k:03d}.jpg"), quality=86, optimize=True)
+        strip.save(os.path.join(out, sub, f"{k:03d}.jpg"), quality=80, optimize=True, progressive=True)
         if sub == "w" and k == nwin - 1:
             # the "song so far" strip of the last window's band picture: the whole song on one axis
             pics["band"].crop(tuple(round(v) for v in crop_box(geoms["band"], "sofar"))).save(
@@ -233,17 +233,17 @@ def parse_seal_log(path):
     if not os.path.exists(path):
         return opened, sealed, looks
     for line in open(path, encoding="utf-8"):
-        m = re.match(r"^(\S+) (\S+)\s+window (\d+) revealed", line)
+        m = re.match(r"^(\d{4}-\d\d-\d\d) (\d\d:\d\d:\d\d)\s+window (\d+) revealed", line)
         if m:
             cur = int(m.group(3))
             opened[cur] = (m.group(1), m.group(2))
-        m = re.match(r"^(\S+) (\S+)\s+note (\d+) sealed\s+sha256 (\w+)", line)
+        m = re.match(r"^(\d{4}-\d\d-\d\d) (\d\d:\d\d:\d\d)\s+note (\d+) sealed\s+sha256 (\w+)", line)
         if m:
             sealed[int(m.group(3))] = (m.group(1), m.group(2), m.group(4)[:10])
-        m = re.match(r"^(\S+) (\S+)\s+look (\d+)\s+\S+\s+why: (.*)$", line)
+        m = re.match(r"^(\d{4}-\d\d-\d\d) (\d\d:\d\d:\d\d)\s+look (\d+)\s+\S+\s+why: (.*)$", line)
         if m:
             looks.setdefault(int(m.group(3)), {}).update(asked=m.group(2), why=m.group(4).strip(), win=cur)
-        m = re.match(r"^(\S+) (\S+)\s+look (\d+) saw sealed\s+sha256 (\w+)", line)
+        m = re.match(r"^(\d{4}-\d\d-\d\d) (\d\d:\d\d:\d\d)\s+look (\d+) saw sealed\s+sha256 (\w+)", line)
         if m:
             looks.setdefault(int(m.group(3)), {}).update(sealed=m.group(2), sha=m.group(4)[:10])
     return opened, sealed, looks
@@ -411,9 +411,10 @@ def read_listen(run, st, first_run=None, fix=lambda s: s, with_after=True):
         lg = logged.get(n, {})
         why, saw = fix(j.get("why") or lg.get("why", "")), parse_note(fix(read(md))).get("saw", "")
         t0, t1 = float(j["start"]), float(j["end"])
+        # read: how long the card stays up from the close-up's start, at an unhurried reading pace
         looks.append(dict(n=n, t0=t0, t1=t1, win=min(lg.get("win", int((t1 - 1e-6) // win)), nwin - 1),
-                          zoom=round(win / (t1 - t0), 1), why=why, saw=saw, asked=lg.get("asked", ""),
-                          sealed=lg.get("sealed", ""), sha=lg.get("sha", ""), json=j))
+                          why=why, saw=saw, asked=lg.get("asked", ""), sealed=lg.get("sealed", ""),
+                          read=round(min(30.0, max(12.0, len((why + " " + saw).split()) / 3.5)), 1)))
         texts += [why, saw]
     nums = {lk["n"] for lk in looks}
     for lk in looks:
@@ -448,31 +449,8 @@ def read_listen(run, st, first_run=None, fix=lambda s: s, with_after=True):
                 full=bool(st.get("full")), texts=texts)
 
 
-def composite_looks(run, out, looks):
-    """One JPEG per close-up in out/c: its lead panel, its piano roll and (a look made with --timbre) its timbre
-    panel, cropped by the boxes in LL.json."""
-    from PIL import Image
-    if looks:
-        os.makedirs(os.path.join(out, "c"), exist_ok=True)
-    for lk in looks:
-        geoms = lk.pop("json")["pictures"]
-        spec = [t for t in LOOK if t[3] in geoms and any(q["id"] == t[0] for q in geoms[t[3]]["panels"])
-                and os.path.exists(os.path.join(run, "looks", f"{lk['n']:02d}-{t[3]}.png"))]
-        if not spec:
-            lk["img"] = ""
-            continue
-        for name in {t[3] for t in spec}:
-            assert all(p.get("time") for p in geoms[name]["panels"] if p["id"] in [t[0] for t in spec]), "a look panel off the time axis"
-        pics = {n: Image.open(os.path.join(run, "looks", f"{lk['n']:02d}-{n}.png")).convert("RGB") for n in {t[3] for t in spec}}
-        lk["tall"] = round(sum(t[4] for t in spec), 3)
-        im, tracks, boxes = stack(spec, pics, geoms, round(LOOK_H * lk["tall"]))
-        lk["img"] = f"c/{lk['n']:02d}.jpg"
-        im.save(os.path.join(out, lk["img"]), quality=86, optimize=True)
-        lk["tracks"], lk["ticks"] = tracks, ticks_for(spec, tracks, geoms, boxes)
-
-
 def build(run, out, audio, by, note="", youtube="", link="", second="", pictures="", redrawn="", redact=(),
-          omit_second_after=False):
+          omit_second_after=False, url=""):
     st = json.load(open(os.path.join(run, "state.json"), encoding="utf-8"))
     if st.get("layout") not in ("voice+band", "voice+band+harmony"):
         sys.exit("score.py needs a first-listen run with the voice and band pictures (a second listen goes in --second)")
@@ -497,9 +475,10 @@ def build(run, out, audio, by, note="", youtube="", link="", second="", pictures
 
     listens = [read_listen(r, s, run, fix, not (omit_second_after and i == 1)) for i, (r, s) in enumerate(zip(runs, states))]
     os.makedirs(out, exist_ok=True)
+    shutil.rmtree(os.path.join(out, "c"), ignore_errors=True)   # close-up tiles from an older build of this page
 
     # ---- pictures: instrument tiles from the first listen (or --pictures), notes tiles from whichever run has
-    # the harmony picture, close-up tiles from each run's looks; every box from the tool's geometry files
+    # the harmony picture, every box from the tool's geometry files
     work = st.get("work", "")
     cache = load_geometry(os.path.join(work, "windows")) if work else {}
     pdir = pictures or os.path.join(run, "windows")
@@ -515,8 +494,6 @@ def build(run, out, audio, by, note="", youtube="", link="", second="", pictures
         hp = lambda k, n: os.path.join(hrun, "windows", f"{k:03d}-{n}.png")    # noqa: E731
         notes = composite_windows(out, "n", nwin, NOTES, hp, {"harmony": geometry_for(hp(0, "harmony"), "harmony", cands)})
     for r, s, ls in zip(runs, states, listens):
-        composite_looks(r, out, ls["looks"])
-        ls["looks"] = [lk for lk in ls["looks"] if lk["img"]]
         ls["inst"] = inst
         ls["notes"] = notes if (s["layout"] != "voice+band" and notes) else None
 
@@ -545,7 +522,7 @@ def build(run, out, audio, by, note="", youtube="", link="", second="", pictures
         if not listens[1]["full"]:
             made.append("In the second listen each window showed me only the picture of the notes, the timed words and my "
                         "own first note, not the voice and band pictures again" +
-                        ("; each close-up came with its own voice, band and notes pictures." if listens[1]["looks"] else "."))
+                        ("; each close-up came with its own voice, band and notes pictures, which this page leaves out." if listens[1]["looks"] else "."))
     else:
         made.append("The lyric lane and lyric lines are cropped out of the pictures here" +
                     (f", and the notes {lyric_claim(stats[0])}." if stats[0] else "."))
@@ -576,10 +553,26 @@ def build(run, out, audio, by, note="", youtube="", link="", second="", pictures
         "date": dates[0] if len(set(dates)) == 1 else " and ".join(dates), "made": " ".join(made),
         "listens": listens,
     }
-    page = PAGE.replace("__TITLE__", html.escape(f"{data['title']}, listened to in order"))
-    page = page.replace("__DATA__", json.dumps(data, ensure_ascii=False).replace("</", "<\\/"))
+    name = f"{data['title']}, listened to in order"
+    desc = (f"{by} listened to {data['artist']}'s \"{data['title']}\" one {win:g}-second window at a time, as pictures "
+            "measured from the sound, writing a sealed note before each next window opened. The notes play back against the music.")
+    meta = [f'<meta name="description" content="{html.escape(desc)}">',
+            f'<meta property="og:title" content="{html.escape(name)}">',
+            f'<meta property="og:description" content="{html.escape(desc)}">', '<meta property="og:type" content="website">']
+    if youtube:    # the page made for hosting: nothing loads but its own pictures and the YouTube player
+        meta.append('<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src \'self\' data:; '
+                    'style-src \'unsafe-inline\'; script-src \'unsafe-inline\'; frame-src https://www.youtube.com">')
+    if url:        # the page's public address: link previews need absolute URLs
+        base = url.rstrip("/") + "/"
+        meta.append(f'<meta property="og:url" content="{html.escape(base)}">')
+        if os.path.exists(os.path.join(out, "card.jpg")):      # a 1200 x 630 picture put in the output folder by hand
+            meta += [f'<meta property="og:image" content="{html.escape(base)}card.jpg">',
+                     '<meta property="og:image:width" content="1200">', '<meta property="og:image:height" content="630">',
+                     '<meta name="twitter:card" content="summary_large_image">']
+    page = PAGE.replace("__TITLE__", html.escape(name)).replace("__META__", "\n".join(meta))
+    page = page.replace("__DATA__", json.dumps(data, ensure_ascii=False).replace("<", "\\u003c"))
     for bad in {"/Users/", "/home/", os.path.expanduser("~"), work or "/Users/"}:
-        assert bad not in page, f"a local path ({bad}) would be on the page"
+        need(bad not in page, f"a local path ({bad}) would be on the page")
     path = os.path.join(out, "index.html")
     open(path, "w", encoding="utf-8").write(page)
     for name, _ in redact:
@@ -600,6 +593,8 @@ PAGE = r"""<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>__TITLE__</title>
+__META__
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%230b0a0e'/%3E%3Cpath d='M2 11h2V6H2zm3.5 0h2V3h-2zM9 11h2V7H9zm3.5 0h2V5h-2z' fill='%23f4a259'/%3E%3Cpath d='M2 13h12.5' stroke='%233ad8ee'/%3E%3C/svg%3E">
 <style>
 :root {
   --bg: #0b0a0e; --panel: #131218; --line: #26242e; --text: #ece7dd; --muted: #948e9c; --dim: #5f5a68;
@@ -638,7 +633,6 @@ a.cta[hidden] { display: none; }
 
 #transport { display: flex; align-items: center; gap: 16px; padding: 0 28px 8px; }
 #play { width: 44px; height: 44px; border-radius: 50%; background: var(--text); color: var(--bg); display: grid; place-items: center; flex: none; }
-#play.held { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--warm); }
 #play svg { width: 18px; height: 18px; fill: currentColor; }
 #clock { font-family: var(--mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; flex: none; width: 92px; }
 #clock b { color: var(--text); font-weight: 500; }
@@ -656,10 +650,8 @@ a.cta[hidden] { display: none; }
 #map .mlook { position: absolute; top: 0; height: 4px; min-width: 2px; background: var(--warm); opacity: .9; }
 #seal { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); flex: none; user-select: none; cursor: pointer; }
 #seal input { accent-color: var(--cyan); margin: 0; }
-#hold { flex: none; min-width: 204px; height: 30px; padding: 0 11px; border: 1px solid var(--line); border-radius: 6px; font-size: 12px; color: var(--muted); text-align: left; white-space: nowrap; transition: color .2s, border-color .2s; }
-#hold b { font-weight: 500; color: var(--text); }
-#hold:hover { border-color: #3a3745; }
-#hold.held { border-color: var(--warm); color: var(--warm); }
+#keys { flex: none; font-size: 12px; color: var(--muted); white-space: nowrap; user-select: none; }
+#keys kbd { font: 500 11px/1 var(--mono); color: var(--text); padding: 2px 6px; border: 1px solid #3a3745; border-radius: 4px; margin-right: 5px; }
 #hint { position: absolute; top: 34px; padding: 6px 11px; max-width: 46%; font-size: 12.5px; line-height: 1.4; color: var(--text); background: rgba(11,10,14,.9); border: 1px solid #3a3745; border-radius: 6px; pointer-events: none; transition: opacity .4s; }
 #hint.off { opacity: 0; }
 
@@ -684,30 +676,26 @@ a.cta[hidden] { display: none; }
 .labels div { position: absolute; left: 10px; white-space: nowrap; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: rgba(255,255,255,.82); text-shadow: 0 1px 3px #000; }
 .labels div span { text-transform: none; letter-spacing: 0; color: var(--cyan); margin-left: 6px; }
 .labels .hz, .labels .nn { left: 10px; font-family: var(--mono); font-size: 10px; letter-spacing: 0; text-transform: none; color: rgba(255,255,255,.5); transform: translateY(-50%); }
-#head, #lhead { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--text); box-shadow: 0 0 0 1px rgba(0,0,0,.6), 0 0 12px rgba(255,255,255,.35); pointer-events: none; }
-#head i, #lhead i { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); font: 500 11px/20px var(--mono); padding: 0 6px; border-radius: 4px 4px 0 0; font-style: normal; font-variant-numeric: tabular-nums; }
+#head { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--text); box-shadow: 0 0 0 1px rgba(0,0,0,.6), 0 0 12px rgba(255,255,255,.35); pointer-events: none; }
+#head i { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); font: 500 11px/20px var(--mono); padding: 0 6px; border-radius: 4px 4px 0 0; font-style: normal; font-variant-numeric: tabular-nums; }
 
-/* the lens: a close-up's own pictures and text, open only while the playhead is inside its span */
-#lens { display: grid; grid-template-rows: 0fr; visibility: hidden; background: var(--panel); transition: grid-template-rows .5s cubic-bezier(.3,.1,.2,1), visibility 0s .5s; }
-#lens.open { grid-template-rows: 1fr; visibility: visible; transition: grid-template-rows .5s cubic-bezier(.3,.1,.2,1); }
-#lens > .in { min-height: 0; overflow: hidden; }
-#lens .box { display: grid; grid-template-columns: minmax(0, 62fr) minmax(0, 38fr); border-bottom: 1px solid var(--line); }
-#lpic { position: relative; overflow: hidden; background: #000; cursor: pointer; }
-#lpic::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--warm); pointer-events: none; }
-#limg { position: absolute; inset: 0; background-repeat: no-repeat; background-size: 100% 100%; }
-#ltext { padding: 12px 28px 18px 26px; min-width: 0; max-height: var(--lh, 240px); overflow-y: auto; scrollbar-width: thin; scrollbar-color: #3a3745 transparent; }
-#lbar { display: flex; align-items: center; gap: 10px; }
-#lbar #lkick { flex: 1; min-width: 0; }
-#lbar button { flex: none; height: 22px; padding: 0 8px; border: 1px solid var(--line); border-radius: 4px; font-size: 11.5px; color: var(--muted); }
-#lbar button:hover { color: var(--text); border-color: #3a3745; }
-#lreplay { visibility: hidden; }
-#lens.passed #lreplay { visibility: visible; color: var(--warm); border-color: rgba(244,162,89,.5); }
-#lens.passed #lhead { opacity: .45; }
-#lens.passed #limg { opacity: .82; }
-#lkick { font: 600 11px/1.3 var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--warm); }
+/* a close-up's text: a card over the right of the strip (the part not played yet), up while the clock is within its
+   reading time; on a narrow screen it sits under the strip instead */
+#scorewrap { position: relative; }
+#lcard { position: absolute; top: 28px; right: 12px; bottom: 8px; display: flex; flex-direction: column; min-width: 0; padding: 9px 16px 10px; background: rgba(17,16,22,.94); border: 1px solid rgba(244,162,89,.55); border-radius: 8px; box-shadow: 0 8px 30px rgba(0,0,0,.55); opacity: 0; visibility: hidden; transform: translateY(4px); transition: opacity .6s, transform .6s, visibility 0s .6s; }
+#lcard.open { opacity: 1; visibility: visible; transform: none; transition: opacity .35s, transform .35s; }
+#lbar { flex: none; display: flex; align-items: baseline; gap: 12px; }
+#lkick { flex: 1; min-width: 0; font: 600 11px/1.3 var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--warm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #lkick span { font: 11.5px/1.3 var(--mono); letter-spacing: 0; text-transform: none; color: var(--muted); margin-left: 10px; }
-#lmeta { font-family: var(--mono); font-size: 11px; color: var(--dim); display: flex; gap: 4px 16px; flex-wrap: wrap; margin-top: 6px; }
-#ltext p { margin: 0; font-size: 13.5px; line-height: 1.5; color: #d3cdc3; text-wrap: pretty; }
+#lhintkey { flex: none; font-size: 11.5px; color: var(--dim); white-space: nowrap; }
+#lclose { flex: none; align-self: center; width: 22px; height: 22px; border: 1px solid var(--line); border-radius: 4px; font-size: 13px; line-height: 1; color: var(--muted); }
+#lclose:hover { color: var(--text); border-color: #3a3745; }
+#lbody { flex: 1 1 0; min-height: 0; margin-top: 8px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #3a3745 transparent; }
+#lcols { column-gap: 26px; }
+#lcard.wide #lcols { column-count: 2; }
+#lbody h3 { font: 600 10.5px/1.2 var(--sans); letter-spacing: .09em; text-transform: uppercase; color: var(--dim); margin: 0 0 4px; }
+#lbody p { margin: 0 0 10px; font-size: 13px; line-height: 1.46; color: #ded8ce; text-wrap: pretty; }
+#lbody p:last-child { margin-bottom: 0; }
 
 #note { padding: 12px 28px 26px; max-width: 1500px; margin: 0 auto; }
 #note .meta { font-family: var(--mono); font-size: 11.5px; color: var(--dim); display: flex; gap: 18px; flex-wrap: wrap; }
@@ -717,8 +705,7 @@ a.cta[hidden] { display: none; }
 .prior { font-size: 13px; line-height: 1.45; color: var(--muted); border-left: 2px solid var(--line); padding-left: 12px; margin-bottom: 12px; text-wrap: pretty; }
 .prior.said { margin: 14px 0 0; }
 .prior.said[hidden] { display: none; }
-.prior span, .expect span, .cols h3, #ltext h3 { display: block; font: 600 10.5px/1.2 var(--sans); letter-spacing: .09em; text-transform: uppercase; color: var(--dim); margin: 0 0 5px; }
-#ltext h3 { margin-top: 14px; }
+.prior span, .expect span, .cols h3 { display: block; font: 600 10.5px/1.2 var(--sans); letter-spacing: .09em; text-transform: uppercase; color: var(--dim); margin: 0 0 5px; }
 .feel { font-family: var(--serif); font-weight: 400; font-size: clamp(19px, 1.5vw, 23px); line-height: 1.32; margin: 0; letter-spacing: -0.005em; text-wrap: pretty; }
 #note > .feel { max-width: 1120px; font-size: clamp(18px, 1.4vw, 21px); margin: 0 0 12px; }
 .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 26px; align-content: start; }
@@ -748,13 +735,12 @@ button.t.ref.now { background: var(--warm); color: var(--bg); }
 #after strong { font-weight: 600; color: #fff; }
 #after .made { margin-top: 44px; padding-top: 20px; border-top: 1px solid var(--line); font: 13px/1.6 var(--sans); color: var(--muted); }
 .more { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 34px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 34px), transparent); }
-/* laptop and up: header, transport, strip, lens and note are one screen; long text scrolls inside its own column */
+/* laptop and up: header, transport, strip and note are one screen; long text scrolls inside its own column */
 @media (min-width: 1100px) and (min-height: 700px) {
   #stage { height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
   #stage > * { flex: none; }
   #stage > #note { flex: 1 1 0; min-height: 0; width: 100%; display: flex; flex-direction: column; padding-bottom: 12px; }
   #note > * { flex: none; }
-  #lens.open + #note > .meta { display: none; }   /* a close-up is open: the room goes to the note's text */
   #note > .grid { flex: 1 1 0; min-height: 0; grid-template-rows: minmax(0, 1fr); }
   #note .left { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
   #note .left > * { flex: none; }
@@ -766,17 +752,19 @@ button.t.ref.now { background: var(--warm); color: var(--bg); }
 }
 @media (max-width: 900px) {
   header { flex-direction: column; align-items: flex-start; gap: 10px; }
-  #top.yt { display: block; } #video { width: auto; max-width: 420px; margin: 0 16px 10px; } #hold { min-width: 0; } #hint { max-width: 60%; }
+  #top.yt { display: block; } #video { width: auto; max-width: 420px; margin: 0 16px 10px; } #keys { display: none; } #hint { max-width: 60%; }
   #transport { flex-wrap: wrap; } #map { flex-basis: 100%; order: 9; }
-  #note .grid, #note .grid.again, .cols, .cols.n2, .cols.n4, #lens .box { grid-template-columns: 1fr; gap: 16px; } #seal span { display: none; }
-  #lens .box { gap: 0; } #ltext { padding: 12px 16px 16px; max-height: none; }
+  #note .grid, #note .grid.again, .cols, .cols.n2, .cols.n4 { grid-template-columns: 1fr; gap: 16px; } #seal span { display: none; }
+  #lcard { position: static; display: none; margin: 10px 16px 0; transform: none; } #lcard.open { display: flex; } #lhintkey { display: none; }
+  #lcard.wide #lcols { column-count: 1; } #lbody { flex: none; overflow: visible; }
 }
 @media (prefers-reduced-motion: reduce) {
-  #note.swap .grid, #note.swap > .feel { animation: none; } .col .veil, .lk, #lens, #lens.open { transition: none; }
+  #note.swap .grid, #note.swap > .feel { animation: none; } .col .veil, .lk, #lcard, #lcard.open { transition: none; }
 }
 </style>
 </head>
 <body>
+<noscript><p style="padding:24px;font:16px sans-serif;color:#eee">This page plays an AI listener's notes against the music and needs JavaScript.</p></noscript>
 <main id="stage">
 <div id="top">
 <header>
@@ -792,21 +780,18 @@ button.t.ref.now { background: var(--warm); color: var(--bg); }
   <div id="clock"><b>0:00</b> / 0:00</div>
   <div id="tabs" role="tablist" aria-label="Which listen" hidden></div>
   <div id="map" title="Click to jump"><div class="img"></div><div class="unheard"></div></div>
-  <button id="hold" aria-live="polite" title="Stop by itself at the end of each close-up, or of every window, so there is time to read. Play or space goes on."></button>
+  <div id="keys"><kbd>space</kbd>pause to read</div>
   <label id="seal" title="Each window stayed hidden until the note for the one before it was locked"><input type="checkbox" checked> <span>hide what I hadn't seen yet</span></label>
 </div>
 <div id="video" hidden></div>
 </div>
-<div id="score"><div id="strip"></div><div class="labels" id="labels"></div><div id="head"><i>0:00</i></div><div id="hint">Press play. The pictures pass under this line; what I wrote is beneath.</div></div>
-<section id="lens" aria-hidden="true"><div class="in"><div class="box">
-  <div id="lpic" title="Click to jump inside the close-up"><div id="limg"></div><div class="labels" id="llabels"></div><div id="lhead"><i>0:00.00</i></div></div>
-  <div id="ltext">
-    <div id="lbar"><div id="lkick"></div><button id="lreplay" title="Play this close-up again">↺ replay</button><button id="lclose" aria-label="Close this close-up" title="Close">×</button></div>
-    <div id="lmeta"></div>
-    <h3>What I was looking for</h3><p id="lwhy"></p>
-    <h3>What I saw</h3><p id="lsaw"></p>
-  </div>
-</div></div></section>
+<div id="scorewrap">
+<div id="score"><div id="strip"></div><div class="labels" id="labels"></div><div id="head"><i>0:00</i></div><div id="hint"></div></div>
+<aside id="lcard" aria-hidden="true">
+  <div id="lbar"><div id="lkick"></div><span id="lhintkey">space pauses</span><button id="lclose" aria-label="Close this close-up" title="Close">×</button></div>
+  <div id="lbody"><div id="lcols"><h3>What I was looking for</h3><p id="lwhy"></p><h3>What I saw</h3><p id="lsaw"></p></div></div>
+</aside>
+</div>
 <section id="note" aria-live="off">
   <div class="meta" id="meta"></div>
   <div class="grid" id="grid">
@@ -835,7 +820,7 @@ const query = new URLSearchParams(location.search);
 let cur = Math.max(0, Math.min(LS.length - 1, (parseInt(query.get('listen')) || 1) - 1));   // which listen is showing
 const numeral = n => ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'][n] || String(n);
 
-$('h1').innerHTML = D.title + ' <em>listened to in order</em>';
+$('h1').textContent = D.title + ' '; { const em = document.createElement('em'); em.textContent = 'listened to in order'; $('h1').appendChild(em); }
 $('sub').textContent = D.artist + ' · ' + D.nwin + ' windows of ' + D.win + ' s · ' + D.by + ' · ' + D.date;
 $('how').textContent = "I can't take in sound. A tool measured this recording into pictures, " + D.win +
   " seconds at a time; I read one window, wrote a note, and the note was locked before the next window opened. " +
@@ -876,7 +861,6 @@ const cols = W.map(n => {
   h.textContent = 'window ' + pad(n.k, 3) + '  ' + n.span; c.appendChild(h);
   c.tile = el('div', 'tile');
   c.stile = el('div', 'tile');
-  c.tile.style.backgroundImage = c.stile.style.backgroundImage = 'url("' + LS[0].inst.dir + '/' + pad(n.k, 3) + '.jpg")';
   c.stile.style.backgroundPosition = 'bottom'; c.appendChild(c.tile); c.appendChild(c.stile);
   c.ntile = el('div', 'tile nt'); c.appendChild(c.ntile);
   const v = el('div', 'veil'); v.textContent = 'not opened yet'; c.appendChild(v);
@@ -905,13 +889,12 @@ function place(m, y) {   // one overlay mark; y maps a fraction of its tile's he
   m.el.style.display = (into < 22 || th - into < 6 || (m.cls === 'hz' && th < 110 && m.i % 2 === 0)) ? 'none' : '';
 }
 
-let shown = -1, lens = -2, times = [];
+let shown = -1, card = -2, dismissed = -1, times = [];
 function setListen(j) {
   cur = j; const l = LS[cur];
   [...$('tabs').children].forEach((b, i) => b.setAttribute('aria-selected', i === cur ? 'true' : 'false'));
   cols.forEach((c, i) => {
     c.title = l.wins[i].feelPlain; c.ntile.style.display = l.notes ? '' : 'none';
-    if (l.notes && !c.ntile.style.backgroundImage) c.ntile.style.backgroundImage = 'url("' + l.notes.dir + '/' + pad(i, 3) + '.jpg")';
   });
   labels.innerHTML = ''; marks = [];
   overlay(labels, l.inst, 0, marks); if (l.notes) overlay(labels, l.notes, 1, marks);
@@ -922,11 +905,11 @@ function setListen(j) {
     b.addEventListener('click', e => { e.stopPropagation(); seekLook(lk.n); if (e.detail) b.blur(); });
     looksBox.appendChild(b); lk.el = b;
   });
-  shown = -1; lens = -2; dismissed = -1;
+  shown = -1; card = -2; dismissed = -1;
   layout();
 }
 
-let winW = 800, pps = 53, headX = 300, H = 400, lensH = 236, gutter = 184, lensMax = 1e9;
+let winW = 800, pps = 53, headX = 300, H = 400, gutter = 184;
 const stageMQ = matchMedia('(min-width: 1100px) and (min-height: 700px)');   // the one-screen stage (see the CSS)
 function layout() {
   const vw = score.clientWidth, l = LS[cur];
@@ -957,16 +940,15 @@ function layout() {
   for (let k = 1; k < D.nwin; k++) { const t = el('div', 'tick'); t.style.left = (k * D.win / D.dur * 100) + '%'; m.appendChild(t); }
   l.looks.forEach(lk => { const t = el('div', 'mlook'); t.style.left = (lk.t0 / D.dur * 100) + '%';
     t.style.width = ((lk.t1 - lk.t0) / D.dur * 100) + '%'; t.title = 'close-up ' + pad(lk.n, 2); m.appendChild(t); });
-  lensH = staged ? cl(150, avail * 0.26, 260) : cl(200, vh * 0.26, 260);   // a close-up's lead panel and piano roll; a timbre panel adds to it
-  lensMax = staged ? Math.max(lensH, avail - (H + 22) - 170) : 1e9;   // staged: the note keeps some room under a tall lens
   $('hint').style.left = (headX + 14) + 'px';
-  if (lens >= 0) { const i = lens; lens = -2; showLens(i, lensPassed); }
+  const lc = $('lcard'), cw = Math.min(900, vw - headX - 42);   // the card: right of the playhead, never on it
+  lc.style.width = vw > 900 ? cw + 'px' : ''; lc.classList.toggle('wide', vw > 900 && cw >= 620);
   draw(true);
 }
 
 // ---- everything on screen is a function of the audio clock (and of which listen is chosen)
 function gather() {
-  times = [...document.querySelectorAll('#note button.t, #lens button.t')];
+  times = [...document.querySelectorAll('#note button.t, #lcard button.t')];
   times.forEach(b => { b._c = b.dataset.look ? null : +b.dataset.c; b._w = String(b.dataset.t).includes('.') ? 0.8 : 1.6; });
 }
 function showNote(k) {
@@ -990,41 +972,32 @@ function showNote(k) {
   const e = $('note'); e.classList.remove('swap'); void e.offsetWidth; e.classList.add('swap');
 }
 function fades() {   // a column whose text runs on below its edge fades out there
-  for (const e of document.querySelectorAll('.cols > div, #note .left > .prior, #note .left > .expect, #ltext'))
+  for (const e of document.querySelectorAll('.cols > div, #note .left > .prior, #note .left > .expect, #lbody'))
     e.classList.toggle('more', e.scrollHeight - e.clientHeight - e.scrollTop > 6);
 }
-let lensPassed = false, dismissed = -1;
-function showLens(i, passed) {   // i: which close-up (-1: none); passed: the playhead is beyond its span
-  const box = $('lens'), fresh = i !== lens; lens = i; lensPassed = !!passed;
-  box.classList.toggle('open', i >= 0); box.classList.toggle('passed', i >= 0 && lensPassed); box.setAttribute('aria-hidden', i >= 0 ? 'false' : 'true');
-  LS[cur].looks.forEach((lk, j) => lk.el.classList.toggle('now', j === i && !lensPassed));
-  if (i < 0 || !fresh) return;   // going from playing to passed keeps the text where the reader had scrolled it
-  const lk = LS[cur].looks[i], ph = Math.min(Math.round(lensH * lk.tall), lensMax), lm = [];
-  $('lpic').style.height = ph + 'px'; box.style.setProperty('--lh', ph + 'px'); $('ltext').scrollTop = 0;
-  $('limg').style.backgroundImage = 'url("' + lk.img + '")';
-  $('llabels').innerHTML = ''; overlay($('llabels'), lk, 0, lm); lm.forEach(m => place(m, f => f * ph));
-  $('lkick').innerHTML = 'Close-up ' + pad(lk.n, 2) + ' <span>' + edge(lk.t0) + '-' + edge(lk.t1) + ' · ' + lk.zoom + '× a window\'s time detail</span>';
-  $('lmeta').innerHTML = (lk.asked ? '<span>asked for ' + lk.asked + ', before the picture existed</span>' : '') +
-    (lk.sealed ? '<span>note sealed ' + lk.sealed + '</span>' : '') + (lk.sha ? '<span>sha256 ' + lk.sha + '…</span>' : '');
-  $('lwhy').innerHTML = lk.why; $('lsaw').innerHTML = lk.saw;
+function tiles(k) {   // pictures load as the playhead nears them: this window, the one before and the two after
+  const l = LS[cur];
+  for (let i = Math.max(0, k - 1); i <= Math.min(D.nwin - 1, k + 2); i++) { const c = cols[i];
+    if (!c.tile.style.backgroundImage) c.tile.style.backgroundImage = c.stile.style.backgroundImage = 'url("' + l.inst.dir + '/' + pad(i, 3) + '.jpg")';
+    if (l.notes && !c.ntile.style.backgroundImage) c.ntile.style.backgroundImage = 'url("' + l.notes.dir + '/' + pad(i, 3) + '.jpg")'; }
+}
+function showCard(i) {   // i: which close-up's text is up (-1: none; the old text stays in place while the card fades)
+  const box = $('lcard'); card = i;
+  box.classList.toggle('open', i >= 0); box.setAttribute('aria-hidden', i >= 0 ? 'false' : 'true');
+  if (i < 0) return;
+  const lk = LS[cur].looks[i];
+  $('lkick').innerHTML = 'Close-up ' + pad(lk.n, 2) + ' <span>' + edge(lk.t0) + '-' + edge(lk.t1) + '</span>';
+  $('lkick').title = (lk.asked ? 'Asked for ' + lk.asked + ', before the picture existed. ' : '') + (lk.sealed ? 'Note sealed ' + lk.sealed + '.' : '');
+  $('lwhy').innerHTML = lk.why; $('lsaw').innerHTML = lk.saw; $('lbody').scrollTop = 0;
   gather(); fades();
 }
-// Which close-up the lens shows at time t: the one the playhead is inside, else the last one that ended in the
-// window now playing (kept open, marked as passed, so there is time to read it). With the veil on, none before the
-// window it was made in.
-function lensAt(t, k, l) {
-  let i = l.looks.findIndex(lk => t >= lk.t0 && t < lk.t1 && lookOpen(lk, k));
-  if (i >= 0) return [i, false];
-  l.looks.forEach((lk, j) => { if (lk.t1 <= t && Math.min(Math.floor((lk.t1 - 1e-6) / D.win), D.nwin - 1) === k && lookOpen(lk, k) &&
-    (i < 0 || lk.t1 > l.looks[i].t1)) i = j; });
-  return [i, i >= 0];
-}
-// Pause to read: 0 off, 1 at the end of each close-up, 2 also at the end of every window. Only playback that runs
-// into a stop pauses there; a seek never does, and neither does a frame renderer's clock.
-let hold = LS.some(l => l.looks.length) ? 1 : 0, held = false, prevT = null, skipStop = null;
-function holdLabel() {
-  $('hold').innerHTML = held ? 'paused to read · space to go on' : 'pause to read: <b>' + ['off', 'at close-ups', 'every window'][hold] + '</b>';
-  $('hold').classList.toggle('held', held); $('play').classList.toggle('held', held);
+// Which close-up's card is up at time t: the latest one the playhead has reached, for its reading time (lk.read
+// seconds from its start, and never less than its own span), so the next close-up replaces it. With the veil on,
+// none before the window it was made in. A function of the clock only: pausing holds the card, a seek lands right.
+function cardAt(t, k, l) {
+  let i = -1;
+  l.looks.forEach((lk, j) => { if (t >= lk.t0 && t < Math.max(lk.t1, lk.t0 + lk.read) && lookOpen(lk, k) && (i < 0 || lk.t0 > l.looks[i].t0)) i = j; });
+  return i;
 }
 function draw(force) {
   const t = Math.min(window.__t ?? clock.now(), D.dur), k =   // window.__t: a frame renderer's clock
@@ -1034,6 +1007,7 @@ function draw(force) {
   $('clock').innerHTML = '<b>' + fmt(t) + '</b> / ' + fmt(D.dur);
   $('map').querySelector('.unheard').style.left = (t / D.dur * 100) + '%';
   if (k !== shown || force) {
+    tiles(k);
     const hide = hideOn();
     cols.forEach((c, i) => { c.classList.toggle('unseen', hide && i > k); c.classList.toggle('now', i === k); });
     l.looks.forEach(lk => lk.el.classList.toggle('unseen', !lookOpen(lk, k)));
@@ -1044,31 +1018,21 @@ function draw(force) {
     lk.el.classList.toggle('gone', off > w - cw);
     lk.chip.style.transform = off && off <= w - cw ? 'translateX(' + off + 'px)' : '';
   }
-  let [li, passed] = lensAt(t, k, l);
+  let li = cardAt(t, k, l);
+  const inside = li >= 0 && t < l.looks[li].t1;   // the playhead is in the close-up's own span
+  l.looks.forEach((lk, j) => lk.el.classList.toggle('now', j === li && inside));
   if (li !== dismissed) dismissed = -1; else li = -1;   // closed by hand: stays closed until another close-up's turn
-  if (li !== lens || (li >= 0 && passed !== lensPassed)) showLens(li, passed);
-  if (li >= 0) { const lk = l.looks[li], at = passed ? lk.t1 : t;
-    $('lhead').style.left = ((at - lk.t0) / (lk.t1 - lk.t0) * 100) + '%'; $('lhead').firstElementChild.textContent = fmtd(at, 2); }
-  for (const b of times) b.classList.toggle('now', b._c === null ? (li >= 0 && !passed && l.looks[li].n === +b.dataset.look) : Math.abs(t - b._c) < b._w);
-  // pause to read, last: stopping the clock draws again
-  const playing = window.__t === undefined && !clock.paused();
-  if (skipStop !== null && t > skipStop + 0.05) skipStop = null;
-  if (playing && hold && prevT !== null && t > prevT && t - prevT < 1) {
-    const early = D.yt ? 0.3 : 0.1, ok = s => prevT < s - early && t >= s - early && (skipStop === null || Math.abs(s - skipStop) > 0.6);
-    let stop = l.looks.filter(lk => lookOpen(lk, k)).map(lk => lk.t1).find(ok);
-    if (stop === undefined && hold === 2) { const s = (k + 1) * D.win; if (s < D.dur - 0.5 && ok(s)) stop = s; }
-    if (stop !== undefined) { skipStop = stop; held = true; prevT = null; holdLabel(); clock.pause(); return; }
-  }
-  prevT = playing ? t : null;
+  if (li !== card) showCard(li);
+  for (const b of times) b.classList.toggle('now', b._c === null ? (inside && l.looks[li < 0 ? dismissed : li].n === +b.dataset.look) : Math.abs(t - b._c) < b._w);
 }
 function loop() { draw(); if (!clock.paused()) requestAnimationFrame(loop); }
-function seek(t) { prevT = skipStop = null; if (held) { held = false; holdLabel(); } clock.seek(Math.max(0, Math.min(D.dur - 0.05, t))); draw(); }
+function seek(t) { clock.seek(Math.max(0, Math.min(D.dur - 0.05, t))); draw(); }
 function seekLook(n) {   // to the start of a close-up, or with the veil on to the first moment it existed
   const lk = LS[cur].looks.find(x => x.n === n);
   if (lk) { dismissed = -1; seek(Math.max(lk.t0, hideOn() ? lk.win * D.win : 0) + 0.02); }
 }
 function toggle() { clock.paused() ? clock.play() : clock.pause(); }
-function onPlay() { $('hint').classList.add('off'); prevT = null; if (held) { held = false; holdLabel(); } $('playicon').setAttribute('d', 'M4 3h4v14H4zM12 3h4v14h-4z'); $('play').setAttribute('aria-label', 'Pause'); loop(); }
+function onPlay() { $('hint').classList.add('off'); $('playicon').setAttribute('d', 'M4 3h4v14H4zM12 3h4v14h-4z'); $('play').setAttribute('aria-label', 'Pause'); loop(); }
 function onPause() { $('playicon').setAttribute('d', 'M5 3l12 7-12 7z'); $('play').setAttribute('aria-label', 'Play'); draw(); }
 const startAt = parseFloat(query.get('t')) || 0;
 
@@ -1116,15 +1080,10 @@ function youtubeClock() {
 const clock = D.yt ? youtubeClock() : audioClock();
 $('play').addEventListener('click', e => { toggle(); if (e.detail) $('play').blur(); });
 $('map').addEventListener('click', e => { const r = $('map').getBoundingClientRect(); seek((e.clientX - r.left) / r.width * D.dur); });
-score.addEventListener('click', e => { const r = score.getBoundingClientRect(); seek(clock.now() + (e.clientX - r.left - headX) / pps); });
-$('lpic').addEventListener('click', e => { const lk = LS[cur].looks[lens]; if (!lk) return;
-  const r = $('lpic').getBoundingClientRect(); seek(lk.t0 + (e.clientX - r.left) / r.width * (lk.t1 - lk.t0)); });
+score.addEventListener('click', e => { if (e.target.closest('#hint')) return; const r = score.getBoundingClientRect(); seek(clock.now() + (e.clientX - r.left - headX) / pps); });
 sealBox.addEventListener('change', () => draw(true));
-$('hold').addEventListener('click', e => { if (!held) hold = (hold + 1) % 3; held = false; holdLabel(); if (e.detail) $('hold').blur(); });
-$('lclose').addEventListener('click', e => { dismissed = lens; draw(true); });
-$('lreplay').addEventListener('click', e => { const lk = LS[cur].looks[lens]; if (!lk) return; seekLook(lk.n); clock.play(); if (e.detail) $('lreplay').blur(); });
+$('lclose').addEventListener('click', e => { dismissed = card; draw(true); });
 document.addEventListener('scroll', fades, true);
-$('lens').addEventListener('transitionend', fades);
 document.addEventListener('keydown', e => { if (e.code === 'Escape') how(false); });
 document.addEventListener('click', e => {
   const b = e.target.closest('button.t'); if (!b) return;
@@ -1141,7 +1100,7 @@ document.addEventListener('keydown', e => {
   else if (e.code === 'ArrowLeft') { e.preventDefault(); seek((clock.now() - k * D.win > 1.5 ? k : k - 1) * D.win); }
 });
 addEventListener('resize', layout);
-holdLabel();
+$('hint').textContent = matchMedia('(pointer: coarse)').matches ? 'Press play. The pictures pass under this line; what I wrote is beneath.' : 'Press play. The pictures pass under this line; what I wrote is beneath. Space pauses, so you can read.';
 setListen(cur);
 </script>
 </body>
@@ -1166,14 +1125,21 @@ def main():
     ap.add_argument("--audio", help="audio file (default: song.wav in the run's cache)")
     ap.add_argument("--by", default="Claude", help="who listened, for the byline")
     ap.add_argument("--note", default="", help="a sentence for the intro, e.g. what the listener already knew of the song")
+    ap.add_argument("--url", default="", help="the page's public address, for link previews (og: tags); a card.jpg "
+                    "(1200 x 630) already in the output folder becomes the preview picture")
     a = ap.parse_args()
+    for flag, val in (("--link", a.link), ("--url", a.url)):
+        if val and not re.match(r"https?://[^\s\"'<>]+$", val):
+            ap.error(f"{flag} takes an http(s) address")
+    if a.youtube and not re.fullmatch(r"[\w-]{11}", a.youtube):
+        ap.error("--youtube takes the 11-character video id (the part after v=), not a whole address")
     pairs = [tuple(r.split("=", 1)) for r in a.redact]
     if any(len(p) != 2 or not p[0] for p in pairs):
         ap.error("--redact takes NAME=REPLACEMENT")
     run = os.path.abspath(a.run)
     print(build(run, os.path.abspath(a.out) if a.out else os.path.join(run, "share" if a.youtube else "score"),
                 a.audio, a.by, a.note, a.youtube, a.link, os.path.abspath(a.second) if a.second else "",
-                os.path.abspath(a.pictures) if a.pictures else "", a.redrawn, pairs, a.omit_second_after))
+                os.path.abspath(a.pictures) if a.pictures else "", a.redrawn, pairs, a.omit_second_after, a.url))
 
 
 if __name__ == "__main__":

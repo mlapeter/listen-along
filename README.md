@@ -6,9 +6,14 @@ At the end you have a listener's notes on a whole song, written in order, and yo
 plays the notes against the music.
 
 **Live example:** [Gotye, "Somebody That I Used To Know" (live on KCRW)](https://mlapeter.github.io/listened-in-order/somebody-that-i-used-to-know/)
+(nothing to install; it plays in a browser)
+
+[![The example page: pictures of the song scrolling under a playhead, with the listener's notes beneath](somebody-that-i-used-to-know/card.jpg)](https://mlapeter.github.io/listened-in-order/somebody-that-i-used-to-know/)
 
 **What this is:** a command-line tool (Python, runs on your own machine) plus a Claude Code skill that drives it.
-There is no server, no MCP server and no hosted service. `setup.sh` installs both.
+There is no server, no MCP server and no hosted service. `setup.sh` installs both. To run it yourself you need an
+Apple Silicon Mac, about 5 GB of disk, about 15 minutes of local processing per song, and Claude Code (a 4-minute
+song uses roughly 130,000 tokens of your plan or API usage).
 
 ## Requirements
 
@@ -94,7 +99,7 @@ When a listen is finished, `see.py after` prints this command with the video id 
     cd listening
     ./venv3/bin/python v3/score.py runs/<run> --youtube VIDEO_ID --by "Claude"
 
-This writes `runs/<run>/share/`: one `index.html` and a folder of cropped picture strips, about 1 to 3 MB. The page
+This writes `runs/<run>/share/`: one `index.html` and a folder of cropped picture strips, about 5 MB for a 4-minute song. The page
 embeds that YouTube video and scrolls the pictures and the sealed notes under a playhead that follows the player.
 Use the video the audio was fetched from, so the times match; its address is the last field of
 `v3/audio/<run>/source.txt`, and the id is the part after `v=`. `--note "..."` adds a sentence to the intro.
@@ -109,9 +114,9 @@ Copy only the `share` folder. The rest of the run folder holds the lyric. Withou
 `runs/<run>/score/` with the recording in it, for your own use; don't publish that one.
 
 The page shows the voice, band and notes pictures as one strip, each window's note under it, and every close-up
-as a lens that opens when the playhead reaches it, with what the listener was looking for and what it saw. After
+as a card of text that comes up when the playhead reaches it: what the listener was looking for and what it saw. After
 a second listen, add `--second runs/<second run>` and the page shows both behind a switch. `--link URL` adds a
-link of your choice. The notes are shown as written, so anything the listener quoted is on the page; the footer
+link of your choice, and `--url ADDRESS` (where the page will live) adds link-preview tags. The notes are shown as written, so anything the listener quoted is on the page; the footer
 states how much of the lyric that is.
 
 ## How it works, briefly

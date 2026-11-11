@@ -631,21 +631,20 @@ What the page shows, by the run's layout:
   `changed` as columns, "what I said the first time" (the `feel` of `NNN-first.md`), its own `expect` guesses and
   its own seal times. Both after-notes follow, each under its own heading.
 - **Close-ups** (any layout with `looks/`): a numbered bracket over each look's span on the strip, and ticks on the
-  minimap. While the playhead is inside a look a **lens** opens under the strip: the look's own lead panel and piano
-  roll (and the `timbre` panel of a look made with `--timbre`) with a playhead of their own, beside the why (logged
-  before the picture existed) and the `saw:` note. Clicking a bracket, or "close-up NN" in a note, goes there.
+  minimap. When the playhead reaches a look, a **card** with its text comes up over the right of the strip (the part
+  not played yet): the why (logged before the picture existed) and the `saw:` note. The look's own pictures are not
+  on the page. The card stays for a reading time counted from the look's start (its word count at 3.5 words a
+  second, between 12 and 30 s, and never less than the look's span), then fades; the next look's card replaces it,
+  and it can be closed by hand. It is a function of the clock, so pausing holds it. On a narrow screen the card
+  sits under the strip. Clicking a bracket, or "close-up NN" in a note, goes there.
 - The "hide what I hadn't seen yet" box (on by default) veils every later window, and every close-up until the
   window it was made in is open.
 - **One screen.** The header is one slim row (title, byline, "How this was made", which opens the intro text, a
   link down to the after-notes, and with `--link` a button for it). On a viewport of at least about 1100 x 700 the
-  header, transport, strip, lens and current note together are exactly the viewport's height: the note takes what
+  header, transport, strip and current note together are exactly the viewport's height: the note takes what
   room is left and its columns scroll inside themselves, fading at the bottom when there is more. The after-notes
   and the footer are below that. Smaller viewports get an ordinary flowing page.
-- **Pause to read** (a control in the transport: off / at close-ups / every window; "at close-ups" by default when
-  the page has any): playback that runs into the end of a close-up's span, or of a window, pauses there by itself
-  and says so; play or space goes on. A seek never triggers it, and neither does `window.__t`. After its span a
-  close-up's lens stays open, marked as passed, with a replay button and a close button, until the next close-up
-  begins, it is closed, or the playhead leaves the window the close-up ended in.
+- Nothing pauses by itself. Space (or the play button) pauses, and the transport says so.
 
 Options:
 
@@ -664,6 +663,10 @@ Options:
 - **`--link URL`** adds a "get the tool" link; `--by` and `--note` set the byline and a sentence of the intro;
   `--audio FILE` and `--out DIR` override the defaults. `?t=SECONDS` and `?listen=2` in the page's URL choose where
   it opens, and `window.__t` is a clock hook for rendering frames.
+- **`--url ADDRESS`** (the page's public address) adds link-preview tags; a 1200 x 630 `card.jpg` put in the output
+  folder beforehand becomes the preview picture. `--link` and `--url` must be http(s), and `--youtube` an
+  11-character id. A `--youtube` page carries a content-security policy: only its own pictures and the YouTube
+  player load. Strip pictures load as the playhead nears them.
 
 Every crop is made **by panel id** from the tool's own boxes (`windows/geometry.json` beside the pictures or in the
 cache, `looks/LL.json` for a close-up), with the in-panel caption rows left out; a run whose cache is gone falls back
