@@ -31,9 +31,9 @@ Be sure of these before you start; it is a heavy install.
 - **Time:** `prepare` runs locally and takes 8 to 18 minutes for most songs (about 15 minutes for a 5-minute song on
   the M3 Pro, about 6 for a 2-minute one, a 9:30 song roughly half an hour). The first song also waits for the
   model downloads.
-- **Tokens:** `prepare` costs none. The listen does: each 15-second window is three pictures, about 6,900 tokens.
-  A 3-minute song is about 95k tokens of context, 4 minutes about 120k, 5 minutes about 150k (each including about 10k
-  for reading the skill and the manual); spending all six close-ups adds about 30k. These are estimates from the
+- **Tokens:** `prepare` costs none. The listen does: each 15-second window is three pictures, about 7,400 tokens.
+  A 3-minute song is about 100k tokens of context, 4 minutes about 130k, 5 minutes about 160k (each including about 11k
+  for reading the skill and the manual); spending all six close-ups adds about 33k. These are estimates from the
   image sizes. Every step re-reads the conversation from cache, so a whole song is a few million cached tokens
   read against your usage limit. Start a fresh session for each song; over about 6 minutes of music, context
   compaction will land mid-song.
@@ -68,7 +68,7 @@ Optional check, no audio needed (about 40 seconds):
    audio (yt-dlp, or a local file you give it), gets the timed lyric from LRCLIB, separates the voice and five
    instrument stems, finds when each word is sung, and renders every window into a cache the listener doesn't open.
 2. **Window by window.** `see.py next` reveals one 15-second window: a picture of the voice (its sound, its pitch
-   line, the words under the moments they're sung), a picture of the band (drums, bass, guitar, keys, other, the
+   line, every period in the vocal at once so two singers show as two ridges, the words under the moments they're sung), a picture of the band (drums, bass, guitar, keys, other, the
    stereo field, the song so far) and a picture of the notes (the band's energy on semitone rows). Claude reads the
    three pictures and writes a short note: `feel`, `voice`, `band`, `words`. The next `next` seals that note
    (read-only, hash logged) before it reveals anything more. So every note was provably written before the listener

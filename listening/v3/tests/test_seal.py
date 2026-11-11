@@ -382,6 +382,28 @@ def main():
         check("older run: LOOKED AHEAD still works", rc != 0 and "LOOKED AHEAD" in out, out)
         rc, out = see("status", LD)
         check("older run: status works", rc == 0 and "one picture each" in out and "all match" in out, out)
+        # the intensity scale (prepare --scale): a run and its cache must agree; no key anywhere means db
+        SW, SD = fake_run(root, name="scale")
+        rj = os.path.join(SW, "windows", "render.json")
+        json.dump(dict(window=15.0, layout="voice+band", nwin=3, scale="ear"), open(rj, "w"))
+        rc, out = see("next", SD)
+        check("a run without a scale (db, like every run before the switch) over a cache re-rendered on the ear scale: "
+              "next refuses, nothing revealed", rc != 0 and "ear scale" in out and "--scale db" in out
+              and not os.listdir(os.path.join(SD, "windows")), out)
+        json.dump(dict(window=15.0, layout="voice+band", nwin=3), open(rj, "w"))
+        rc, out = see("next", SD)
+        check("...and over a db cache (render.json without a scale key) it goes on as before", rc == 0
+              and len(os.listdir(os.path.join(SD, "windows"))) == 3, out)
+        st = json.load(open(os.path.join(SD, "state.json"))); st["scale"] = "ear"
+        json.dump(st, open(os.path.join(SD, "state.json"), "w"))
+        write(SD, "000", GOOD)
+        rc, out = see("next", SD)
+        check("an ear-scale run over a db cache: next refuses and says how to render it again", rc != 0
+              and "--scale ear" in out and len(os.listdir(os.path.join(SD, "windows"))) == 3, out)
+        json.dump(dict(window=15.0, layout="voice+band", nwin=3, scale="ear"), open(rj, "w"))
+        rc, out = see("next", SD)
+        check("an ear-scale run over an ear-scale cache: next reveals", rc == 0
+              and len(os.listdir(os.path.join(SD, "windows"))) == 6, out)
         # legacy run folder (all windows, no state.json)
         L = os.path.join(root, "legacy"); os.makedirs(os.path.join(L, "windows"))
         rc, out = see("status", L)

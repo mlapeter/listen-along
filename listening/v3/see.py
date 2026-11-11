@@ -3,6 +3,7 @@
 Sealed listening (the normal way to use it):
   see.py prepare SOURCE --artist A --title T --run DIR [--work W] [--looks N]
                        all heavy stages; windows rendered into W (a cache outside DIR); DIR gets only state.json, notes/
+                       (--scale db|ear: how the cochleagrams map intensity to colour; stored in state.json)
   see.py next DIR      seal notes/NNN.md of the window just read, then reveal exactly one more window into DIR/windows/
   see.py look DIR START END --why "..."   a close-up of 2-8 s you choose inside what is revealed, recomputed at a finer
                        step into DIR/looks/ (a budget per run; write looks/NN.md with a 'saw:' line after each)
@@ -10,7 +11,8 @@ Sealed listening (the normal way to use it):
   see.py after DIR     after the last window: seal notes/after.md (the whole-song note) and copy summary.json into DIR
   see.py again DIR --run DIR2 [--looks N] [--full]   a second listen of a finished one, over the same cache: per window
                        the harmony picture, the text and your own first note (--full: the first listen's pictures too)
-  see.py refcard OUT.png   known synthetic notes through the harmony picture's own code: how to read it
+  see.py refcard OUT.png   known synthetic notes through the harmony picture's own code, and known synthetic voices
+                       through the periodicity panel's: how to read both
 
 Stages of prepare (each cached in WORK, skipped if its output exists and nothing it reads from ran; --redo STAGE
 reruns one and every stage that depends on it; --window SECONDS sets the window, default 15):
@@ -24,6 +26,8 @@ reruns one and every stage that depends on it; --window SECONDS sets the window,
   voices     speaker embeddings of the whole vocal, averaged per line, lines clustered -> WORK/voices.json (labels A, B, C)
   features   per-frame pitch (lead stem), loudness/HNR/flatness, backing spectrogram and pitch, per-word z-scores
   sound      gammatone cochleagrams (lead, backing, five stems; one colour scale), stereo picture, song-so-far blocks
+  periodicity  summary autocorrelogram of the whole vocal stem (every period present at once, on semitone rows)
+             -> WORK/periodicity.npz (measured only: no peak is picked, no voice counted)
   harmony    constant-Q of accomp.wav and of the bass stem on semitone rows (36 per octave, on the song's own tuning),
              the pitch-class fold, the bass stem's pitch -> WORK/harmony.npz (measured only: nothing is named)
   render     WORK/windows/NNN-voice.png, NNN-band.png, NNN-harmony.png and NNN.txt (sealed: revealed one window at a
@@ -120,6 +124,22 @@ C = dict(
     LOOK_VOICE_H=6.5, LOOK_BAND_H=8.3,   # in: the voice and band close-ups (no lyric block, no song-so-far strip)
     LOOK_WORD_ROWS=3,
     LOOK_PYIN_HOP=64,      # samples at 22050 Hz (2.9 ms): the lead pitch re-tracked on the excerpt
+    # ---- how the cochleagrams map intensity to colour (prepare --scale; stored in state.json and render.json)
+    SCALE="db",            # "db": envelope power in dB, COCH_RANGE_DB under the song's top. "ear": loudness as felt:
+    EAR_POWER=0.3,         #   each channel's frame power (relative to the song's dB top) to this power (Stevens), then
+    EAR_TAU=0.05,          #   adaptation: minus EAR_ADAPT x the channel's own causal average over the previous EAR_TAU
+    EAR_ADAPT=0.5,         #   seconds (never below 0): an onset shows in full, a held sound settles to (1 - EAR_ADAPT)
+    EAR_TOP_PCT=99.5,      #   colour scale 0 .. the loudest source's whole-song percentile of that response
+    # ---- the periodicity panel (stage periodicity): summary autocorrelogram of the whole vocal stem on semitone rows
+    PER_SR=22050,
+    PER_HOP=0.01,          # s per frame in a window picture (frame j is centred on j * PER_HOP)
+    PER_FRAME=0.046,       # s; Hann frame the autocorrelation is taken over (3 periods of C2)
+    PER_N=24, PER_FMIN=80.0, PER_FMAX=4000.0,  # gammatone channels (ERB-spaced) whose timing is read
+    PER_COMPRESS=0.3,      # each channel's half-wave rectified output to this power before the autocorrelation
+    PER_CUT=50.0,          # Hz; slower fluctuation (each channel's mean level and its drift) is left out
+    PER_LO=36, PER_HI=84,  # rows: MIDI C2..C6, 3 per semitone like the harmony picture
+    PER_TOP_PCT=99.5,      # colour scale 0 .. this percentile over the whole song (linear)
+    PER_H=2.25, PER_GAP=0.12,  # in: the panel's height in the voice picture and the gap under it
 )
 MODELS_DIR = os.path.join(HERE, "audio", "_models")   # audio-separator model cache (gitignored with audio/)
 
@@ -868,12 +888,16 @@ def stage_sound(a, W):
     out = {}
     cf_l = erb_space(C["COCH_FMIN"], C["COCH_FMAX"], C["COCH_N_LEAD"])
     cf_s = erb_space(C["COCH_FMIN"], C["COCH_FMAX"], C["COCH_N_STEM"])
+    # the frame steps as they really are: cochleagram() rounds them to whole samples (110 and 220 at 22050 Hz, 0.23%
+    # under 5 and 10 ms). These, not the nominal steps, are stored and drawn: until 11-11 the nominal ones were, and
+    # every cochleagram panel ran late by 0.23% of the time since the song's start (0.7 s at 5:00)
+    hop_l, hop_s = (int(round(C[k] * sr)) / sr for k in ("COCH_HOP_LEAD", "COCH_HOP_STEM"))
     t = time.time()
     lead = cochleagram(load_mono(lead_wav(W), sr), sr, cf_l, C["COCH_HOP_LEAD"])
     if use_full.any():  # the main panel shows the whole vocal where the words were found there (see features)
         voc = cochleagram(load_mono(os.path.join(W, "vocals.wav"), sr), sr, cf_l, C["COCH_HOP_LEAD"])
         n_ = min(lead.shape[1], voc.shape[1])
-        tl = (np.arange(n_) + 0.5) * C["COCH_HOP_LEAD"]
+        tl = (np.arange(n_) + 0.5) * hop_l
         m = use_full[np.clip(np.searchsorted(ft, tl), 0, len(ft) - 1)]
         lead[:, :n_][:, m] = voc[:, :n_][:, m]
     out["lead"] = lead
@@ -901,9 +925,8 @@ def stage_sound(a, W):
     B = C["SOFAR_BLOCK"]
     mix = ys.mean(0) if ys.ndim > 1 else ys
     cf_m = erb_space(C["COCH_FMIN"], C["COCH_FMAX"], C["SOFAR_N"])
-    cm = cochleagram(mix, sr, cf_m, 0.01, align=False)
-    per = int(round(B / 0.01)); nb = cm.shape[1] // per
-    sof = 10 * np.log10((10 ** (cm[:, :nb * per] / 10)).reshape(len(cf_m), nb, per).mean(2) + 1e-12)
+    sof = cochleagram(mix, sr, cf_m, B, align=False)   # one frame per block: the mean power of exactly B seconds
+    nb = sof.shape[1]
     lanes = {}
     hb = int(B * sr)
     for name, path in [("voice", os.path.join(W, "vocals.wav"))] + \
@@ -916,8 +939,8 @@ def stage_sound(a, W):
     L = np.array([lanes[n][:nbl] for n in lane_names], np.float32)
     np.savez_compressed(
         os.path.join(W, "sound.npz"),
-        lead=out["lead"].astype(np.float16), lead_cf=cf_l, lead_hop=C["COCH_HOP_LEAD"],
-        stem_cf=cf_s, stem_hop=C["COCH_HOP_STEM"], top=top, floor=top - C["COCH_RANGE_DB"],
+        lead=out["lead"].astype(np.float16), lead_cf=cf_l, lead_hop=hop_l,
+        stem_cf=cf_s, stem_hop=hop_s, top=top, floor=top - C["COCH_RANGE_DB"],
         **({"backing": out["backing"].astype(np.float16)} if out["backing"] is not None else {}),
         **{f"stem_{n}": out[n].astype(np.float16) for n in C["STEMS6"]},
         mono=mono, side_ratio=side, pan_hop=hop_p / sr,
@@ -926,6 +949,140 @@ def stage_sound(a, W):
         sofar_top=float(np.percentile(sof, 99.5)), lanes_top=float(np.percentile(L, 99.5)))
     say(f"sound: cochleagram scale {top - C['COCH_RANGE_DB']:.1f}..{top:.1f} dB; "
         f"{'mono' if mono else f'stereo (side/mid energy {side:.3f})'}")
+
+
+# ------------------------------------------------------------------ the "ear" intensity scale (prepare --scale ear)
+def ear_map(M, hop_s, top):
+    """A dB cochleagram (channels x frames, frame step hop_s) as the 'ear' response, two plain steps per channel:
+    1. loudness: d = (frame power / the song's top power) ** EAR_POWER (so d = 1 at the dB scale's top, 0.5 ten dB
+       under it at 0.3: Stevens' power law);
+    2. adaptation: out = d - EAR_ADAPT * (the channel's own average of d over the previous EAR_TAU seconds: a causal
+       one-pole average of the frames before this one), never below 0. An onset meets no average yet and shows at
+       its full d; a held sound settles to (1 - EAR_ADAPT) * d within about 2 * EAR_TAU; just after a sound stops the
+       average is still up, so its tail is cut short. out never exceeds d: nothing is drawn where there is no energy.
+    Returns float32, same shape."""
+    from scipy.signal import lfilter
+    d = (10.0 ** (C["EAR_POWER"] * (M.astype(np.float32) - top) / 10.0)).astype(np.float32)
+    a_ = float(np.exp(-hop_s / C["EAR_TAU"]))
+    slow = lfilter([1.0 - a_], [1.0, -a_], d, axis=1)
+    out = d.copy()
+    out[:, 1:] -= C["EAR_ADAPT"] * slow[:, :-1]
+    return np.maximum(out, 0.0, out=out).astype(np.float32)
+
+
+def ear_scale(W, S=None):
+    """The top of the 'ear' colour scale for a cache: the largest, over the sources of sound.npz (lead, backing, the
+    five stems), of the EAR_TOP_PCT percentile of ear_map() over the whole song. Kept in WORK/ear.json with what it
+    was made from (the constants, sound.npz's dB top, frame step and size), so a close-up uses the same number as the windows;
+    made again if any of those changed."""
+    p = os.path.join(W, "ear.json")
+    S = S if S is not None else np.load(os.path.join(W, "sound.npz"))
+    top = float(S["top"])
+    key = dict({k: C[k] for k in ("EAR_POWER", "EAR_TAU", "EAR_ADAPT", "EAR_TOP_PCT")}, sound_top=top,
+               sound_bytes=os.path.getsize(os.path.join(W, "sound.npz")), lead_hop=float(S["lead_hop"]))
+    if os.path.exists(p) and jload(p).get("made_from") == key:
+        return float(jload(p)["top"])
+    srcs = [("lead", float(S["lead_hop"]))] + [(n, float(S["stem_hop"])) for n in S.files
+                                               if n == "backing" or n.startswith("stem_") and n[5:] in C["STEMS6"]]
+    etop = max(float(np.percentile(ear_map(S[n], h, top)[:, ::3], C["EAR_TOP_PCT"])) for n, h in srcs)
+    jdump(dict(top=etop, made_from=key), p)
+    return etop
+
+
+def coch_scale(W, S):
+    """(lo, hi, to_colour) of every cochleagram panel under C['SCALE']: to_colour(M_dB, hop_s) gives what is drawn."""
+    if C["SCALE"] == "ear":
+        top = float(S["top"])
+        return 0.0, ear_scale(W, S), (lambda M, hop_s: ear_map(M, hop_s, top))
+    return float(S["floor"]), float(S["top"]), (lambda M, hop_s: M)
+
+
+# ------------------------------------------------------------------ periodicity (timing-based pitch, whole vocal stem)
+def periodicity(y, sr, hop, lo=None, hi=None):
+    """Summary autocorrelogram (Licklider 1951; Meddis & Hewitt 1991, here without a hair-cell model) on semitone
+    rows: how strongly the sound repeats itself after each period, for every period at once.
+      1. PER_N gammatone channels, ERB-spaced PER_FMIN..PER_FMAX (the cochleagram's filters), each shifted earlier by
+         its group delay;
+      2. each channel's output half-wave rectified and raised to PER_COMPRESS (what is left is when the channel
+         fires, hardly how loud it is);
+      3. per frame (Hann, PER_FRAME long, centred on j*hop/sr) the autocorrelation of each channel, summed over the
+         channels (computed as the cosine transform of the summed power spectra, which is the same thing, at the
+         exact period of each row; fluctuation slower than PER_CUT Hz is left out); negative values are drawn as 0.
+    Rows: 3 per semitone for MIDI lo-1..hi+1 on A4 = 440 Hz (row 3*(m - lo + 1) + 1 is centred on note m; the extra
+    semitone at each end lets the picture be moved by the song's tuning). The value at lag 0 would be the mean
+    compressed power of the frame, so loud is bright and silence is 0. Nothing is picked or counted: a sound of
+    period T also repeats after 2T, 3T..., so every pitch has fainter rows 12, 19, 24, 28 semitones below it.
+    Returns (3*(hi-lo+3), n_frames) float32."""
+    from scipy.signal import lfilter
+    from scipy.fft import rfft
+    lo = C["PER_LO"] if lo is None else lo
+    hi = C["PER_HI"] if hi is None else hi
+    hop = int(hop)
+    N = int(round(C["PER_FRAME"] * sr))
+    nfft = 1 << int(np.ceil(np.log2(N + sr / midi_hz(lo - 2) + 2)))   # no wrap-around at the longest period
+    nfr = len(y) // hop + 1
+    t = np.arange(len(y)) / sr
+    w = np.hanning(N).astype(np.float32)
+    S = np.zeros((nfr, nfft // 2 + 1), np.float32)
+    for fc in erb_space(C["PER_FMIN"], C["PER_FMAX"], C["PER_N"]):
+        erb = 24.7 * (4.37 * fc / 1000.0 + 1.0)
+        a_ = np.exp(-2 * np.pi * 1.019 * erb / sr)
+        rot = np.exp(-2j * np.pi * fc * t)
+        x = 2.0 * np.real(lfilter([(1 - a_) ** 4], np.poly([a_] * 4), y * rot) * np.conj(rot))  # the channel's waveform
+        dly = int(round(4 * a_ / (1 - a_)))
+        x = np.maximum(x[dly:], 0.0) ** C["PER_COMPRESS"]
+        xp = np.concatenate([np.zeros(N // 2), x, np.zeros(N + dly + hop)]).astype(np.float32)
+        V = np.lib.stride_tricks.sliding_window_view(xp, N)[::hop][:nfr]
+        for j in range(0, nfr, 4096):
+            S[j:j + 4096] += np.abs(rfft(V[j:j + 4096] * w, n=nfft, axis=1)) ** 2
+    fk = np.arange(nfft // 2 + 1) * sr / nfft
+    m = (lo - 1) - 1.0 / 3 + np.arange(3 * (hi - lo + 3)) / 3.0
+    Cm = 2.0 * np.cos(2 * np.pi * np.outer(fk, 1.0 / midi_hz(m))).astype(np.float32)
+    Cm[fk < C["PER_CUT"]] = 0.0
+    return np.maximum((S @ Cm) / (nfft * float(np.sum(w ** 2))), 0.0).T.astype(np.float32)
+
+
+def stage_periodicity(a, W):
+    """The periodicity picture of the whole vocal stem (vocals.wav: lead and backing together), for every window
+    frame, and its whole-song colour top. Reads vocals.wav, nothing else. Prints no whole-song number."""
+    sr = C["PER_SR"]
+    hop = int(round(C["PER_HOP"] * sr))
+    R = periodicity(load_mono(os.path.join(W, "vocals.wav"), sr), sr, hop)
+    top = float(np.percentile(R[:, ::3], C["PER_TOP_PCT"]))
+    tmp = os.path.join(W, "periodicity.tmp.npz")
+    np.savez_compressed(tmp, R=R.astype(np.float16), hop=hop / sr, top=top, lo=C["PER_LO"], hi=C["PER_HI"])
+    os.replace(tmp, os.path.join(W, "periodicity.npz"))
+    say(f"periodicity: {R.shape[1]} frames")
+
+
+def load_periodicity(W):
+    """periodicity.npz as a dict with the song's tuning (cents, from harmony.npz; 0 without one), or None if the
+    cache has none (made before the panel existed): the voice picture is then drawn without the panel."""
+    p = os.path.join(W, "periodicity.npz")
+    if not os.path.exists(p):
+        return None
+    Z = np.load(p)
+    D = {k: (Z[k] if Z[k].ndim else float(Z[k])) for k in Z.files}
+    hp = os.path.join(W, "harmony.npz")
+    D["cents"] = float(np.load(hp)["cents"]) if os.path.exists(hp) else 0.0
+    return D
+
+
+def draw_period(ax, R, hop, toff, t0, t1, tend, top, cents, ww=(), fs=5.6, note=""):
+    """The periodicity panel: R from periodicity() (frame j centred on toff + j*hop) on the harmony picture's
+    semitone axis (PER_LO..PER_HI, moved by the song's tuning `cents`), linear colour 0..top.
+    Returns {label note name: MIDI number}."""
+    lo, hi = C["PER_LO"], C["PER_HI"]
+    draw_cq(ax, R, hop, toff, t0, t1, tend, 0.0, top, lo - 1.5 - cents / 100.0, hi + 1.5 - cents / 100.0)
+    lab = semitone_axis(ax, lo, hi, fs)
+    for w in ww:
+        ax.axvline(w["s"], color="white", lw=0.5, alpha=0.22 if not w["approx"] else 0.1, zorder=3.4)
+    ax.text(t0 + 0.004 * (t1 - t0), hi + 0.3, "periodicity of the whole vocal stem (lead + backing together): summary "
+            "autocorrelogram on semitone rows" + note + "; every voice lights its note's row AND fainter rows 12, 19, "
+            "24 semitones below it (the top row " + ("of a ladder is the note)" if not note else "= the note)"),
+            color="white", fontsize=8.5 if not note else 7.9, va="top", ha="left", zorder=5)
+    ax.set_ylabel("periods", fontsize=11, labelpad=30)
+    return lab
 
 
 # ------------------------------------------------------------------ harmony (the notes: constant-Q on semitone rows)
@@ -1142,11 +1299,14 @@ def harm_grid(H):
                              right=C["MARG_R"], top=1 - 0.08 / H, bottom=1 - (C["HARM_H"] - 0.26) / H)
 
 
-def draw_harmony(path, head, t0, t1, tend, D, ww, toff=0.0, lines=None, look=False, annot=(), foot=None, extra_h=0.0):
+def draw_harmony(path, head, t0, t1, tend, D, ww, toff=0.0, lines=None, look=False, annot=(), foot=None, extra_h=0.0,
+                 under=None, foot_h=None):
     """One harmony picture. D: harmony data (cq, bcq, chroma, hop, cents, *_top); toff: time of its frame 0.
     lines: dict name -> (times, Hz) for 'lead', 'backing', 'bass' pitch, drawn on the semitone axes.
-    annot: [(time, MIDI number, text)] captions inside the piano roll, foot: text under the picture (extra_h inches;
-    both only the refcard uses). Returns the picture's geometry (pixel boxes, the pixel row of every labelled note)."""
+    annot: [(time, MIDI number, text)] captions inside the piano roll, foot: text under the picture (extra_h inches
+    in all, the lowest foot_h of them for the text), under: a function (fig, H) that draws more panels between the
+    picture and the foot and returns their geometry (only the refcard uses these).
+    Returns the picture's geometry (pixel boxes, the pixel row of every labelled note)."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -1230,10 +1390,11 @@ def draw_harmony(path, head, t0, t1, tend, D, ww, toff=0.0, lines=None, look=Fal
                 axx.axvline(x, color="#4fc3f7" if axx is not axw else "#bbbbbb", lw=0.5, alpha=0.3,
                             zorder=0.5 if axx is axw else 3.5)
     if foot:
-        fig.text(ML, (extra_h - 0.08) / H, foot, fontsize=10.5, va="top", ha="left", family="DejaVu Sans",
-                 linespacing=1.4)
+        fig.text(ML, ((extra_h if foot_h is None else foot_h) - 0.08) / H, foot, fontsize=10.5, va="top", ha="left",
+                 family="DejaVu Sans", linespacing=1.4)
+    more = under(fig, H) if under else None
     fig.canvas.draw()
-    geom = dict(w=int(round(FW * DPI)), h=int(round(H * DPI)), panels=[
+    geom = dict(w=fig.canvas.get_width_height()[0], h=fig.canvas.get_width_height()[1], panels=[
         dict(id="header", **px_box(fig, axh)),
         dict(id="notes", **px_box(fig, ax), time=True, midi_lo=lo, midi_hi=hi,
              notes={n: px_row(fig, ax, m) for n, m in lab.items()}),
@@ -1241,6 +1402,8 @@ def draw_harmony(path, head, t0, t1, tend, D, ww, toff=0.0, lines=None, look=Fal
              notes={n: px_row(fig, axb, m) for n, m in blab.items()}),
         dict(id="classes", **px_box(fig, axc), time=True, rows={n: px_row(fig, axc, m) for n, m in rows.items()}),
         dict(id="words", **px_box(fig, axw), time=True)])
+    if more:
+        geom["under"] = more
     fig.savefig(path, dpi=DPI)
     plt.close(fig)
     return geom
@@ -1282,9 +1445,80 @@ def refcard_audio(sr):
     return ya.astype(np.float32), yb.astype(np.float32), ev, (13.1, yv.astype(np.float32)), click
 
 
+def synth_sung(f, dur, sr, vib=0.0, nh=12):
+    """A sung-like tone: nh harmonics of f falling as 1/h with a broad bump near 600 Hz, 30 ms attack; vib = the
+    depth in semitones of a 5.5 Hz vibrato."""
+    t = np.arange(int(dur * sr)) / sr
+    ph = 2 * np.pi * np.cumsum(f * 2.0 ** (vib * np.sin(2 * np.pi * 5.5 * t) / 12.0)) / sr
+    y = sum(np.sin(h * ph) / h * (1.0 / (1 + ((h * f - 600) / 900.0) ** 2) + 0.15) for h in range(1, nh + 1)
+            if h * f < sr / 2.2)
+    return (0.3 * y * np.minimum(1, t / 0.03) * np.minimum(1, (dur - t) / 0.05)).astype(np.float32)
+
+
+def refcard_voices(sr):
+    """15 s of synthetic 'vocal stem' for the periodicity panel: the events as [(start, end, [(midi, vibrato
+    semitones)], short name)], then a click and a hiss (their times returned too)."""
+    y = np.zeros(int(15 * sr), np.float32)
+    ev = [(0.5, 2.3, [(57, 0)], "one voice, A3"), (2.8, 4.6, [(57, 0), (64, 0)], "A3 + E4 (a fifth)"),
+          (5.1, 6.9, [(57, 0), (58, 0)], "A3 + A#3 (a semitone)"), (7.4, 9.2, [(69, 0.5)], "A4, vibrato"),
+          (9.7, 11.5, [(57, 0), (69, 0)], "A3 + A4 (an octave)")]
+    for s, e, ns, _ in ev:
+        x = sum(synth_sung(midi_hz(m), e - s, sr, vib) for m, vib in ns)
+        y[int(s * sr):int(s * sr) + len(x)] += x
+    click, hiss = 12.3, (13.0, 14.5)
+    rng = np.random.default_rng(0)
+    nc = int(0.004 * sr)
+    y[int(click * sr) - nc // 2:int(click * sr) - nc // 2 + nc] += rng.uniform(-1, 1, nc).astype(np.float32)
+    nh_ = int((hiss[1] - hiss[0]) * sr)
+    th = np.arange(nh_) / sr
+    y[int(hiss[0] * sr):int(hiss[0] * sr) + nh_] += (0.15 * rng.uniform(-1, 1, nh_) * np.minimum(1, th / 0.05)
+                                                     * np.minimum(1, (th[-1] - th) / 0.05)).astype(np.float32)
+    return y, ev, click, hiss
+
+
+def refcard_period(fig, H, top_in):
+    """The periodicity half of the reference card: synthetic voices through periodicity() and draw_period(), in a
+    panel the size it has in a voice picture, top_in inches below the picture's top. Returns its geometry."""
+    from matplotlib import gridspec
+    sr = C["PER_SR"]
+    hop = int(round(C["PER_HOP"] * sr))
+    y, ev, click, hiss = refcard_voices(sr)
+    R = periodicity(y, sr, hop)
+    top = float(np.percentile(R[:, ::3], C["PER_TOP_PCT"]))
+    ML, MR = C["MARG_L"], C["MARG_R"]
+    fig.text(ML, 1 - (top_in + 0.05) / H, "THE PERIODICITY PANEL of the voice picture, on synthetic voices   "
+             "0:00-0:15   (not the same sounds as above)", fontsize=13.5, va="top", ha="left", weight="bold")
+    gs = gridspec.GridSpec(2, 1, height_ratios=[C["PER_H"], 0.44], hspace=0.03, left=ML, right=MR,
+                           top=1 - (top_in + 0.36) / H, bottom=1 - (top_in + 0.36 + C["PER_H"] + 0.51) / H)
+    ax = fig.add_subplot(gs[0])
+    draw_period(ax, R, hop / sr, 0.0, 0.0, 15.0, 15.0, top, 0.0)
+    for ta, txt in ((0.5, "1. one voice on A3: its row, and\nfainter rows below it: A2 (12\nsemitones down), D2 (19 down)"),
+                    (2.8, "2. two voices a fifth apart,\nA3 + E4: both rows, and A2 (where\ntheir ladders meet) as bright as\n"
+                          "either, though nobody sings it"),
+                    (5.1, "3. two a semitone apart,\nA3 + A#3: one ridge between\nthe rows, pulsing (they beat)"),
+                    (7.4, "4. A4 with vibrato: the ridge\nwobbles, and its ladder too\n(A3, D3, A2, F2, D2)"),
+                    (9.7, "5. two an octave apart, A3 + A4:\none ladder from A4 down, but A3\nbrighter than A4 (compare no. 4)"),
+                    (12.0, "6. click:\nno period,\nnothing"), (13.0, "7. hiss: no period,\nnearly nothing")):
+        ax.text(ta, C["PER_HI"] - 3.2, txt, color="white", fontsize=8.5, va="top", ha="left", zorder=6,
+                bbox=dict(facecolor="black", alpha=0.6, edgecolor="none", pad=1.5))
+    axw = fig.add_subplot(gs[1])
+    ww = [dict(text=nm, s=s, e=e, approx=False, tags=[]) for s, e, _, nm in ev]
+    ww += [dict(text="click", s=click, e=click + 0.05, approx=False, tags=[]),
+           dict(text="hiss (noise)", s=hiss[0], e=hiss[1], approx=False, tags=[])]
+    draw_words(axw, ww, 0.0, 15.0, 15.0, 15.0, C["FIG_W2"] * C["DPI"] * (MR - ML), 1, C["HARM_WORD_FS"], thin=True)
+    axw.set_ylabel("events", fontsize=10, labelpad=30)
+    for x in time_ticks(axw, 0.0, 15.0)[1:-1]:
+        ax.axvline(x, color="#4fc3f7", lw=0.5, alpha=0.3, zorder=3.5)
+        axw.axvline(x, color="#bbbbbb", lw=0.5, alpha=0.3, zorder=0.5)
+    return dict(panels=[period_geometry(px_box(fig, ax)), dict(id="events", **px_box(fig, axw), time=True)],
+                events=[dict(start=s, end=e, midi=[m for m, _ in ns], name=nm) for s, e, ns, nm in ev],
+                click=click, hiss=list(hiss))
+
+
 def refcard(out):
-    """Render the reference card: known synthetic notes through the same measuring and drawing as a real window."""
-    import librosa
+    """Render the reference card: known synthetic notes through the same measuring and drawing as a real window's
+    harmony picture, and under it known synthetic voices through the voice picture's periodicity panel."""
+    import librosa, textwrap
     sr = C["HARM_SR"]
     ya, yb, ev, (tv0, yv), click = refcard_audio(sr)
     D = harm_scales(harmony_data(ya, yb, sr, C["HARM_HOP"], harm_tuning(ya, sr)))
@@ -1313,9 +1547,24 @@ def refcard(out):
             "Low rows are blurred in time (a filter narrow enough to tell semitones apart is long down there): "
             "starts and ends look soft below C3, and the bass panel smears most. The click shows it.\n"
             "The strip above the words folds the piano roll over octaves (C at the bottom, B at the top); "
-            "overtones land on other classes too (a lone A also lights E and C#).")
+            "overtones land on other classes too (a lone A also lights E and C#).\n"
+            + "\n".join(textwrap.wrap(
+                "THE PERIODICITY PANEL (in the voice picture, between the backing strip and the words) is the mirror "
+                "image: how strongly the whole vocal stem repeats itself after each period, for every period at once (a "
+                "summary autocorrelogram; brightness = strength; nothing is picked or counted). A sound that repeats "
+                "every T also repeats every 2T, 3T, 4T..., so each voice lights its own row AND a ladder BELOW it: 12 "
+                "semitones down (the octave below), 19, 24, 28, 31, fading toward the bottom. The top row of a ladder "
+                "is the sung note; the rows below it are not other singers. Two voices are two ladders, and a row both "
+                "ladders share can be as bright as either note (no. 2: A2). Voices a semitone apart merge into one "
+                "pulsing ridge; an octave pair is one ladder, the upper voice's, with the lower voice's row the brighter. "
+                "Ridges are about 1.5 semitones wide "
+                "at A2, 2 at A3, 2.5 at A4, 3.5 at A5 (the timing is equally fine in milliseconds everywhere, which is "
+                "fewer semitones up high); the peak sits on the note.", width=168)))
+    per_h = 0.2 + 0.36 + C["PER_H"] + 0.51 + 0.3   # the periodicity block: gap, title, panel, event lane, tick labels
+    foot_h = 0.204 * (foot.count("\n") + 1) + 0.2
     geom = draw_harmony(out, "REFERENCE CARD   0:00-0:15   synthetic notes", 0.0, 15.0, 15.0, D, ww, lines=lines,
-                        annot=annot, foot=foot, extra_h=1.45)
+                        annot=annot, foot=foot, extra_h=per_h + foot_h, foot_h=foot_h,
+                        under=lambda fig, H: refcard_period(fig, H, C["HARM_H"] + 0.2))
     say(f"refcard: {out} ({geom['w']} x {geom['h']} px)")
     return geom
 
@@ -1427,15 +1676,53 @@ def held_notes(ww, ft, f0, t0, tend):
     return cand[:C["HELD_MAX"]]
 
 
-def voice_grid(H):
-    """The voice picture's grids: (header, lead, backing, words), and the held-note close-ups under them."""
+def per_extra(per):
+    """Inches a voice picture grows by when it has the periodicity panel."""
+    return (C["PER_H"] + C["PER_GAP"]) if per else 0.0
+
+
+def split_words(gs, H, per, bottom):
+    """(periodicity slot, word-lane slot) of a voice grid gs whose last row was the word lane: with the periodicity
+    panel the picture is per_extra() taller, the panel starts where the word lane did, and the word lane keeps its
+    size, `bottom` inches above the picture's bottom edge. Everything above keeps its place from the top."""
+    if not per:
+        return None, gs[len(gs.get_height_ratios()) - 1]
+    from matplotlib import gridspec
+    from matplotlib.figure import Figure
+    ML, MR = C["MARG_L"], C["MARG_R"]
+    wt = (1 - gs[len(gs.get_height_ratios()) - 1].get_position(Figure(figsize=(C["FIG_W2"], H))).y1) * H  # in from the top
+    gp = gridspec.GridSpec(1, 1, left=ML, right=MR, top=1 - wt / H, bottom=1 - (wt + C["PER_H"]) / H)
+    gw = gridspec.GridSpec(1, 1, left=ML, right=MR, top=1 - (wt + per_extra(True)) / H, bottom=bottom / H)
+    return gp[0], gw[0]
+
+
+def voice_grid(H, per=False):
+    """The voice picture's grids: (header, lead, backing, words), the held-note close-ups under them, and the slots
+    of the periodicity panel (None without it) and the word lane. H is the picture's height in inches: VOICE_H, plus
+    per_extra() with the periodicity panel."""
     from matplotlib import gridspec
     ML, MR = C["MARG_L"], C["MARG_R"]
     gs = gridspec.GridSpec(4, 1, height_ratios=[0.32, 3.75, 0.95, 1.5], hspace=0.07,
-                           left=ML, right=MR, top=1 - 0.08 / H, bottom=4.4 / H)
+                           left=ML, right=MR, top=1 - 0.08 / H, bottom=(4.4 + per_extra(per)) / H)
     gc = gridspec.GridSpec(4, 5, width_ratios=[3.3, 1.2, 0.42, 3.3, 1.2], height_ratios=[2.3, 0.75, 0.75, 0.75],
                            left=ML, right=MR, top=3.86 / H, bottom=1.98 / H, hspace=0.1, wspace=0.06)
-    return gs, gc
+    return (gs, gc) + split_words(gs, H, per, 4.4)
+
+
+def look_voice_grid(H, per=False):
+    """The voice close-up's grid (header, lead, backing, words) and the periodicity and word-lane slots."""
+    from matplotlib import gridspec
+    gs = gridspec.GridSpec(4, 1, height_ratios=[0.32, 3.75, 0.95, 0.9], hspace=0.07, left=C["MARG_L"],
+                           right=C["MARG_R"], top=1 - 0.08 / H, bottom=(0.3 + per_extra(per)) / H)
+    return (gs,) + split_words(gs, H, per, 0.3)
+
+
+def period_geometry(box):
+    """The periodicity panel's entry for a geometry file, from its pixel box: the row of every labelled note."""
+    lo, hi = C["PER_LO"], C["PER_HI"]
+    row = lambda m: round(box["y0"] + (hi + 0.5 - m) / (hi - lo + 1) * (box["y1"] - box["y0"]), 2)  # noqa: E731
+    return dict(id="periodicity", **box, time=True, midi_lo=lo, midi_hi=hi,
+                notes={note_name(m): row(m) for m in range(lo, hi + 1) if "#" not in note_name(m)})
 
 
 def band_grid(H2):
@@ -1449,16 +1736,18 @@ def band_grid(H2):
     return gs, g2
 
 
-def static_geometry():
+def static_geometry(per=True):
     """Pixel boxes of the voice and band pictures' panels, from the same grids the renderer uses (the panels are at
     the same place in every window). Panels with time=True share the window's time axis: x0 = the window's start,
-    x1 = start + window seconds. 'sofar' and 'lanes' span the whole song instead."""
+    x1 = start + window seconds. 'sofar' and 'lanes' span the whole song instead. per=False: the voice picture
+    without the periodicity panel (a cache made before it existed)."""
     from matplotlib.figure import Figure
     FW, DPI = C["FIG_W2"], C["DPI"]
     out = {}
-    for pic, H, grid in (("voice", C["VOICE_H"], voice_grid), ("band", C["BAND_H"], band_grid)):
+    for pic, H, grid in (("voice", C["VOICE_H"] + per_extra(per), lambda h: voice_grid(h, per)),
+                         ("band", C["BAND_H"], band_grid)):
         fig = Figure(figsize=(FW, H), dpi=DPI)
-        ga, gb = grid(H)
+        ga, gb = grid(H)[:2]
 
         def box(spec):
             b = spec.get_position(fig)
@@ -1466,22 +1755,35 @@ def static_geometry():
             return dict(x0=round(float(b.x0 * w), 2), x1=round(float(b.x1 * w), 2),
                         y0=round(float((1 - b.y1) * h), 2), y1=round(float((1 - b.y0) * h), 2))
         if pic == "voice":
-            ids = [("header", ga[0], False), ("lead", ga[1], True), ("backing", ga[2], True), ("words", ga[3], True),
-                   ("held", gb[:, :], False)]
+            gp, gw = grid(H)[2:]
+            ids = [("header", ga[0], False), ("lead", ga[1], True), ("backing", ga[2], True)] + \
+                  ([("periodicity", gp, True)] if per else []) + [("words", gw, True), ("held", gb[:, :], False)]
         else:
             ids = [("header", ga[0], False)] + [(n, ga[1 + i], True) for i, n in enumerate(C["STEMS6"])] + \
                   [("stereo", ga[6], True), ("attacks", ga[7], True), ("sofar", gb[0], False), ("lanes", gb[1], False)]
-        out[pic] = dict(w=int(round(FW * DPI)), h=int(round(H * DPI)),
-                        panels=[dict(id=i, **box(sp), **({"time": True} if tm else {})) for i, sp, tm in ids])
+        out[pic] = dict(w=fig.canvas.get_width_height()[0], h=fig.canvas.get_width_height()[1],
+                        panels=[period_geometry(box(sp)) if i == "periodicity" else
+                                dict(id=i, **box(sp), **({"time": True} if tm else {})) for i, sp, tm in ids])
     return out
+
+
+def png_size(p):
+    """(width, height) of a PNG file from its header, or None if it isn't one."""
+    with open(p, "rb") as f:
+        b = f.read(24)
+    return (int.from_bytes(b[16:20], "big"), int.from_bytes(b[20:24], "big")) if b[:8] == b"\x89PNG\r\n\x1a\n" else None
 
 
 def write_geometry(wd, nwin, harmony=None):
     """windows/geometry.json: for every picture of a window its size and each panel's pixel box (x0, x1 from the left
     edge; y0 = top, y1 = bottom, from the top edge), and for the semitone panels the pixel row of every labelled
-    note. A page generator reads this instead of hardcoding pixels."""
+    note. A page generator reads this instead of hardcoding pixels. The voice picture is described as it was
+    rendered: with the periodicity panel only if the file on disk has that height."""
     pics = {}
-    for name, g in static_geometry().items():
+    vp = os.path.join(wd, "000-voice.png")
+    size = png_size(vp) if os.path.exists(vp) else None
+    per = bool(size) and size[1] == static_geometry(True)["voice"]["h"]
+    for name, g in static_geometry(per).items():
         if os.path.exists(os.path.join(wd, f"000-{name}.png")):
             pics[name] = dict(file="NNN-" + name + ".png", **g)
     if harmony:
@@ -1566,11 +1868,16 @@ def stage_render(a, W, OUT):
     has_back = "backing" in S.files and "back_on" in F.files and bool(F["back_on"].any())
     bf0 = F["bf0"] if has_back else None
     bon = F["back_on"] if "back_on" in F.files else None
-    lo, hi = float(S["floor"]), float(S["top"])
-    lead_c, cf_l, hop_l = S["lead"], S["lead_cf"], float(S["lead_hop"])
+    lo, hi, colour = coch_scale(W, S)
+    ear = C["SCALE"] == "ear"
+    scale_txt = "'ear' scale for the song (level^%g, onsets emphasised)" % C["EAR_POWER"] if ear \
+        else "one dB scale for the song"
+    cf_l, hop_l = S["lead_cf"], float(S["lead_hop"])
     cf_s, hop_s = S["stem_cf"], float(S["stem_hop"])
-    stems = {n: S[f"stem_{n}"] for n in C["STEMS6"]}
-    back_c = S["backing"] if has_back else None
+    lead_c = colour(S["lead"], hop_l)
+    stems = {n: colour(S[f"stem_{n}"], hop_s) for n in C["STEMS6"]}
+    back_c = colour(S["backing"], hop_s) if has_back else None
+    PD = load_periodicity(W)   # None on a cache without the stage's output: the voice picture as it was before
     mono = bool(S["mono"])
     at, low, onset = F["acc_t"], F["low"], F["onset"]
     lmin, lmax = np.percentile(low, (2, 99.8))
@@ -1599,9 +1906,9 @@ def stage_render(a, W, OUT):
         i0, i1 = np.searchsorted(ft, t0), np.searchsorted(ft, tend)
 
         # ================================================================ picture 1: the voice
-        fig = plt.figure(figsize=(FW, C["VOICE_H"]), dpi=DPI)
-        H = C["VOICE_H"]
-        gs, gc = voice_grid(H)
+        H = C["VOICE_H"] + per_extra(PD is not None)
+        fig = plt.figure(figsize=(FW, H), dpi=DPI)
+        gs, gc, gp, gw = voice_grid(H, PD is not None)
         axh = fig.add_subplot(gs[0]); axh.axis("off")
         axh.text(0, 0.5, head + "   [the voice]", fontsize=14, va="center", ha="left", weight="bold")
         ax = fig.add_subplot(gs[1])
@@ -1610,8 +1917,8 @@ def stage_render(a, W, OUT):
         ax.set_ylabel(("lead vocal" if split else "vocal only") + ", Hz", fontsize=12)
         ax.text(t0 + 0.05, nch - 1.5, ("lead vocal (backing removed; yellow band on top = the whole vocal there), "
                                        if split else "vocal, ") +
-                "cochleagram: gammatone ERB channels, 5 ms frames, one dB scale for the song; cyan = lead pitch",
-                color="white", fontsize=10, va="top", ha="left", zorder=4)
+                f"cochleagram: gammatone ERB channels, 5 ms frames, {scale_txt}; cyan = lead pitch",
+                color="white", fontsize=10 if not ear else 9, va="top", ha="left", zorder=4)
         for w in ww:
             ax.axvline(w["s"], color="white", lw=0.6, alpha=0.35 if not w["approx"] else 0.15,
                        ls="-" if not w["approx"] else ":")
@@ -1634,16 +1941,22 @@ def stage_render(a, W, OUT):
         axk.set_ylabel("backing", fontsize=11)
         # word lane (time order), x ticks under it
         NR = C["WORD_ROWS"]
-        axw = fig.add_subplot(gs[3])
+        timed = [ax, axk]
+        if PD is not None:   # every period in the whole vocal stem at once, between the backing strip and the words
+            axq = fig.add_subplot(gp)
+            draw_period(axq, PD["R"], PD["hop"], 0.0, t0, t1, tend, PD["top"], PD["cents"], ww)
+            timed.append(axq)
+        axw = fig.add_subplot(gw)
+        timed.append(axw)
         axw.set_ylabel("words", fontsize=12)
         draw_words(axw, ww, t0, t1, tend, WIN, ax_px, NR, 12)
         axw.set_xticks(xt); axw.set_xticklabels([mmss_short(x) if i % 5 == 0 else f"+{i}s" for i, x in enumerate(xt)],
                                                fontsize=10)
-        for axx in (ax, axk, axw):
+        for axx in timed:
             for x in xt[1:-1]:
                 axx.axvline(x, color="#4fc3f7" if axx is not axw else "#bbbbbb", lw=0.5, alpha=0.3, zorder=0.5 if axx is axw else 3.5)
         for c in chg:
-            for axx in (ax, axk, axw):
+            for axx in timed:
                 axx.axvline(c["t"], color="#76ff03" if axx is not axw else "#2e7d32", lw=3, ls="--", zorder=5)
             ax.text(c["t"] + 0.05, nch * 0.78, ("NEW VOICE: " if c["first"] else "VOICE CHANGE TO ") + c["voice"],
                     color="#76ff03", fontsize=14, weight="bold", va="top", zorder=6,
@@ -1740,7 +2053,7 @@ def stage_render(a, W, OUT):
             out_lines.append(f"{mmss_short(lw[0]['s'])} {v}: " + mark + " ".join(parts))
         if not out_lines:
             out_lines = ["(no lyric words start in this window)"]
-        axt = fig.add_axes([0.012, 0.004, 0.976, 1.6 / H]); axt.axis("off")
+        axt = fig.add_axes([0.012, 0.004 * C["VOICE_H"] / H, 0.976, 1.6 / H]); axt.axis("off")
         fs = 15
         while True:
             width = int(FW * 0.97 * 72 / (0.61 * fs))
@@ -1773,7 +2086,8 @@ def stage_render(a, W, OUT):
             if n_ == 0:
                 axs.text(t0 + 0.05, nn - 1.5, f"five stems of the whole song (Demucs {C['BAND_MODEL']}; the voice is in "
                          "the other picture), cochleagrams on the lead's colour scale: faint = quiet, black = silent; "
-                         "y in Hz", color="white", fontsize=9.5, va="top", ha="left", zorder=4)
+                         "y in Hz" + ("; 'ear' scale: level^%g, onsets emphasised" % C["EAR_POWER"] if ear else ""),
+                         color="white", fontsize=9.5, va="top", ha="left", zorder=4)
             panels.append(axs)
         axp = fig.add_subplot(gs[6])
         if mono:
@@ -1871,7 +2185,8 @@ def stage_render(a, W, OUT):
     say(f"render: {nwin} windows x 2 pictures in {time.time() - t_render:.0f} s -> {wd}")
     harm = render_harmony(W, OUT) if os.path.exists(os.path.join(W, "harmony.npz")) else None
     write_geometry(wd, nwin, harm)
-    jdump(dict(window=WIN, layout=LAYOUT3 if harm else LAYOUT, nwin=nwin), os.path.join(wd, "render.json"))
+    jdump(dict(window=WIN, layout=LAYOUT3 if harm else LAYOUT, nwin=nwin, **({"scale": C["SCALE"]} if ear else {})),
+          os.path.join(wd, "render.json"))   # no "scale" key = db (as every render before the switch existed)
 
 
 # ------------------------------------------------------------------ close-ups (`look`): recomputed at a finer step
@@ -1902,7 +2217,8 @@ def look_steps(L):
     k, sr = L / C["WIN"], 22050
     return dict(lead=max(1, int(round(C["COCH_HOP_LEAD"] * k * sr))), stem=max(1, int(round(C["COCH_HOP_STEM"] * k * sr))),
                 cq=max(16, 16 * int(round(C["HARM_HOP"] * k / 16))), pan=max(32, int(round(C["PAN_HOP"] * k * sr))),
-                attacks=max(16, int(round(2 * int(C["HOP"] * sr) * k))))
+                attacks=max(16, int(round(2 * int(C["HOP"] * sr) * k))),
+                periodicity=max(1, int(round(C["PER_HOP"] * k * C["PER_SR"]))))
 
 
 def pan_image(Lc, Rc, sr, hop_p):
@@ -1975,8 +2291,14 @@ def look_render(W, st, n, ts, te, limit, out, kinds):
             back_line = (ft[m], F["bf0"][m])
 
     # ---------------- the voice
+    ear = C["SCALE"] == "ear"
+    scale_txt = "the song's loudness scale ('ear')" if ear else "the song's dB scale"
+    # the periodicity panel: only on a cache that has the stage's output (its whole-song scale) and the vocal stem
+    PD = load_periodicity(W) if "voice" in kinds and os.path.exists(os.path.join(W, "vocals.wav")) else None
+    if PD is None:
+        steps.pop("periodicity")
     if "voice" in kinds:
-        lo, hi = float(S["floor"]), float(S["top"])
+        lo, hi, colour = coch_scale(W, S)
         cf_l, cf_s = S["lead_cf"], S["stem_cf"]
         hl, hs = steps["lead"] / sr, steps["stem"] / sr
         lead = cochleagram(yl, sr, cf_l, hl)
@@ -1987,10 +2309,10 @@ def look_render(W, st, n, ts, te, limit, out, kinds):
             voc = cochleagram(excerpt(os.path.join(W, "vocals.wav"), a0, b0, sr), sr, cf_l, hl)
             n_ = min(lead.shape[1], voc.shape[1])
             lead[:, :n_][:, uf[:n_]] = voc[:, :n_][:, uf[:n_]]
-        H = C["LOOK_VOICE_H"]
+        lead = colour(lead, hl)
+        H = C["LOOK_VOICE_H"] + per_extra(PD is not None)
         fig = plt.figure(figsize=(FW, H), dpi=DPI)
-        gs = gridspec.GridSpec(4, 1, height_ratios=[0.32, 3.75, 0.95, 0.9], hspace=0.07, left=ML, right=MR,
-                               top=1 - 0.08 / H, bottom=0.3 / H)
+        gs, gp, gw = look_voice_grid(H, PD is not None)
         axh = fig.add_subplot(gs[0]); axh.axis("off")
         fit_header(fig, axh.text(0, 0.5, head + "   [the voice, close-up]", fontsize=13.5, va="center", ha="left",
                                  weight="bold"))
@@ -1999,7 +2321,7 @@ def look_render(W, st, n, ts, te, limit, out, kinds):
         ax.plot(lead_line[0], hz2ch(cf_l, lead_line[1]), color="#00e5ff", lw=2.4)
         ax.set_ylabel("lead vocal, Hz", fontsize=12)
         ax.text(ts + 0.004 * L, nch - (4.5 if uf.any() else 1.5), f"lead vocal, cochleagram recomputed for this span at {hl * 1000:.2f} ms "
-                f"frames (a window: {C['COCH_HOP_LEAD'] * 1000:g} ms), the song's dB scale; cyan = lead pitch "
+                f"frames (a window: {C['COCH_HOP_LEAD'] * 1000:g} ms), {scale_txt}; cyan = lead pitch "
                 f"re-tracked at {C['LOOK_PYIN_HOP'] / sr * 1000:.1f} ms; yellow band on top = the whole vocal there",
                 color="white", fontsize=9.5, va="top", ha="left", zorder=4)
         for w in ww:
@@ -2010,7 +2332,7 @@ def look_render(W, st, n, ts, te, limit, out, kinds):
         axk = fig.add_subplot(gs[2])
         bp = os.path.join(W, "backing.wav")
         if back_line is not None and os.path.exists(bp):
-            back = cochleagram(excerpt(bp, a0, b0, sr), sr, cf_s, hs)
+            back = colour(cochleagram(excerpt(bp, a0, b0, sr), sr, cf_s, hs), hs)
             nb = draw_coch(axk, back, hs, cf_s, ts, te, te, lo, hi, fmax=C["BACK_FMAX"], ticks=(100, 400, 1600), fs=9,
                            toff=a0)
             axk.plot(back_line[0], hz2ch(cf_s, back_line[1]), color="#80deea", lw=1.2, alpha=0.6)
@@ -2023,20 +2345,30 @@ def look_render(W, st, n, ts, te, limit, out, kinds):
                      transform=axk.transAxes)
             axk.tick_params(labelbottom=False)
         axk.set_ylabel("backing", fontsize=11)
-        axw = fig.add_subplot(gs[3])
+        timed = [("lead", ax), ("backing", axk)]
+        if PD is not None:   # the whole vocal stem's periods, measured again on this span at the finer step
+            hq = steps["periodicity"]
+            R = periodicity(excerpt(os.path.join(W, "vocals.wav"), a0, b0, C["PER_SR"]), C["PER_SR"], hq)
+            axq = fig.add_subplot(gp)
+            draw_period(axq, R, hq / C["PER_SR"], a0, ts, te, te, PD["top"], PD["cents"], ww,
+                        note=f", at {hq / C['PER_SR'] * 1000:.2f} ms steps ({C['PER_FRAME'] * 1000:g} ms frames)")
+            timed.append(("periodicity", axq))
+        axw = fig.add_subplot(gw)
+        timed.append(("words", axw))
         axw.set_ylabel("words", fontsize=12)
         draw_words(axw, ww, ts, te, te, L, ax_px, C["LOOK_WORD_ROWS"], 12)
         time_ticks(axw, ts, te, look=True)
-        grid_lines((ax, axk, axw), axw)
-        geom["voice"] = dict(w=int(round(FW * DPI)), h=int(round(H * DPI)), panels=[
-            dict(id=i, **px_box(fig, x), time=True) for i, x in (("lead", ax), ("backing", axk), ("words", axw))])
+        grid_lines([x for _, x in timed], axw)
+        geom["voice"] = dict(w=fig.canvas.get_width_height()[0], h=fig.canvas.get_width_height()[1], panels=[
+            period_geometry(px_box(fig, x)) if i == "periodicity" else dict(id=i, **px_box(fig, x), time=True)
+            for i, x in timed])
         fig.savefig(os.path.join(out, f"{n:02d}-voice.png"), dpi=DPI)
         plt.close(fig)
         files.append(f"{n:02d}-voice.png")
 
     # ---------------- the band
     if "band" in kinds:
-        lo, hi = float(S["floor"]), float(S["top"])
+        lo, hi, colour = coch_scale(W, S)
         cf_s, hs = S["stem_cf"], steps["stem"] / sr
         H2 = C["LOOK_BAND_H"]
         fig = plt.figure(figsize=(FW, H2), dpi=DPI)
@@ -2048,13 +2380,13 @@ def look_render(W, st, n, ts, te, limit, out, kinds):
         panels = []
         for i, name in enumerate(C["STEMS6"]):
             axs = fig.add_subplot(gs[1 + i])
-            M = cochleagram(excerpt(os.path.join(W, "band", f"{name}.wav"), a0, b0, sr), sr, cf_s, hs)
+            M = colour(cochleagram(excerpt(os.path.join(W, "band", f"{name}.wav"), a0, b0, sr), sr, cf_s, hs), hs)
             nn = draw_coch(axs, M, hs, cf_s, ts, te, te, lo, hi, ticks=(100, 300, 1000, 3000), fs=9, toff=a0)
             axs.set_ylabel(name, fontsize=12)
             if i == 0:
                 axs.text(ts + 0.004 * L, nn - 1.5, f"the five stems, cochleagrams recomputed for this span at "
-                         f"{hs * 1000:.2f} ms frames (a window: {C['COCH_HOP_STEM'] * 1000:g} ms), the song's dB "
-                         f"scale", color="white", fontsize=9.5, va="top", ha="left", zorder=4)
+                         f"{hs * 1000:.2f} ms frames (a window: {C['COCH_HOP_STEM'] * 1000:g} ms), {scale_txt}",
+                         color="white", fontsize=9.5, va="top", ha="left", zorder=4)
             panels.append((name, axs))
         axp = fig.add_subplot(gs[6])
         if bool(S["mono"]):
@@ -2136,17 +2468,19 @@ def look_render(W, st, n, ts, te, limit, out, kinds):
     return files + [f"{n:02d}.txt"], info
 
 
-STAGES = ["fetch", "separate", "bands", "lead", "transcribe", "align", "voices", "features", "sound", "harmony", "render"]
+STAGES = ["fetch", "separate", "bands", "lead", "transcribe", "align", "voices", "features", "sound", "periodicity",
+          "harmony", "render"]
 OUTPUTS = dict(fetch="meta.json", separate="vocals.wav", bands=os.path.join("band", "other.wav"), lead="lead.wav",
                transcribe="whisper.json", align="align.json", voices="voices.json", features="words.json",
-               sound="sound.npz", harmony="harmony.npz", render=None)
+               sound="sound.npz", periodicity="periodicity.npz", harmony="harmony.npz", render=None)
 # what each stage reads: a stage runs if its output is missing, if --redo names it or something it depends on, or if
 # a stage it depends on ran (so adding the band view to an old work dir runs only bands, sound, harmony and render,
-# and adding the harmony picture to a two-picture work dir runs only harmony and render)
+# and adding the harmony picture to a two-picture work dir runs only harmony and render; a work dir made before the
+# periodicity panel runs only periodicity, which reads vocals.wav alone, and render)
 DEPS = dict(fetch=[], separate=["fetch"], bands=["fetch"], lead=["separate"], transcribe=["lead"],
             align=["transcribe", "lead", "separate"], voices=["align"], features=["voices", "align", "lead", "separate"],
-            sound=["bands", "features", "lead", "separate"], harmony=["separate", "bands"],
-            render=["sound", "harmony", "features", "voices", "align"])
+            sound=["bands", "features", "lead", "separate"], periodicity=["separate"], harmony=["separate", "bands"],
+            render=["sound", "periodicity", "harmony", "features", "voices", "align"])
 
 
 def downstream(st):
@@ -2395,6 +2729,7 @@ def prepare(a):
     if a.looks < 0:
         sys.exit("--looks can't be negative")
     C["WIN"] = float(a.window)
+    C["SCALE"] = a.scale
     os.makedirs(W, exist_ok=True); os.makedirs(RUN, exist_ok=True)
     log = {}
     for st in plan_stages(W, a.redo, a.only):   # the plan depends only on which outputs exist before the first stage
@@ -2418,13 +2753,15 @@ def prepare(a):
     jdump(summ, prev)
     meta = jload(os.path.join(W, "meta.json"))
     nwin = n_windows(meta["duration"])
-    st_ = dict(tool="listening v3 see.py", layout=LAYOUT3, window=C["WIN"], labels=list(LABELS),
+    st_ = dict(tool="listening v3 see.py", layout=LAYOUT3, window=C["WIN"], scale=C["SCALE"], labels=list(LABELS),
                optional=list(OPTIONAL) + ["harmony"], looks=int(a.looks), looks_used=0,
                work=W, nwin=nwin, artist=meta.get("artist"), title=meta.get("title"), duration=meta["duration"],
                revealed=0, prepared=time.strftime("%Y-%m-%d %H:%M:%S"))
     rend = os.path.join(W, "windows", "render.json")
-    if not os.path.exists(rend) or jload(rend).get("window") != C["WIN"] or jload(rend).get("layout") != LAYOUT3:
-        sys.exit(f"windows not rendered for {C['WIN']:g} s windows yet; run prepare again without --only")
+    if not os.path.exists(rend) or jload(rend).get("window") != C["WIN"] or jload(rend).get("layout") != LAYOUT3 \
+            or jload(rend).get("scale", "db") != C["SCALE"]:
+        sys.exit(f"windows not rendered for {C['WIN']:g} s windows on the {C['SCALE']} scale yet; run prepare again "
+                 f"without --only")
     missing = [f for k in range(nwin) for f, src in window_files(st_, k) if not os.path.exists(src)]
     if missing:
         sys.exit(f"windows not rendered yet ({len(missing)} files missing); run prepare again without --only")
@@ -2463,6 +2800,9 @@ def again(a):
     if not os.path.exists(os.path.join(W, "harmony.npz")):
         say("== harmony")
         stage_harmony(a, W)
+    if not os.path.exists(os.path.join(W, "periodicity.npz")) and os.path.exists(os.path.join(W, "vocals.wav")):
+        say("== periodicity")   # so this listen's close-ups have the periodicity panel (no window is drawn again)
+        stage_periodicity(a, W)
     wd = os.path.join(W, "windows")
     gj = os.path.join(wd, "geometry.json")
     have = os.path.exists(gj) and jload(gj).get("window") == C["WIN"] and "harmony" in jload(gj).get("pictures", {}) \
@@ -2471,7 +2811,7 @@ def again(a):
         say("== render (harmony pictures only)")
         write_geometry(wd, nwin, render_harmony(W, W))
     st_ = dict(tool="listening v3 see.py", layout=SECOND, first=R1, first_layout=s1.get("layout"), full=bool(a.full),
-               window=C["WIN"], labels=list(SECOND_LABELS), optional=list(OPTIONAL), looks=int(a.looks), looks_used=0,
+               window=C["WIN"], scale=s1.get("scale", "db"), labels=list(SECOND_LABELS), optional=list(OPTIONAL), looks=int(a.looks), looks_used=0,
                work=W, nwin=nwin, artist=s1.get("artist"), title=s1.get("title"), duration=s1["duration"],
                revealed=0, prepared=time.strftime("%Y-%m-%d %H:%M:%S"))
     missing = [src for k in range(nwin) for f, src in window_files(st_, k) if not os.path.exists(src)]
@@ -2510,6 +2850,10 @@ def nxt(d):
     if lay in (LAYOUT, LAYOUT3, SECOND) and os.path.exists(rj) and jload(rj).get("window") != s.get("window"):
         sys.exit(f"the cache {s['work']}/windows was re-rendered with {jload(rj).get('window')} s windows, but this run "
                  f"uses {s.get('window')} s: run prepare again with --window {s.get('window'):g} (nothing revealed)")
+    if lay in (LAYOUT, LAYOUT3) and os.path.exists(rj) and jload(rj).get("scale", "db") != s.get("scale", "db"):
+        sys.exit(f"the cache {s['work']}/windows was re-rendered on the {jload(rj).get('scale', 'db')} scale, but this "
+                 f"run uses {s.get('scale', 'db')}: run prepare again with --scale {s.get('scale', 'db')} (nothing "
+                 f"revealed)")
     if lay == SECOND:
         _, bad1 = seal_problems(s["first"])
         if bad1:
@@ -2583,6 +2927,7 @@ def look(a):
         sys.exit(f"REFUSED: the cache {s['work']} can't give a close-up (no stems or no whole-song scales in it). "
                  f"Nothing was spent.")
     C["WIN"] = float(win)
+    C["SCALE"] = s.get("scale", "db")   # the run's own scale (runs prepared before the switch have none: db)
     ld = os.path.join(d, "looks")
     os.makedirs(ld, exist_ok=True)
     log_line(d, f"look {n:02d}  {mmss(ts)}-{mmss(te)}  why: {why}")   # the reason is on record before any picture exists
@@ -2639,7 +2984,8 @@ def status(d):
     labels, help_ = run_labels(s)
     k, nwin = s["revealed"], s["nwin"]
     print(f"{s.get('artist')} - {s.get('title')}: {k} of {nwin} windows revealed "
-          f"({s.get('window', 10.0):g} s windows, {layout_words(s)}; note labels {help_})")
+          f"({s.get('window', 10.0):g} s windows, {layout_words(s)}"
+          + (", cochleagrams on the ear scale" if s.get("scale") == "ear" else "") + f"; note labels {help_})")
     n, bad = seal_problems(d)
     print(f"seal check: {n} sealed notes, " + ("all match their logged sha256" if not bad else "MISMATCH: " + "; ".join(bad)))
     used = s.get("looks_used", 0)
@@ -2706,6 +3052,10 @@ def main():
     p.add_argument("--window", type=float, default=C["WIN"], metavar="SECONDS",
                    help=f"seconds per window (default {C['WIN']:g}); stored in state.json")
     p.add_argument("--looks", type=int, default=C["LOOKS"], help=f"close-ups the listener may spend (default {C['LOOKS']})")
+    p.add_argument("--scale", choices=("db", "ear"), default=C["SCALE"],
+                   help=f"how the cochleagrams map intensity to colour (default {C['SCALE']}): db = envelope power in "
+                        f"dB; ear = loudness as felt (power^{C['EAR_POWER']:g}) with onsets emphasised; stored in "
+                        f"state.json")
     prepare(p.parse_args(sys.argv[2:]))
 
 
