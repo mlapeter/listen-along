@@ -1,9 +1,9 @@
 # Listened to in order
 
-A language model can't take in sound. This tool measures a recording into pictures, fifteen seconds at a time, and a
-Claude Code session reads one window, writes a note about it, and has that note locked before the next window opens.
-At the end you have a listener's notes on a whole song, written in order, and you can turn them into a page that
-plays the notes against the music.
+**Let your AI listen to a song with you.** An AI can't hear, so this tool turns a recording into pictures it can
+read, fifteen seconds at a time. A Claude Code session reads one window, writes down what it notices and how it
+lands, and has that note locked before the next window opens. At the end you get a page that plays its notes back
+against the music.
 
 **Live examples** (nothing to install; they play in a browser):
 

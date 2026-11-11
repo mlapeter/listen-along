@@ -449,6 +449,59 @@ def read_listen(run, st, first_run=None, fix=lambda s: s, with_after=True):
                 full=bool(st.get("full")), texts=texts)
 
 
+def _font(names, size):
+    from PIL import ImageFont
+    for f in names:
+        try:
+            return ImageFont.truetype(f, size)
+        except OSError:
+            pass
+    return ImageFont.load_default(size)
+
+
+SERIF = ["/System/Library/Fonts/Supplemental/Georgia.ttf", "Georgia.ttf", "georgia.ttf", "DejaVuSerif.ttf", "LiberationSerif-Regular.ttf"]
+ITALIC = ["/System/Library/Fonts/Supplemental/Georgia Italic.ttf", "Georgia Italic.ttf", "georgiai.ttf", "DejaVuSerif-Italic.ttf"] + SERIF
+SANS = ["/System/Library/Fonts/Helvetica.ttc", "Arial.ttf", "arial.ttf", "DejaVuSans.ttf", "LiberationSans-Regular.ttf"]
+
+
+def make_card(out, nwin, title, artist, by, feels):
+    """card.jpg, the 1200 x 630 link-preview picture: the loudest window's instrument strip, and under it the song,
+    who listened, and the first sentence of what the listener wrote about that window."""
+    from PIL import Image, ImageDraw, ImageStat
+    tiles = [Image.open(os.path.join(out, "w", f"{k:03d}.jpg")).convert("RGB") for k in range(nwin)]
+    k = max(range(max(1, nwin - 1)), key=lambda i: ImageStat.Stat(tiles[i].convert("L")).mean[0])   # not the last: it is padded
+    W, H, PH = 1200, 630, 372
+    im = Image.new("RGB", (W, H), (11, 10, 14))
+    t = tiles[k]
+    t = t.resize((W, round(t.height * W / t.width)), Image.LANCZOS).crop((0, 0, W, PH))
+    fade = Image.new("L", (W, PH), 255)
+    fd = ImageDraw.Draw(fade)
+    for y in range(PH - 90, PH):
+        fd.line([(0, y), (W, y)], fill=round(255 * (PH - y) / 90))
+    im.paste(t, (0, 0), fade)
+    d = ImageDraw.Draw(im)
+    d.rectangle([430, 0, 432, PH - 28], fill=(236, 231, 223))          # the playhead
+    f_title, f_sub, f_q = _font(SERIF, 58), _font(SANS, 25), _font(ITALIC, 29)
+    while d.textlength(title, font=f_title) > W - 112 and f_title.size > 34:
+        f_title = _font(SERIF, f_title.size - 4)
+    d.text((56, 372), title, font=f_title, fill=(236, 231, 223))
+    d.text((58, 448), f"{artist}  ·  an AI listened in order and wrote down what it heard", font=f_sub, fill=(154, 148, 139))
+    sents = re.split(r"(?<=[.!?])\s", " ".join(feels[k].split())) if feels[k] else [""]
+    quote = sents[0] if len(sents[0]) >= 60 or len(sents) == 1 else sents[0] + " " + sents[1]
+    lines, cur = [], ""
+    for w in ("\u201c" + quote + "\u201d").split() if quote else []:
+        if d.textlength((cur + " " + w).strip(), font=f_q) <= W - 116:
+            cur = (cur + " " + w).strip()
+        else:
+            lines.append(cur); cur = w
+    lines.append(cur)
+    if len(lines) > 3:
+        lines = lines[:3]; lines[2] = lines[2].rsplit(" ", 1)[0] + "\u2026\u201d"
+    for i, ln in enumerate(lines):
+        d.text((58, 498 + i * 39), ln, font=f_q, fill=(244, 162, 89))
+    im.save(os.path.join(out, "card.jpg"), quality=88, optimize=True)
+
+
 def publish_request(run, work, st, second=""):
     """The text a local page offers for copying: a request to the reader's own AI to publish this listen as a page
     without the recording. It names the run by its folder, never by a path on this machine."""
@@ -591,7 +644,8 @@ def build(run, out, audio, by, note="", youtube="", link="", second="", pictures
     if url:        # the page's public address: link previews need absolute URLs
         base = url.rstrip("/") + "/"
         meta.append(f'<meta property="og:url" content="{html.escape(base)}">')
-        if os.path.exists(os.path.join(out, "card.jpg")):      # a 1200 x 630 picture put in the output folder by hand
+        make_card(out, nwin, data["title"], data["artist"], by, [w["feelPlain"] for w in listens[0]["wins"]])
+        if os.path.exists(os.path.join(out, "card.jpg")):
             meta += [f'<meta property="og:image" content="{html.escape(base)}card.jpg">',
                      '<meta property="og:image:width" content="1200">', '<meta property="og:image:height" content="630">',
                      '<meta name="twitter:card" content="summary_large_image">']
@@ -1188,8 +1242,8 @@ def main():
     ap.add_argument("--audio", help="audio file (default: song.wav in the run's cache)")
     ap.add_argument("--by", default="Claude", help="who listened, for the byline")
     ap.add_argument("--note", default="", help="a sentence for the intro, e.g. what the listener already knew of the song")
-    ap.add_argument("--url", default="", help="the page's public address, for link previews (og: tags); a card.jpg "
-                    "(1200 x 630) already in the output folder becomes the preview picture")
+    ap.add_argument("--url", default="", help="the page's public address, for link previews (og: tags); it also "
+                    "writes card.jpg, the preview picture")
     a = ap.parse_args()
     for flag, val in (("--link", a.link), ("--url", a.url)):
         if val and not re.match(r"https?://[^\s\"'<>]+$", val):

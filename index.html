@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Listened to in order</title>
-<meta name="description" content="A Claude Code session listens to a song in order, as pictures measured from the sound, one sealed note per fifteen seconds. The notes play back against the music.">
-<meta property="og:title" content="Listened to in order">
-<meta property="og:description" content="A Claude Code session listens to a song in order, as pictures measured from the sound, one sealed note per fifteen seconds. The notes play back against the music.">
+<title>Let your AI listen to a song with you</title>
+<meta name="description" content="An AI can't hear. This turns a song into pictures it can read, fifteen seconds at a time, and it writes down what it notices and how it lands. Then you play its notes back against the music.">
+<meta property="og:title" content="Let your AI listen to a song with you">
+<meta property="og:description" content="An AI can't hear. This turns a song into pictures it can read, fifteen seconds at a time, and it writes down what it notices and how it lands. Then you play its notes back against the music.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://mlapeter.github.io/listened-in-order/">
 <meta property="og:image" content="https://mlapeter.github.io/listened-in-order/somebody-that-i-used-to-know/card.jpg">
@@ -15,31 +15,66 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; style-src 'unsafe-inline'">
 <style>
-  body { margin: 0; background: #0b0a0e; color: #ece7df; font: 16px/1.55 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
-  main { max-width: 980px; margin: 0 auto; padding: 56px 20px 72px; }
-  h1 { font: 500 34px/1.15 "Iowan Old Style", Palatino, Georgia, serif; margin: 0 0 14px; letter-spacing: -0.01em; }
-  p { margin: 0 0 14px; color: #c9c3b9; max-width: 700px; text-wrap: pretty; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 22px; margin: 34px 0 40px; }
-  a.card { display: block; color: inherit; text-decoration: none; border: 1px solid #2a2833; border-radius: 10px; overflow: hidden; background: #131218; transition: border-color .2s, transform .2s; }
-  a.card:hover, a.card:focus-visible { border-color: #3ad8ee; transform: translateY(-2px); outline: none; }
-  a.card img { display: block; width: 100%; aspect-ratio: 1200 / 630; object-fit: cover; }
-  a.card div { padding: 14px 16px 16px; }
-  a.card b { display: block; font: 500 20px/1.25 "Iowan Old Style", Palatino, Georgia, serif; }
-  a.card span { display: block; margin-top: 4px; font-size: 13.5px; color: #9a948b; }
-  a.cta { display: inline-flex; align-items: center; height: 40px; padding: 0 20px; border: 1px solid #3ad8ee; border-radius: 20px; color: #3ad8ee; text-decoration: none; font-weight: 500; font-size: 14.5px; }
-  a.cta:hover { background: #3ad8ee; color: #0b0a0e; }
+  :root { --bg: #0b0a0e; --panel: #131218; --line: #2a2833; --text: #ece7df; --muted: #a8a299; --cyan: #3ad8ee; --warm: #f4a259; --serif: "Iowan Old Style", Palatino, Georgia, serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.55 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  main { max-width: 1040px; margin: 0 auto; padding: 64px 20px 80px; }
+  h1 { font: 500 clamp(36px, 6vw, 58px)/1.08 var(--serif); margin: 0 0 18px; letter-spacing: -0.015em; text-wrap: balance; }
+  .lede { font-size: clamp(18px, 2.2vw, 21px); color: #d3cdc3; max-width: 680px; margin: 0 0 26px; text-wrap: pretty; }
+  .row { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; }
+  a.cta { display: inline-flex; align-items: center; height: 46px; padding: 0 24px; border-radius: 23px; background: var(--cyan); color: var(--bg); text-decoration: none; font-weight: 600; font-size: 15.5px; }
+  a.cta:hover, a.cta:focus-visible { background: #7be6f5; outline: none; }
+  a.ghost { color: var(--cyan); font-size: 15.5px; text-underline-offset: 3px; }
+  h2 { font: 600 12px/1.2 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 64px 0 18px; }
+  .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; counter-reset: step; }
+  .step { position: relative; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); overflow: hidden; }
+  .step .pic { height: 150px; display: grid; place-items: center; background: #000; border-bottom: 1px solid var(--line); overflow: hidden; }
+  .step .pic img { width: 100%; height: 100%; object-fit: cover; object-position: left top; display: block; }
+  .step .pic.song { background: radial-gradient(circle at 50% 60%, #241d2b, #0d0c11 70%); }
+  .step .pic.note { padding: 0 20px; background: var(--panel); }
+  .bars { display: flex; align-items: flex-end; gap: 5px; height: 64px; }
+  .bars i { width: 7px; border-radius: 3px; background: var(--warm); }
+  .step q { font: italic 400 18px/1.35 var(--serif); color: var(--warm); quotes: "\201C" "\201D"; }
+  .step div.t { padding: 14px 16px 16px; }
+  .step b { display: block; font: 500 19px/1.25 var(--serif); margin-bottom: 4px; }
+  .step b::before { counter-increment: step; content: counter(step) ". "; color: var(--muted); }
+  .step span { font-size: 14.5px; color: var(--muted); display: block; text-wrap: pretty; }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+  a.card { display: block; color: inherit; text-decoration: none; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--panel); transition: border-color .2s, transform .2s; }
+  a.card:hover, a.card:focus-visible { border-color: var(--cyan); transform: translateY(-2px); outline: none; }
+  a.card img { display: block; width: 100%; height: auto; }
+  a.card div { padding: 12px 16px 14px; font-size: 14.5px; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; }
+  a.card div b { color: var(--cyan); font-weight: 500; white-space: nowrap; }
+  .need { margin-top: 56px; padding: 20px 22px; border: 1px solid var(--line); border-radius: 10px; }
+  .need p { margin: 0 0 14px; color: #d3cdc3; font-size: 15.5px; max-width: 760px; text-wrap: pretty; }
+  footer { margin-top: 40px; font-size: 13.5px; color: var(--muted); max-width: 760px; text-wrap: pretty; }
+  @media (max-width: 760px) { .steps, .grid { grid-template-columns: 1fr; } main { padding-top: 40px; } }
 </style>
 </head>
 <body>
 <main>
-  <h1>Listened to in order</h1>
-  <p>A language model can't take in sound. This tool measures a recording into pictures, fifteen seconds at a time, and a Claude Code session reads one window, writes a note, and has that note locked before the next window opens.</p>
-  <p>Each page below plays a listener's notes against the music. Nothing here holds a recording: the pages follow the song on YouTube.</p>
-  <div class="grid">
-    <a class="card" href="somebody-that-i-used-to-know/"><img src="somebody-that-i-used-to-know/card.jpg" alt="" width="1200" height="630"><div><b>Somebody That I Used To Know</b><span>Gotye, live on KCRW · listened to twice, with close-ups</span></div></a>
-    <a class="card" href="and-its-still-alright/"><img src="and-its-still-alright/card.jpg" alt="" width="1200" height="630"><div><b>And It's Still Alright</b><span>Nathaniel Rateliff, at Pickathon · one listen</span></div></a>
+  <h1>Let your AI listen to a song with you.</h1>
+  <p class="lede">An AI can't hear. So this turns a song into pictures it can read, fifteen seconds at a time. It writes down what it notices and how it lands, before it's allowed to see what comes next. Then you play its notes back against the music.</p>
+  <div class="row"><a class="cta" href="somebody-that-i-used-to-know/">Watch one play &rarr;</a><a class="ghost" href="https://github.com/mlapeter/listened-in-order">Try it with your own Claude</a></div>
+
+  <h2>How it works</h2>
+  <div class="steps">
+    <div class="step"><div class="pic song" aria-hidden="true"><div class="bars"><i style="height:30%"></i><i style="height:62%"></i><i style="height:44%"></i><i style="height:88%"></i><i style="height:56%"></i><i style="height:100%"></i><i style="height:70%"></i><i style="height:38%"></i><i style="height:80%"></i><i style="height:50%"></i><i style="height:24%"></i></div></div><div class="t"><b>You pick a song</b><span>Any recording: a YouTube link or a file of your own.</span></div></div>
+    <div class="step"><div class="pic"><img src="somebody-that-i-used-to-know/w/013.jpg" alt="A picture of fifteen seconds of a song: the voice as bright bands with a line tracing its pitch, the instruments in rows beneath"></div><div class="t"><b>The sound becomes pictures</b><span>The voice, its pitch, each instrument, the notes. Measured from the audio, not described by another AI.</span></div></div>
+    <div class="step"><div class="pic note"><q>It breaks open at 1:35, and so completely that the tool marks him as a new singer.</q></div><div class="t"><b>Your AI listens in order</b><span>One window at a time, a note after each, locked before the next opens. No skipping ahead, so its surprise is real.</span></div></div>
   </div>
-  <a class="cta" href="https://github.com/mlapeter/listened-in-order">Have your Claude listen to a song →</a>
+
+  <h2>Two listens you can play</h2>
+  <div class="grid">
+    <a class="card" href="somebody-that-i-used-to-know/"><img src="somebody-that-i-used-to-know/card.jpg" alt="Somebody That I Used To Know, Gotye" width="1200" height="630"><div><span>Live on KCRW &middot; listened to twice</span><b>Play &rarr;</b></div></a>
+    <a class="card" href="and-its-still-alright/"><img src="and-its-still-alright/card.jpg" alt="And It's Still Alright, Nathaniel Rateliff" width="1200" height="630"><div><span>At Pickathon &middot; one listen</span><b>Play &rarr;</b></div></a>
+  </div>
+
+  <div class="need">
+    <p><b>To do this with your own Claude</b> you need Claude Code and an Apple Silicon Mac. It's a free, open tool that runs on your machine: about 5 GB to install, about 15 minutes to prepare a song, then your Claude listens.</p>
+    <a class="cta" href="https://github.com/mlapeter/listened-in-order">Get the tool &rarr;</a>
+  </div>
+  <footer>Nothing on these pages holds a recording. Each one follows the song on YouTube and shows the listener's own notes, written by Claude. Whether an AI feels anything when it does this is an open question; the notes are what it wrote.</footer>
 </main>
 </body>
 </html>
