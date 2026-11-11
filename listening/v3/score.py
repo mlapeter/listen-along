@@ -613,22 +613,32 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; border-radius: 3px; }
 
-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; padding: 16px 28px 12px; }
-header h1 { font-family: var(--serif); font-weight: 500; font-size: 26px; line-height: 1.15; margin: 0; letter-spacing: -0.01em; }
+#top { position: relative; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 8px 28px 6px; }
+header h1 { font-family: var(--serif); font-weight: 500; font-size: 21px; line-height: 1.15; margin: 0; letter-spacing: -0.01em; }
 header h1 em { color: var(--muted); font-style: italic; }
-header .sub { color: var(--muted); font-size: 13px; margin-top: 6px; }
-header .how { max-width: 820px; color: var(--muted); font-size: 13px; line-height: 1.5; margin: 8px 0 0; text-wrap: pretty; }
-header .how.wide { max-width: 1000px; }
+header .sub { color: var(--muted); font-size: 12.5px; line-height: 1.3; margin-top: 3px; display: flex; flex-wrap: wrap; gap: 0 14px; align-items: baseline; }
 header .lede { min-width: 0; }
-header .cta { margin: 8px 0 0; font-size: 13px; color: var(--muted); }
-header .cta a, #after .made a { color: var(--cyan); text-decoration: none; border-bottom: 1px solid rgba(58,216,238,.45); }
-header .cta a:hover, #after .made a:hover { border-bottom-color: var(--cyan); }
-#video { flex: none; width: 272px; aspect-ratio: 16 / 9; background: #000; border-radius: 6px; overflow: hidden; }
+.lnk { color: var(--text); font-size: 12.5px; border-bottom: 1px dotted var(--muted); line-height: 1.2; }
+.lnk:hover, .lnk[aria-expanded="true"] { color: var(--cyan); border-bottom-color: var(--cyan); }
+a.cta { flex: none; display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 15px; border: 1px solid var(--cyan); border-radius: 17px; color: var(--cyan); font-size: 13px; font-weight: 500; text-decoration: none; white-space: nowrap; transition: background .2s, color .2s; }
+a.cta:hover { background: var(--cyan); color: var(--bg); }
+a.cta:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+a.cta[hidden] { display: none; }
+#howpanel { position: absolute; z-index: 30; left: 28px; top: 50px; width: min(760px, calc(100vw - 56px)); padding: 14px 18px 16px; background: #191720; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 14px 40px rgba(0,0,0,.55); }
+#howpanel[hidden] { display: none; }
+#howpanel .how { color: #d3cdc3; font-size: 13.5px; line-height: 1.55; margin: 0; text-wrap: pretty; }
+#after .made a { color: var(--cyan); text-decoration: none; border-bottom: 1px solid rgba(58,216,238,.45); }
+#after .made a:hover { border-bottom-color: var(--cyan); }
+#top.yt { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+#top.yt > header, #top.yt > #transport { grid-column: 1; }
+#video { grid-column: 2; grid-row: 1 / span 2; width: 192px; aspect-ratio: 16 / 9; margin: 6px 28px 6px 0; background: #000; border-radius: 6px; overflow: hidden; }
 #video[hidden] { display: none; }
 #video iframe { width: 100%; height: 100%; border: 0; display: block; }
 
-#transport { display: flex; align-items: center; gap: 16px; padding: 0 28px 12px; }
+#transport { display: flex; align-items: center; gap: 16px; padding: 0 28px 8px; }
 #play { width: 44px; height: 44px; border-radius: 50%; background: var(--text); color: var(--bg); display: grid; place-items: center; flex: none; }
+#play.held { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--warm); }
 #play svg { width: 18px; height: 18px; fill: currentColor; }
 #clock { font-family: var(--mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; flex: none; width: 92px; }
 #clock b { color: var(--text); font-weight: 500; }
@@ -646,6 +656,12 @@ header .cta a:hover, #after .made a:hover { border-bottom-color: var(--cyan); }
 #map .mlook { position: absolute; top: 0; height: 4px; min-width: 2px; background: var(--warm); opacity: .9; }
 #seal { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); flex: none; user-select: none; cursor: pointer; }
 #seal input { accent-color: var(--cyan); margin: 0; }
+#hold { flex: none; min-width: 204px; height: 30px; padding: 0 11px; border: 1px solid var(--line); border-radius: 6px; font-size: 12px; color: var(--muted); text-align: left; white-space: nowrap; transition: color .2s, border-color .2s; }
+#hold b { font-weight: 500; color: var(--text); }
+#hold:hover { border-color: #3a3745; }
+#hold.held { border-color: var(--warm); color: var(--warm); }
+#hint { position: absolute; top: 34px; padding: 6px 11px; max-width: 46%; font-size: 12.5px; line-height: 1.4; color: var(--text); background: rgba(11,10,14,.9); border: 1px solid #3a3745; border-radius: 6px; pointer-events: none; transition: opacity .4s; }
+#hint.off { opacity: 0; }
 
 #score { position: relative; overflow: hidden; background: #000; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); cursor: pointer; }
 #strip { position: absolute; left: 0; top: 0; display: flex; will-change: transform; }
@@ -680,6 +696,14 @@ header .cta a:hover, #after .made a:hover { border-bottom-color: var(--cyan); }
 #lpic::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--warm); pointer-events: none; }
 #limg { position: absolute; inset: 0; background-repeat: no-repeat; background-size: 100% 100%; }
 #ltext { padding: 12px 28px 18px 26px; min-width: 0; max-height: var(--lh, 240px); overflow-y: auto; scrollbar-width: thin; scrollbar-color: #3a3745 transparent; }
+#lbar { display: flex; align-items: center; gap: 10px; }
+#lbar #lkick { flex: 1; min-width: 0; }
+#lbar button { flex: none; height: 22px; padding: 0 8px; border: 1px solid var(--line); border-radius: 4px; font-size: 11.5px; color: var(--muted); }
+#lbar button:hover { color: var(--text); border-color: #3a3745; }
+#lreplay { visibility: hidden; }
+#lens.passed #lreplay { visibility: visible; color: var(--warm); border-color: rgba(244,162,89,.5); }
+#lens.passed #lhead { opacity: .45; }
+#lens.passed #limg { opacity: .82; }
 #lkick { font: 600 11px/1.3 var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--warm); }
 #lkick span { font: 11.5px/1.3 var(--mono); letter-spacing: 0; text-transform: none; color: var(--muted); margin-left: 10px; }
 #lmeta { font-family: var(--mono); font-size: 11px; color: var(--dim); display: flex; gap: 4px 16px; flex-wrap: wrap; margin-top: 6px; }
@@ -723,8 +747,26 @@ button.t.ref.now { background: var(--warm); color: var(--bg); }
 #after li { margin-bottom: 7px; }
 #after strong { font-weight: 600; color: #fff; }
 #after .made { margin-top: 44px; padding-top: 20px; border-top: 1px solid var(--line); font: 13px/1.6 var(--sans); color: var(--muted); }
+.more { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 34px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 34px), transparent); }
+/* laptop and up: header, transport, strip, lens and note are one screen; long text scrolls inside its own column */
+@media (min-width: 1100px) and (min-height: 700px) {
+  #stage { height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+  #stage > * { flex: none; }
+  #stage > #note { flex: 1 1 0; min-height: 0; width: 100%; display: flex; flex-direction: column; padding-bottom: 12px; }
+  #note > * { flex: none; }
+  #lens.open + #note > .meta { display: none; }   /* a close-up is open: the room goes to the note's text */
+  #note > .grid { flex: 1 1 0; min-height: 0; grid-template-rows: minmax(0, 1fr); }
+  #note .left { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+  #note .left > * { flex: none; }
+  #note .left > .prior, #note .left > .expect { flex: 0 1 auto; min-height: 36px; overflow-y: auto; }
+  .cols { grid-template-rows: minmax(0, 1fr); min-height: 0; }
+  .cols.n4 { grid-template-rows: repeat(2, minmax(0, 1fr)); row-gap: 14px; }
+  .cols > div { min-height: 0; overflow-y: auto; padding-right: 8px; }
+  .cols > div, #note .left > .prior, #note .left > .expect { scrollbar-width: thin; scrollbar-color: #3a3745 transparent; }
+}
 @media (max-width: 900px) {
-  header { flex-direction: column; align-items: flex-start; }
+  header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  #top.yt { display: block; } #video { width: auto; max-width: 420px; margin: 0 16px 10px; } #hold { min-width: 0; } #hint { max-width: 60%; }
   #transport { flex-wrap: wrap; } #map { flex-basis: 100%; order: 9; }
   #note .grid, #note .grid.again, .cols, .cols.n2, .cols.n4, #lens .box { grid-template-columns: 1fr; gap: 16px; } #seal span { display: none; }
   #lens .box { gap: 0; } #ltext { padding: 12px 16px 16px; max-height: none; }
@@ -735,27 +777,31 @@ button.t.ref.now { background: var(--warm); color: var(--bg); }
 </style>
 </head>
 <body>
+<main id="stage">
+<div id="top">
 <header>
   <div class="lede">
     <h1 id="h1"></h1>
-    <div class="sub" id="sub"></div>
-    <p class="how" id="how"></p>
-    <p class="cta" id="cta" hidden>Want your own Claude to listen to a song? <a id="ctalink" target="_blank" rel="noopener">Get the tool and the Claude Code skill</a></p>
+    <div class="sub"><span id="sub"></span><button class="lnk" id="howbtn" aria-expanded="false" aria-controls="howpanel">How this was made</button><button class="lnk" id="afterbtn">After-notes ↓</button></div>
   </div>
-  <div id="video" hidden></div>
+  <a class="cta" id="cta" target="_blank" rel="noopener" hidden>Have your Claude listen to a song <span aria-hidden="true">→</span></a>
 </header>
+<div id="howpanel" hidden><p class="how" id="how"></p></div>
 <div id="transport">
   <button id="play" aria-label="Play"><svg viewBox="0 0 20 20"><path id="playicon" d="M5 3l12 7-12 7z"/></svg></button>
   <div id="clock"><b>0:00</b> / 0:00</div>
   <div id="tabs" role="tablist" aria-label="Which listen" hidden></div>
   <div id="map" title="Click to jump"><div class="img"></div><div class="unheard"></div></div>
+  <button id="hold" aria-live="polite" title="Stop by itself at the end of each close-up, or of every window, so there is time to read. Play or space goes on."></button>
   <label id="seal" title="Each window stayed hidden until the note for the one before it was locked"><input type="checkbox" checked> <span>hide what I hadn't seen yet</span></label>
 </div>
-<div id="score"><div id="strip"></div><div class="labels" id="labels"></div><div id="head"><i>0:00</i></div></div>
+<div id="video" hidden></div>
+</div>
+<div id="score"><div id="strip"></div><div class="labels" id="labels"></div><div id="head"><i>0:00</i></div><div id="hint">Press play. The pictures pass under this line; what I wrote is beneath.</div></div>
 <section id="lens" aria-hidden="true"><div class="in"><div class="box">
   <div id="lpic" title="Click to jump inside the close-up"><div id="limg"></div><div class="labels" id="llabels"></div><div id="lhead"><i>0:00.00</i></div></div>
   <div id="ltext">
-    <div id="lkick"></div>
+    <div id="lbar"><div id="lkick"></div><button id="lreplay" title="Play this close-up again">↺ replay</button><button id="lclose" aria-label="Close this close-up" title="Close">×</button></div>
     <div id="lmeta"></div>
     <h3>What I was looking for</h3><p id="lwhy"></p>
     <h3>What I saw</h3><p id="lsaw"></p>
@@ -764,7 +810,7 @@ button.t.ref.now { background: var(--warm); color: var(--bg); }
 <section id="note" aria-live="off">
   <div class="meta" id="meta"></div>
   <div class="grid" id="grid">
-    <div>
+    <div class="left">
       <div class="prior"><span>Going in, I'd guessed</span><div id="prior"></div></div>
       <h2 class="feel" id="feel"></h2>
       <div class="prior said" id="saidbox" hidden><span>What I said the first time</span><div id="said"></div></div>
@@ -773,6 +819,7 @@ button.t.ref.now { background: var(--warm); color: var(--bg); }
     <div class="cols" id="cols"></div>
   </div>
 </section>
+</main>
 <section id="after"></section>
 
 <script>
@@ -797,8 +844,11 @@ $('how').textContent = "I can't take in sound. A tool measured this recording in
     numeral(LS[1].looks.length) + " close-up" + (LS[1].looks.length > 1 ? "s" : "") + " of moments I chose" : "") + ". " : "") +
   (D.yt ? "Press play: the music comes from YouTube, and the pictures pass under the line with what I wrote beneath them."
         : "Press play: the pictures pass under the line with what I wrote beneath them.");
-$('how').classList.toggle('wide', two);
-if (D.link) { $('ctalink').href = D.link; $('cta').hidden = false; }
+if (D.link) { $('cta').href = D.link; $('cta').hidden = false; }
+function how(open) { $('howpanel').hidden = !open; $('howbtn').setAttribute('aria-expanded', open ? 'true' : 'false'); }
+$('howbtn').addEventListener('click', e => { e.stopPropagation(); how($('howpanel').hidden); if (e.detail) $('howbtn').blur(); });
+document.addEventListener('click', e => { if (!$('howpanel').hidden && !e.target.closest('#howpanel')) how(false); });
+$('afterbtn').addEventListener('click', e => { $('after').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); if (e.detail) $('afterbtn').blur(); });
 const lastAfter = LS.reduce((m, l, j) => l.after ? j : m, 0);
 LS.forEach((l, j) => {
   if (!l.after) return;
@@ -872,20 +922,23 @@ function setListen(j) {
     b.addEventListener('click', e => { e.stopPropagation(); seekLook(lk.n); if (e.detail) b.blur(); });
     looksBox.appendChild(b); lk.el = b;
   });
-  shown = -1; lens = -2;
+  shown = -1; lens = -2; dismissed = -1;
   layout();
 }
 
-let winW = 800, pps = 53, headX = 300, H = 400, lensH = 236, gutter = 184;
+let winW = 800, pps = 53, headX = 300, H = 400, lensH = 236, gutter = 184, lensMax = 1e9;
+const stageMQ = matchMedia('(min-width: 1100px) and (min-height: 700px)');   // the one-screen stage (see the CSS)
 function layout() {
   const vw = score.clientWidth, l = LS[cur];
   winW = Math.round(Math.max(520, Math.min(1150, vw * 0.62)));
   pps = winW / D.win; headX = Math.round(vw * 0.36);
   const vh = innerHeight, cl = (lo, x, hi) => Math.round(Math.max(lo, Math.min(hi, x))), sp = l.inst.split, tight = D.yt ? 0.93 : 1;
-  H = cl(250, vh * (D.yt ? 0.33 : 0.36), 440);
+  const staged = stageMQ.matches, avail = vh - $('top').offsetHeight;   // staged: sizes come from the room under the header
+  H = staged ? cl(200, avail * 0.41, 440) : cl(250, vh * (D.yt ? 0.33 : 0.36), 440);
   // with a notes track: the voice tracks are squeezed, the stems keep their lanes, the notes get the rest
-  const voiceH = l.notes ? cl(66, vh * 0.093 * tight, 150) : Math.round(H * sp), stemH = l.notes ? cl(92, vh * 0.1145, 170) : H - voiceH,
-    noteH = l.notes ? cl(120, vh * 0.162 * tight, 260) : 0, instH = voiceH + stemH;
+  const voiceH = !l.notes ? Math.round(H * sp) : staged ? cl(54, avail * 0.105, 150) : cl(66, vh * 0.093 * tight, 150),
+    stemH = !l.notes ? H - voiceH : staged ? cl(80, avail * 0.131, 170) : cl(92, vh * 0.1145, 170),
+    noteH = !l.notes ? 0 : staged ? cl(104, avail * 0.185, 260) : cl(120, vh * 0.162 * tight, 260), instH = voiceH + stemH;
   H = instH + noteH;
   cols.forEach((c, i) => { c.style.width = Math.round((W[i].t1 - W[i].t0) * pps) + 'px';
     c.tile.style.width = c.stile.style.width = c.ntile.style.width = winW + 'px';
@@ -898,14 +951,16 @@ function layout() {
   score.style.height = (H + 22) + 'px'; $('head').style.left = headX + 'px';
   labels.style.width = Math.min(150, headX) + 'px';
   gutter = vw > 700 ? 184 : Math.min(150, headX);   // the fixed labels' width: a bracket's chip keeps clear of it
-  const m = $('map'), mw = m.clientWidth;
+  const m = $('map');
   m.querySelector('.img').style.backgroundImage = 'url("' + LS[0].inst.dir + '/map.jpg")';
   m.querySelectorAll('.tick, .mlook').forEach(t => t.remove());
-  for (let k = 1; k < D.nwin; k++) { const t = el('div', 'tick'); t.style.left = (k * D.win / D.dur * mw) + 'px'; m.appendChild(t); }
+  for (let k = 1; k < D.nwin; k++) { const t = el('div', 'tick'); t.style.left = (k * D.win / D.dur * 100) + '%'; m.appendChild(t); }
   l.looks.forEach(lk => { const t = el('div', 'mlook'); t.style.left = (lk.t0 / D.dur * 100) + '%';
     t.style.width = ((lk.t1 - lk.t0) / D.dur * 100) + '%'; t.title = 'close-up ' + pad(lk.n, 2); m.appendChild(t); });
-  lensH = cl(200, vh * 0.26, 260);   // a close-up's lead panel and piano roll; a timbre panel adds to it
-  if (lens >= 0) showLens(lens);
+  lensH = staged ? cl(150, avail * 0.26, 260) : cl(200, vh * 0.26, 260);   // a close-up's lead panel and piano roll; a timbre panel adds to it
+  lensMax = staged ? Math.max(lensH, avail - (H + 22) - 170) : 1e9;   // staged: the note keeps some room under a tall lens
+  $('hint').style.left = (headX + 14) + 'px';
+  if (lens >= 0) { const i = lens; lens = -2; showLens(i, lensPassed); }
   draw(true);
 }
 
@@ -931,15 +986,20 @@ function showNote(k) {
   $('grid').classList.toggle('again', l.kind === 'second');
   $('cols').className = 'cols n' + l.heads.length;
   $('cols').innerHTML = l.heads.map((h, i) => n.cols[i] ? '<div><h3>' + h + '</h3><p>' + n.cols[i] + '</p></div>' : '').join('');
-  gather();
+  gather(); fades();
   const e = $('note'); e.classList.remove('swap'); void e.offsetWidth; e.classList.add('swap');
 }
-function showLens(i) {
-  const box = $('lens'); lens = i;
-  box.classList.toggle('open', i >= 0); box.setAttribute('aria-hidden', i >= 0 ? 'false' : 'true');
-  LS[cur].looks.forEach((lk, j) => lk.el.classList.toggle('now', j === i));
-  if (i < 0) return;
-  const lk = LS[cur].looks[i], ph = Math.round(lensH * lk.tall), lm = [];
+function fades() {   // a column whose text runs on below its edge fades out there
+  for (const e of document.querySelectorAll('.cols > div, #note .left > .prior, #note .left > .expect, #ltext'))
+    e.classList.toggle('more', e.scrollHeight - e.clientHeight - e.scrollTop > 6);
+}
+let lensPassed = false, dismissed = -1;
+function showLens(i, passed) {   // i: which close-up (-1: none); passed: the playhead is beyond its span
+  const box = $('lens'), fresh = i !== lens; lens = i; lensPassed = !!passed;
+  box.classList.toggle('open', i >= 0); box.classList.toggle('passed', i >= 0 && lensPassed); box.setAttribute('aria-hidden', i >= 0 ? 'false' : 'true');
+  LS[cur].looks.forEach((lk, j) => lk.el.classList.toggle('now', j === i && !lensPassed));
+  if (i < 0 || !fresh) return;   // going from playing to passed keeps the text where the reader had scrolled it
+  const lk = LS[cur].looks[i], ph = Math.min(Math.round(lensH * lk.tall), lensMax), lm = [];
   $('lpic').style.height = ph + 'px'; box.style.setProperty('--lh', ph + 'px'); $('ltext').scrollTop = 0;
   $('limg').style.backgroundImage = 'url("' + lk.img + '")';
   $('llabels').innerHTML = ''; overlay($('llabels'), lk, 0, lm); lm.forEach(m => place(m, f => f * ph));
@@ -947,7 +1007,24 @@ function showLens(i) {
   $('lmeta').innerHTML = (lk.asked ? '<span>asked for ' + lk.asked + ', before the picture existed</span>' : '') +
     (lk.sealed ? '<span>note sealed ' + lk.sealed + '</span>' : '') + (lk.sha ? '<span>sha256 ' + lk.sha + '…</span>' : '');
   $('lwhy').innerHTML = lk.why; $('lsaw').innerHTML = lk.saw;
-  gather();
+  gather(); fades();
+}
+// Which close-up the lens shows at time t: the one the playhead is inside, else the last one that ended in the
+// window now playing (kept open, marked as passed, so there is time to read it). With the veil on, none before the
+// window it was made in.
+function lensAt(t, k, l) {
+  let i = l.looks.findIndex(lk => t >= lk.t0 && t < lk.t1 && lookOpen(lk, k));
+  if (i >= 0) return [i, false];
+  l.looks.forEach((lk, j) => { if (lk.t1 <= t && Math.min(Math.floor((lk.t1 - 1e-6) / D.win), D.nwin - 1) === k && lookOpen(lk, k) &&
+    (i < 0 || lk.t1 > l.looks[i].t1)) i = j; });
+  return [i, i >= 0];
+}
+// Pause to read: 0 off, 1 at the end of each close-up, 2 also at the end of every window. Only playback that runs
+// into a stop pauses there; a seek never does, and neither does a frame renderer's clock.
+let hold = LS.some(l => l.looks.length) ? 1 : 0, held = false, prevT = null, skipStop = null;
+function holdLabel() {
+  $('hold').innerHTML = held ? 'paused to read · space to go on' : 'pause to read: <b>' + ['off', 'at close-ups', 'every window'][hold] + '</b>';
+  $('hold').classList.toggle('held', held); $('play').classList.toggle('held', held);
 }
 function draw(force) {
   const t = Math.min(window.__t ?? clock.now(), D.dur), k =   // window.__t: a frame renderer's clock
@@ -967,20 +1044,31 @@ function draw(force) {
     lk.el.classList.toggle('gone', off > w - cw);
     lk.chip.style.transform = off && off <= w - cw ? 'translateX(' + off + 'px)' : '';
   }
-  const li = l.looks.findIndex(lk => t >= lk.t0 && t < lk.t1 && lookOpen(lk, k));
-  if (li !== lens) showLens(li);
-  if (li >= 0) { const lk = l.looks[li];
-    $('lhead').style.left = ((t - lk.t0) / (lk.t1 - lk.t0) * 100) + '%'; $('lhead').firstElementChild.textContent = fmtd(t, 2); }
-  for (const b of times) b.classList.toggle('now', b._c === null ? (li >= 0 && l.looks[li].n === +b.dataset.look) : Math.abs(t - b._c) < b._w);
+  let [li, passed] = lensAt(t, k, l);
+  if (li !== dismissed) dismissed = -1; else li = -1;   // closed by hand: stays closed until another close-up's turn
+  if (li !== lens || (li >= 0 && passed !== lensPassed)) showLens(li, passed);
+  if (li >= 0) { const lk = l.looks[li], at = passed ? lk.t1 : t;
+    $('lhead').style.left = ((at - lk.t0) / (lk.t1 - lk.t0) * 100) + '%'; $('lhead').firstElementChild.textContent = fmtd(at, 2); }
+  for (const b of times) b.classList.toggle('now', b._c === null ? (li >= 0 && !passed && l.looks[li].n === +b.dataset.look) : Math.abs(t - b._c) < b._w);
+  // pause to read, last: stopping the clock draws again
+  const playing = window.__t === undefined && !clock.paused();
+  if (skipStop !== null && t > skipStop + 0.05) skipStop = null;
+  if (playing && hold && prevT !== null && t > prevT && t - prevT < 1) {
+    const early = D.yt ? 0.3 : 0.1, ok = s => prevT < s - early && t >= s - early && (skipStop === null || Math.abs(s - skipStop) > 0.6);
+    let stop = l.looks.filter(lk => lookOpen(lk, k)).map(lk => lk.t1).find(ok);
+    if (stop === undefined && hold === 2) { const s = (k + 1) * D.win; if (s < D.dur - 0.5 && ok(s)) stop = s; }
+    if (stop !== undefined) { skipStop = stop; held = true; prevT = null; holdLabel(); clock.pause(); return; }
+  }
+  prevT = playing ? t : null;
 }
 function loop() { draw(); if (!clock.paused()) requestAnimationFrame(loop); }
-function seek(t) { clock.seek(Math.max(0, Math.min(D.dur - 0.05, t))); draw(); }
+function seek(t) { prevT = skipStop = null; if (held) { held = false; holdLabel(); } clock.seek(Math.max(0, Math.min(D.dur - 0.05, t))); draw(); }
 function seekLook(n) {   // to the start of a close-up, or with the veil on to the first moment it existed
   const lk = LS[cur].looks.find(x => x.n === n);
-  if (lk) seek(Math.max(lk.t0, hideOn() ? lk.win * D.win : 0) + 0.02);
+  if (lk) { dismissed = -1; seek(Math.max(lk.t0, hideOn() ? lk.win * D.win : 0) + 0.02); }
 }
 function toggle() { clock.paused() ? clock.play() : clock.pause(); }
-function onPlay() { $('playicon').setAttribute('d', 'M4 3h4v14H4zM12 3h4v14h-4z'); $('play').setAttribute('aria-label', 'Pause'); loop(); }
+function onPlay() { $('hint').classList.add('off'); prevT = null; if (held) { held = false; holdLabel(); } $('playicon').setAttribute('d', 'M4 3h4v14H4zM12 3h4v14h-4z'); $('play').setAttribute('aria-label', 'Pause'); loop(); }
 function onPause() { $('playicon').setAttribute('d', 'M5 3l12 7-12 7z'); $('play').setAttribute('aria-label', 'Play'); draw(); }
 const startAt = parseFloat(query.get('t')) || 0;
 
@@ -1009,7 +1097,7 @@ function youtubeClock() {
     ready = true;
     const i = d.info, was = state, at = now();
     if (typeof i.playbackRate === 'number') rate = i.playbackRate;
-    if (typeof i.playerState === 'number') state = i.playerState;
+    if (typeof i.playerState === 'number') state = (i.playerState === 1 && performance.now() < quiet) ? state : i.playerState;
     if (typeof i.currentTime === 'number') {
       // while playing, trust our own interpolation unless the player has really moved (a seek, a stall)
       const diff = i.currentTime - at;
@@ -1018,8 +1106,11 @@ function youtubeClock() {
     stamp = performance.now();
     if (state === 1 && was !== 1) onPlay(); else if (state !== 1 && was === 1) onPause(); else draw();
   });
-  box.hidden = false; box.appendChild(f);
-  return { now, paused: () => state !== 1, play: () => cmd('playVideo'), pause: () => cmd('pauseVideo'),
+  box.hidden = false; box.appendChild(f); $('top').classList.add('yt');
+  // pause() stops our clock at once (the player takes a moment); its late "still playing" reports are not believed
+  let quiet = 0;
+  const pause = () => { base = now(); stamp = performance.now(); quiet = stamp + 800; cmd('pauseVideo'); if (state === 1) { state = 2; onPause(); } };
+  return { now, paused: () => state !== 1, play: () => { quiet = 0; cmd('playVideo'); }, pause,
     seek: t => { base = t; stamp = performance.now(); cmd('seekTo', [t, true]); } };
 }
 const clock = D.yt ? youtubeClock() : audioClock();
@@ -1029,6 +1120,12 @@ score.addEventListener('click', e => { const r = score.getBoundingClientRect(); 
 $('lpic').addEventListener('click', e => { const lk = LS[cur].looks[lens]; if (!lk) return;
   const r = $('lpic').getBoundingClientRect(); seek(lk.t0 + (e.clientX - r.left) / r.width * (lk.t1 - lk.t0)); });
 sealBox.addEventListener('change', () => draw(true));
+$('hold').addEventListener('click', e => { if (!held) hold = (hold + 1) % 3; held = false; holdLabel(); if (e.detail) $('hold').blur(); });
+$('lclose').addEventListener('click', e => { dismissed = lens; draw(true); });
+$('lreplay').addEventListener('click', e => { const lk = LS[cur].looks[lens]; if (!lk) return; seekLook(lk.n); clock.play(); if (e.detail) $('lreplay').blur(); });
+document.addEventListener('scroll', fades, true);
+$('lens').addEventListener('transitionend', fades);
+document.addEventListener('keydown', e => { if (e.code === 'Escape') how(false); });
 document.addEventListener('click', e => {
   const b = e.target.closest('button.t'); if (!b) return;
   const art = b.closest('#after article');
@@ -1044,6 +1141,7 @@ document.addEventListener('keydown', e => {
   else if (e.code === 'ArrowLeft') { e.preventDefault(); seek((clock.now() - k * D.win > 1.5 ? k : k - 1) * D.win); }
 });
 addEventListener('resize', layout);
+holdLabel();
 setListen(cur);
 </script>
 </body>

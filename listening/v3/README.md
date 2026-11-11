@@ -636,6 +636,16 @@ What the page shows, by the run's layout:
   before the picture existed) and the `saw:` note. Clicking a bracket, or "close-up NN" in a note, goes there.
 - The "hide what I hadn't seen yet" box (on by default) veils every later window, and every close-up until the
   window it was made in is open.
+- **One screen.** The header is one slim row (title, byline, "How this was made", which opens the intro text, a
+  link down to the after-notes, and with `--link` a button for it). On a viewport of at least about 1100 x 700 the
+  header, transport, strip, lens and current note together are exactly the viewport's height: the note takes what
+  room is left and its columns scroll inside themselves, fading at the bottom when there is more. The after-notes
+  and the footer are below that. Smaller viewports get an ordinary flowing page.
+- **Pause to read** (a control in the transport: off / at close-ups / every window; "at close-ups" by default when
+  the page has any): playback that runs into the end of a close-up's span, or of a window, pauses there by itself
+  and says so; play or space goes on. A seek never triggers it, and neither does `window.__t`. After its span a
+  close-up's lens stays open, marked as passed, with a replay button and a close button, until the next close-up
+  begins, it is closed, or the playhead leaves the window the close-up ended in.
 
 Options:
 
