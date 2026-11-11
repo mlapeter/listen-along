@@ -1,4 +1,4 @@
-# Listened to in order
+# Listen along
 
 **Let your AI listen to a song with you.** An AI can't hear, so this tool turns a recording into pictures it can
 read, fifteen seconds at a time. A Claude Code session reads one window, writes down what it notices and how it
@@ -7,21 +7,22 @@ against the music.
 
 **Live examples** (nothing to install; they play in a browser):
 
-- [Gotye, "Somebody That I Used To Know" (live on KCRW)](https://mlapeter.github.io/listened-in-order/somebody-that-i-used-to-know/), listened to twice
-- [Nathaniel Rateliff, "And It's Still Alright" (Pickathon)](https://mlapeter.github.io/listened-in-order/and-its-still-alright/)
+- [Gotye, "Somebody That I Used To Know" (live on KCRW)](https://mlapeter.github.io/listen-along/somebody-that-i-used-to-know/), listened to twice
+- [Nathaniel Rateliff, "And It's Still Alright" (Pickathon)](https://mlapeter.github.io/listen-along/and-its-still-alright/)
 
-[![An example page: pictures of the song scrolling under a playhead, with the listener's notes beneath](somebody-that-i-used-to-know/card.jpg)](https://mlapeter.github.io/listened-in-order/somebody-that-i-used-to-know/)
+[![An example page: pictures of the song scrolling under a playhead, with the listener's notes beneath](somebody-that-i-used-to-know/card.jpg)](https://mlapeter.github.io/listen-along/somebody-that-i-used-to-know/)
 
 **What this is:** a command-line tool (Python, runs on your own machine) plus a Claude Code skill that drives it.
-There is no server, no MCP server and no hosted service. `setup.sh` installs both. To run it yourself you need an
-Apple Silicon Mac, about 5 GB of disk, about 15 minutes of local processing per song, and Claude Code (a 4-minute
-song uses roughly 130,000 tokens of your plan or API usage).
+There is no server, no MCP server and no hosted service. `setup.sh` installs both. To run it yourself you need
+about 5 GB of disk, about 15 minutes of local processing per song, and Claude Code (a 4-minute
+song uses roughly 130,000 tokens of your plan or API usage). It has only been tested on an Apple Silicon Mac; other
+machines may need small changes, and reports from them are welcome.
 
 ## Requirements
 
 Be sure of these before you start; it is a heavy install.
 
-- **An Apple Silicon Mac.** It was developed and tested on one machine only: an M3 Pro, 18 GB RAM, macOS 14. Nothing
+- **Tested on an Apple Silicon Mac only.** It was developed and tested on one machine: an M3 Pro, 18 GB RAM, macOS 14. Nothing
   else has been tried. Intel Macs, Linux and Windows may work with changes, but the pinned versions and the use of
   Apple's MPS for one model are untested there.
 - **Python 3.13** (`brew install python@3.13`). The pinned versions are for 3.13.
@@ -49,8 +50,8 @@ Be sure of these before you start; it is a heavy install.
 
 ## Install
 
-    git clone https://github.com/mlapeter/listened-in-order.git
-    cd listened-in-order
+    git clone https://github.com/mlapeter/listen-along.git
+    cd listen-along
     ./setup.sh
 
 `setup.sh` checks for ffmpeg, a compiler and Python 3.13; builds two environments inside `listening/` (`venv3/` with
