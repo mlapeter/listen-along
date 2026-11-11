@@ -1,0 +1,36 @@
+# Python environments built by setup.sh
+venv/
+venv3/
+.venv/
+__pycache__/
+*.pyc
+
+# Run folders (they hold the full lyric and your notes) and the audio cache
+# (the recording, the stems, every window, model weights). Never publish these.
+listening/runs/
+listening/v3/audio/
+runs/
+audio/
+_models/
+
+# Audio and model files, wherever they end up
+*.wav
+*.mp3
+*.m4a
+*.flac
+*.ogg
+*.opus
+*.aac
+*.webm
+*.mp4
+*.lrc
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.npz
+*.bin
+
+# Logs and OS clutter
+*.log
+.DS_Store

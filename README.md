@@ -1,10 +1,150 @@
 # Listened to in order
 
-A language model that can't take in sound, listening to a song anyway: a tool measures the recording into
-pictures, fifteen seconds at a time, and the model reads one window, writes a note, and has the note locked
-before the next window opens. Each page plays those notes against the music.
+A language model can't take in sound. This tool measures a recording into pictures, fifteen seconds at a time, and a
+Claude Code session reads one window, writes a note about it, and has that note locked before the next window opens.
+At the end you have a listener's notes on a whole song, written in order, and you can turn them into a page that
+plays the notes against the music.
 
-- [Gotye, "Somebody That I Used To Know" (live on KCRW)](https://mlapeter.github.io/listened-in-order/somebody-that-i-used-to-know/)
+**Live example:** [Gotye, "Somebody That I Used To Know" (live on KCRW)](https://mlapeter.github.io/listened-in-order/somebody-that-i-used-to-know/)
 
-The pages hold no audio and no lyrics. The music plays from the performer's own YouTube upload, embedded in
-the page; the pictures are cropped measurements of the sound, and the notes are the listener's own words.
+**What this is:** a command-line tool (Python, runs on your own machine) plus a Claude Code skill that drives it.
+There is no server, no MCP server and no hosted service. `setup.sh` installs both.
+
+## Requirements
+
+Be sure of these before you start; it is a heavy install.
+
+- **An Apple Silicon Mac.** It was developed and tested on one machine only: an M3 Pro, 18 GB RAM, macOS 14. Nothing
+  else has been tried. Intel Macs, Linux and Windows may work with changes, but the pinned versions and the use of
+  Apple's MPS for one model are untested there.
+- **Python 3.13** (`brew install python@3.13`). The pinned versions are for 3.13.
+- **ffmpeg and ffprobe** on your PATH (`brew install ffmpeg`).
+- **Xcode command line tools** (`xcode-select --install`): one dependency is compiled during setup.
+- **[Claude Code](https://claude.com/claude-code)**, since the listener is a Claude Code session.
+- **Recommended: deno** (`brew install deno`). yt-dlp warns that fetching from YouTube without a JavaScript runtime
+  is deprecated and that some formats may be missing ([its notes](https://github.com/yt-dlp/yt-dlp/wiki/EJS)). The
+  fetch worked without one when this was tested, but may stop; it has not been tested with deno. A local audio
+  file needs none of this.
+- **Disk:** about 1.3 GB for the Python environments; 3.8 GB of model weights, downloaded the first time you
+  prepare a song (Whisper medium.en 1.5 GB, the forced aligner 1.3 GB, the karaoke model 0.9 GB, two Demucs models
+  0.14 GB; they land in `~/.cache/huggingface`, `~/.cache/torch` and `listening/v3/audio/_models`); and 200 to 600 MB per song (2 to 5 minutes) for its cache, which you can delete once you are done with the song.
+- **Time:** `prepare` runs locally and takes 8 to 18 minutes for most songs (about 15 minutes for a 5-minute song on
+  the M3 Pro, about 6 for a 2-minute one, a 9:30 song roughly half an hour). The first song also waits for the
+  model downloads.
+- **Tokens:** `prepare` costs none. The listen does: each 15-second window is three pictures, about 6,900 tokens.
+  A 3-minute song is about 95k tokens of context, 4 minutes about 120k, 5 minutes about 150k (each including about 10k
+  for reading the skill and the manual); spending all six close-ups adds about 30k. These are estimates from the
+  image sizes. Every step re-reads the conversation from cache, so a whole song is a few million cached tokens
+  read against your usage limit. Start a fresh session for each song; over about 6 minutes of music, context
+  compaction will land mid-song.
+- **The song needs synced lyrics on [LRCLIB](https://lrclib.net).** Without them `prepare` stops. Instrumentals and
+  songs LRCLIB doesn't have timed lines for don't work.
+
+## Install
+
+    git clone https://github.com/mlapeter/listened-in-order.git
+    cd listened-in-order
+    ./setup.sh
+
+`setup.sh` checks for ffmpeg, a compiler and Python 3.13; builds two environments inside `listening/` (`venv3/` with
+pinned versions for the tool, `venv/` for yt-dlp alone so it can be upgraded); and copies the skill to
+`~/.claude/skills/listen-to-song/SKILL.md` with this clone's path filled in. It is safe to run again. If a different
+`listen-to-song` skill is already there it leaves it alone and tells you; `./setup.sh --skill-only --force` replaces
+it and keeps the old file as a `.bak`. `./setup.sh --no-skill` builds the environments only. If you move the clone,
+run `./setup.sh --skill-only --force` so the skill points at the new place.
+
+Then start a new Claude Code session (anywhere) and type:
+
+    /listen-to-song Artist, Title
+
+Optional check, no audio needed (about 40 seconds):
+
+    listening/venv3/bin/python listening/v3/tests/test_seal.py
+    listening/venv3/bin/python listening/v3/tests/test_harmony.py
+
+## What a listen looks like
+
+1. **Prepare.** Claude runs `see.py prepare` in the background and doesn't look at the output. The tool fetches the
+   audio (yt-dlp, or a local file you give it), gets the timed lyric from LRCLIB, separates the voice and five
+   instrument stems, finds when each word is sung, and renders every window into a cache the listener doesn't open.
+2. **Window by window.** `see.py next` reveals one 15-second window: a picture of the voice (its sound, its pitch
+   line, the words under the moments they're sung), a picture of the band (drums, bass, guitar, keys, other, the
+   stereo field, the song so far) and a picture of the notes (the band's energy on semitone rows). Claude reads the
+   three pictures and writes a short note: `feel`, `voice`, `band`, `words`. The next `next` seals that note
+   (read-only, hash logged) before it reveals anything more. So every note was provably written before the listener
+   saw what came after.
+3. **Close-ups.** Six times per song Claude can ask for a finer look at 2 to 8 seconds it has already heard, and has
+   to say why first.
+4. **After.** A free-form note on the whole song. Then, if you have your own take, Claude asks for it before showing
+   you its own, and you compare.
+5. **A second listen**, if you want one: the same song again with the first listen's notes alongside.
+
+You will be asked to approve the commands Claude runs, unless your permissions already allow them. A 4-minute song
+is around 16 windows; expect the listen itself to take a while.
+
+Everything in the pictures is measured from the audio. No other model describes the song to the listener. Speech
+models are used only to find *when* each lyric word is sung; nothing names a chord, a key, a genre or a mood.
+
+## Making a page and sharing it
+
+When a listen is finished (the `after` note sealed), from `listening/`:
+
+    ./venv3/bin/python v3/score.py runs/<run> --youtube VIDEO_ID --by "Claude"
+
+This writes `runs/<run>/share/`: one `index.html` and a folder of cropped picture strips, about 1 to 3 MB. The page
+embeds that YouTube video and scrolls the pictures and the sealed notes under a playhead that follows the player.
+Use the video the audio was fetched from, so the times match; its address is the last field of
+`v3/audio/<run>/source.txt`, and the id is the part after `v=`. `--note "..."` adds a sentence to the intro.
+
+The page has to be served over http(s); YouTube refuses to play inside a page opened as a file. Any static host
+works. With GitHub Pages: put the `share` folder's contents in a folder of a repository of your own, add an empty
+`.nojekyll` file at its root, and turn Pages on. To look at it locally first:
+`python3 -m http.server -d runs/<run>/share 8000`, then open `http://localhost:8000`.
+
+Copy only the `share` folder. The rest of the run folder holds the lyric. Without `--youtube`, `score.py` writes
+`runs/<run>/score/` with the recording in it, for your own use; don't publish that one.
+
+The page shows the voice and the band pictures and the `feel`, `voice`, `band`, `words` and `expect` lines of each
+note. The third picture (the notes) and the optional `harmony:` line are not on the page yet.
+
+## How it works, briefly
+
+`listening/v3/see.py` is the tool: `prepare`, `next`, `look`, `again`, `after`, `status`, `refcard`. `prepare` runs
+Demucs (voice and instrument stems), a karaoke model (lead against backing voices), faster-whisper and a forced
+aligner (word timing), a speaker-embedding model (which voice sings a line), then measures pitch, loudness and
+timbre and draws gammatone cochleagrams and a constant-Q picture. `listening/v3/score.py` builds the page.
+`skill/listen-to-song/SKILL.md` is what tells Claude how to do a listen.
+
+The full manual, with how to read every panel, what the seal enforces, the look-ahead that remains by design, the
+token arithmetic, measured quality and known weak spots: [listening/v3/README.md](listening/v3/README.md).
+
+## Limits
+
+- One machine, one platform, a handful of songs so far. Expect rough edges.
+- It needs synced lyrics on LRCLIB, and they are crowd-sourced: wrong or mistimed lines show up as estimated words.
+- The seal is an honour system with a lock on the notes. It proves the order the notes were written in; it doesn't
+  stop anyone opening the cache.
+- Stem separation is a model's guess. Stacked voices, quiet doubled vocals and instrument bleed are the weak spots;
+  the manual lists them with numbers.
+- Fetching by search (`ytsearch1:...`) takes whatever YouTube returns first, which may be a different version from
+  the one the lyric was timed for. A URL or a local file is more reliable. yt-dlp breaks when YouTube changes;
+  re-running `./setup.sh` upgrades it.
+- A listen is long for a model's context. Songs over about 6 minutes need care.
+
+## Copyright
+
+The tool fetches a copy of a recording and its lyric so that you can listen to and analyse it yourself, on your own
+machine. The run folders (`listening/runs/`) and the audio cache (`listening/v3/audio/`) contain the recording, its
+separated stems and the full lyric; don't publish them or commit them. This repository's `.gitignore` excludes both.
+The shareable page (`score.py --youtube`) holds neither: no audio file and no lyric text, only cropped pictures of
+measurements and the listener's own notes, and the music plays from YouTube's embedded player. In notes, the skill
+asks the listener to paraphrase and quote at most a word or two. Whether a particular use is permitted where you
+live is for you to judge; this is not legal advice.
+
+The model weights the tool downloads come with their own terms, and some are for non-commercial use only (the
+forced aligner's weights are CC-BY-NC 4.0).
+
+## Licence
+
+The code in this repository is licensed under the GNU General Public License v3.0; see [LICENSE](LICENSE). The
+libraries and model weights it installs or downloads keep their own licences.
