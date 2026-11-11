@@ -38,7 +38,7 @@ reruns one and every stage that depends on it; --window SECONDS sets the window,
 
 Usage: see README.md in this folder.
 """
-import argparse, hashlib, json, os, re, shutil, stat, subprocess, sys, time, warnings
+import argparse, hashlib, json, os, re, shlex, shutil, stat, subprocess, sys, time, warnings
 from difflib import SequenceMatcher
 
 import numpy as np
@@ -191,7 +191,7 @@ def stage_fetch(a, W):
             subprocess.run([ytdlp, "-f", "bestaudio", "-x", "--audio-format", "wav",
                             "--ffmpeg-location", os.path.dirname(FFMPEG), "-o", tmpl,
                             "--print-to-file", "%(title)s | %(duration)s | %(webpage_url)s",
-                            os.path.join(W, "source.txt"), src], check=True)
+                            os.path.join(W, "source.txt"), "--no-playlist", "--", src], check=True)
             os.replace(os.path.join(W, "dl.wav"), wav)
     dur = float(subprocess.run([FFPROBE, "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", wav],
                                capture_output=True, text=True, check=True).stdout.strip())
@@ -3211,10 +3211,11 @@ def after(d):
         url = ""
     m = re.search(r"(?:youtube\.com/watch\?(?:.*&)?v=|youtu\.be/)([\w-]{11})", url)
     here = os.path.join(os.path.dirname(os.path.abspath(__file__)), "score.py")
+    cmd = " ".join(shlex.quote(x) for x in (sys.executable, here, d))
+    print(f"a page for yourself (it holds the recording; don't publish it): {cmd}")
     if m:
-        print(f"a page to share (no audio in it; it follows this YouTube video): {sys.executable} {here} {d} --youtube {m.group(1)}")
-    else:
-        print(f"a page for yourself (it holds the recording; don't publish it): {sys.executable} {here} {d}")
+        print(f"a page to share (no audio in it; it follows this YouTube video): {cmd} --youtube {m.group(1)}")
+        print("  publish only the share folder it writes; add --url ADDRESS (where it will live) for link previews")
 
 
 def status(d):

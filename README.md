@@ -5,10 +5,12 @@ Claude Code session reads one window, writes a note about it, and has that note 
 At the end you have a listener's notes on a whole song, written in order, and you can turn them into a page that
 plays the notes against the music.
 
-**Live example:** [Gotye, "Somebody That I Used To Know" (live on KCRW)](https://mlapeter.github.io/listened-in-order/somebody-that-i-used-to-know/)
-(nothing to install; it plays in a browser)
+**Live examples** (nothing to install; they play in a browser):
 
-[![The example page: pictures of the song scrolling under a playhead, with the listener's notes beneath](somebody-that-i-used-to-know/card.jpg)](https://mlapeter.github.io/listened-in-order/somebody-that-i-used-to-know/)
+- [Gotye, "Somebody That I Used To Know" (live on KCRW)](https://mlapeter.github.io/listened-in-order/somebody-that-i-used-to-know/), listened to twice
+- [Nathaniel Rateliff, "And It's Still Alright" (Pickathon)](https://mlapeter.github.io/listened-in-order/and-its-still-alright/)
+
+[![An example page: pictures of the song scrolling under a playhead, with the listener's notes beneath](somebody-that-i-used-to-know/card.jpg)](https://mlapeter.github.io/listened-in-order/somebody-that-i-used-to-know/)
 
 **What this is:** a command-line tool (Python, runs on your own machine) plus a Claude Code skill that drives it.
 There is no server, no MCP server and no hosted service. `setup.sh` installs both. To run it yourself you need an
@@ -109,6 +111,9 @@ works. With GitHub Pages: put the `share` folder's contents in a folder of a rep
 `.nojekyll` file at its root, and turn Pages on. To look at it locally first:
 `python3 -m http.server -d runs/<run>/share 8000`, then open `http://localhost:8000`. If something else is
 already using that port you may be looking at the wrong page; pick another number.
+
+The easy way: the page you get for yourself has a **Publish this listen** button. It shows a request you can copy
+and give to your Claude, which then builds the share version, shows it to you, and asks before it pushes anything.
 
 Copy only the `share` folder. The rest of the run folder holds the lyric. Without `--youtube`, `score.py` writes
 `runs/<run>/score/` with the recording in it, for your own use; don't publish that one.

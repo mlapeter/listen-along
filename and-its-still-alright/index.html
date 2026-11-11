@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>And It&#x27;s Still Alright, listened to in order</title>
+<meta name="description" content="Étienne (Claude Fable 5.2) listened to Nathaniel Rateliff&#x27;s &quot;And It&#x27;s Still Alright&quot; one 15-second window at a time, as pictures measured from the sound, writing a sealed note before each next window opened. The notes play back against the music.">
+<meta property="og:title" content="And It&#x27;s Still Alright, listened to in order">
+<meta property="og:description" content="Étienne (Claude Fable 5.2) listened to Nathaniel Rateliff&#x27;s &quot;And It&#x27;s Still Alright&quot; one 15-second window at a time, as pictures measured from the sound, writing a sealed note before each next window opened. The notes play back against the music.">
+<meta property="og:type" content="website">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; frame-src https://www.youtube.com">
+<meta property="og:url" content="https://mlapeter.github.io/listened-in-order/and-its-still-alright/">
+<meta property="og:image" content="https://mlapeter.github.io/listened-in-order/and-its-still-alright/card.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%230b0a0e'/%3E%3Cpath d='M2 11h2V6H2zm3.5 0h2V3h-2zM9 11h2V7H9zm3.5 0h2V5h-2z' fill='%23f4a259'/%3E%3Cpath d='M2 13h12.5' stroke='%233ad8ee'/%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #0b0a0e; --panel: #131218; --line: #26242e; --text: #ece7dd; --muted: #948e9c; --dim: #5f5a68;
+  --cyan: #3ad8ee; --warm: #f4a259; --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Charter, Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; border-radius: 3px; }
+
+#top { position: relative; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 8px 28px 6px; }
+header h1 { font-family: var(--serif); font-weight: 500; font-size: 21px; line-height: 1.15; margin: 0; letter-spacing: -0.01em; }
+header h1 em { color: var(--muted); font-style: italic; }
+header .sub { color: var(--muted); font-size: 12.5px; line-height: 1.3; margin-top: 3px; display: flex; flex-wrap: wrap; gap: 0 14px; align-items: baseline; }
+header .lede { min-width: 0; }
+.lnk { color: var(--text); font-size: 12.5px; border-bottom: 1px dotted var(--muted); line-height: 1.2; }
+.lnk:hover, .lnk[aria-expanded="true"] { color: var(--cyan); border-bottom-color: var(--cyan); }
+.cta { flex: none; display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 15px; border: 1px solid var(--cyan); border-radius: 17px; color: var(--cyan); font-size: 13px; font-weight: 500; text-decoration: none; white-space: nowrap; transition: background .2s, color .2s; }
+.cta:hover { background: var(--cyan); color: var(--bg); }
+.cta:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.cta[hidden] { display: none; }
+#howpanel { position: absolute; z-index: 30; left: 28px; top: 50px; width: min(760px, calc(100vw - 56px)); padding: 14px 18px 16px; background: #191720; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 14px 40px rgba(0,0,0,.55); }
+#howpanel[hidden] { display: none; }
+#pubpanel { position: absolute; z-index: 30; right: 28px; top: 50px; width: min(620px, calc(100vw - 56px)); padding: 14px 18px 16px; background: #191720; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 14px 40px rgba(0,0,0,.55); }
+#pubpanel[hidden] { display: none; }
+#pubpanel p { margin: 0 0 10px; font-size: 13.5px; line-height: 1.5; color: #d3cdc3; text-wrap: pretty; }
+#pubtext { display: block; width: 100%; box-sizing: border-box; height: 190px; resize: vertical; padding: 10px 12px; font: 12.5px/1.5 var(--mono); color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; }
+#pubcopy { margin-top: 10px; height: 30px; padding: 0 14px; border: 1px solid var(--cyan); border-radius: 15px; color: var(--cyan); font-size: 12.5px; }
+#pubcopy:hover { background: var(--cyan); color: var(--bg); }
+#vbig { flex: none; height: 26px; padding: 0 10px; border: 1px solid var(--line); border-radius: 5px; font-size: 12px; color: var(--muted); white-space: nowrap; }
+#vbig:hover { color: var(--text); border-color: #3a3745; }
+#vbig[hidden] { display: none; }
+#stage { position: relative; }
+#video.big { position: absolute; z-index: 5; margin: 0; box-shadow: 0 8px 30px rgba(0,0,0,.6); border: 1px solid #3a3745; }
+#endcue { position: absolute; z-index: 20; left: 50%; bottom: 18px; transform: translate(-50%, 8px); height: 40px; padding: 0 20px; border-radius: 20px; background: var(--warm); color: var(--bg); font-size: 14px; font-weight: 600; box-shadow: 0 8px 28px rgba(0,0,0,.6); opacity: 0; visibility: hidden; transition: opacity .5s, transform .5s, visibility 0s .5s; }
+#endcue.on { opacity: 1; visibility: visible; transform: translate(-50%, 0); transition: opacity .5s, transform .5s; }
+#endcue span { display: inline-block; margin-left: 8px; animation: nudge 1.6s ease-in-out infinite; }
+@keyframes nudge { 0%, 100% { transform: none; } 50% { transform: translateY(4px); } }
+#howpanel .how { color: #d3cdc3; font-size: 13.5px; line-height: 1.55; margin: 0; text-wrap: pretty; }
+#after .made a { color: var(--cyan); text-decoration: none; border-bottom: 1px solid rgba(58,216,238,.45); }
+#after .made a:hover { border-bottom-color: var(--cyan); }
+#top.yt { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+#top.yt > header, #top.yt > #transport { grid-column: 1; }
+#video { grid-column: 2; grid-row: 1 / span 2; width: 192px; aspect-ratio: 16 / 9; margin: 6px 28px 6px 0; background: #000; border-radius: 6px; overflow: hidden; }
+#video[hidden] { display: none; }
+#video iframe { width: 100%; height: 100%; border: 0; display: block; }
+
+#transport { display: flex; align-items: center; gap: 16px; padding: 0 28px 8px; }
+#play { width: 44px; height: 44px; border-radius: 50%; background: var(--text); color: var(--bg); display: grid; place-items: center; flex: none; }
+#play svg { width: 18px; height: 18px; fill: currentColor; }
+#clock { font-family: var(--mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; flex: none; width: 92px; }
+#clock b { color: var(--text); font-weight: 500; }
+#tabs { display: flex; flex: none; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+#tabs[hidden] { display: none; }
+#tabs button { height: 30px; padding: 0 13px; font-size: 12px; color: var(--muted); white-space: nowrap; transition: color .2s, background .2s; }
+#tabs button + button { border-left: 1px solid var(--line); }
+#tabs button:hover { color: var(--text); }
+#tabs button[aria-selected="true"] { background: #1c1a23; color: var(--text); box-shadow: inset 0 -2px 0 var(--cyan); }
+#tabs button:focus-visible { outline-offset: -3px; }
+#map { position: relative; flex: 1; height: 44px; border-radius: 4px; overflow: hidden; cursor: pointer; background: #000; }
+#map .img { position: absolute; inset: 0; background-repeat: no-repeat; background-size: 100% 100%; }
+#map .unheard { position: absolute; top: 0; bottom: 0; right: 0; background: rgba(11,10,14,.6); border-left: 2px solid var(--cyan); }
+#map .tick { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,.14); }
+#map .mlook { position: absolute; top: 0; height: 4px; min-width: 2px; background: var(--warm); opacity: .9; }
+#seal { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); flex: none; user-select: none; cursor: pointer; }
+#seal input { accent-color: var(--cyan); margin: 0; }
+#keys { flex: none; font-size: 12px; color: var(--muted); white-space: nowrap; user-select: none; }
+#keys kbd { font: 500 11px/1 var(--mono); color: var(--text); padding: 2px 6px; border: 1px solid #3a3745; border-radius: 4px; margin-right: 5px; }
+#hint { position: absolute; top: 34px; padding: 6px 11px; max-width: 46%; font-size: 12.5px; line-height: 1.4; color: var(--text); background: rgba(11,10,14,.9); border: 1px solid #3a3745; border-radius: 6px; pointer-events: none; transition: opacity .4s; }
+#hint.off { opacity: 0; }
+
+#score { position: relative; overflow: hidden; background: #000; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); cursor: pointer; }
+#strip { position: absolute; left: 0; top: 0; display: flex; will-change: transform; }
+.col { position: relative; flex: none; overflow: hidden; border-right: 1px solid rgba(255,255,255,.22); }
+.col .head { height: 22px; padding: 0 8px; font-family: var(--mono); font-size: 11px; line-height: 22px; color: var(--muted); background: var(--panel); white-space: nowrap; }
+.col.now .head { color: var(--text); }
+.tile { background-repeat: no-repeat; background-size: 100% 100%; }
+.tile.nt { box-shadow: inset 0 1px 0 rgba(255,255,255,.2); }
+.col .veil { position: absolute; left: 0; right: 0; top: 22px; bottom: 0; display: grid; place-items: center; background: repeating-linear-gradient(135deg, #17161c 0 14px, #131218 14px 28px); color: var(--dim); font-family: var(--mono); font-size: 12px; opacity: 0; pointer-events: none; transition: opacity .35s; }
+.col.unseen .veil { opacity: 1; }
+#looks { position: absolute; left: 0; top: 22px; width: 0; height: 0; }
+.lk { position: absolute; top: 0; height: 11px; border: solid var(--warm); border-width: 2px 2px 0; border-radius: 2px 2px 0 0; opacity: .92; transition: opacity .35s; }
+.lk b { position: absolute; left: -2px; top: -2px; will-change: transform; padding: 0 6px; font: 500 10px/15px var(--mono); white-space: nowrap; color: var(--warm); background: rgba(11,10,14,.86); border: 1px solid var(--warm); border-radius: 2px 0 3px 0; transition: background .2s, color .2s; }
+.lk:hover b, .lk.now b { background: var(--warm); color: var(--bg); }
+.lk.unseen { opacity: 0; pointer-events: none; }
+.lk.gone b { opacity: 0; }
+.lk:focus-visible { outline-offset: 3px; }
+.labels { position: absolute; left: 0; top: 0; bottom: 0; width: 150px; pointer-events: none; background: linear-gradient(90deg, rgba(0,0,0,.72), rgba(0,0,0,0)); }
+#labels { top: 22px; }
+.labels div { position: absolute; left: 10px; white-space: nowrap; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: rgba(255,255,255,.82); text-shadow: 0 1px 3px #000; }
+.labels div span { text-transform: none; letter-spacing: 0; color: var(--cyan); margin-left: 6px; }
+.labels .hz, .labels .nn { left: 10px; font-family: var(--mono); font-size: 10px; letter-spacing: 0; text-transform: none; color: rgba(255,255,255,.5); transform: translateY(-50%); }
+#head { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--text); box-shadow: 0 0 0 1px rgba(0,0,0,.6), 0 0 12px rgba(255,255,255,.35); pointer-events: none; }
+#head i { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); font: 500 11px/20px var(--mono); padding: 0 6px; border-radius: 4px 4px 0 0; font-style: normal; font-variant-numeric: tabular-nums; }
+
+/* a close-up's text: a card over the right of the strip (the part not played yet), up while the clock is within its
+   reading time; on a narrow screen it sits under the strip instead */
+#scorewrap { position: relative; }
+#lcard { position: absolute; top: 28px; right: 12px; bottom: 8px; display: flex; flex-direction: column; min-width: 0; padding: 9px 16px 10px; background: rgba(17,16,22,.94); border: 1px solid rgba(244,162,89,.55); border-radius: 8px; box-shadow: 0 8px 30px rgba(0,0,0,.55); opacity: 0; visibility: hidden; transform: translateY(4px); transition: opacity .6s, transform .6s, visibility 0s .6s; }
+#lcard.open { opacity: 1; visibility: visible; transform: none; transition: opacity .35s, transform .35s; }
+#lbar { flex: none; display: flex; align-items: baseline; gap: 12px; }
+#lkick { flex: 1; min-width: 0; font: 600 11px/1.3 var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--warm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#lkick span { font: 11.5px/1.3 var(--mono); letter-spacing: 0; text-transform: none; color: var(--muted); margin-left: 10px; }
+#lhintkey { flex: none; font-size: 11.5px; color: var(--dim); white-space: nowrap; }
+#lclose { flex: none; align-self: center; width: 22px; height: 22px; border: 1px solid var(--line); border-radius: 4px; font-size: 13px; line-height: 1; color: var(--muted); }
+#lclose:hover { color: var(--text); border-color: #3a3745; }
+#lbody { flex: 1 1 0; min-height: 0; margin-top: 8px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #3a3745 transparent; }
+#lcols { column-gap: 26px; }
+#lcard.wide #lcols { column-count: 2; }
+#lbody h3 { font: 600 10.5px/1.2 var(--sans); letter-spacing: .09em; text-transform: uppercase; color: var(--dim); margin: 0 0 4px; }
+#lbody p { margin: 0 0 10px; font-size: 13px; line-height: 1.46; color: #ded8ce; text-wrap: pretty; }
+#lbody p:last-child { margin-bottom: 0; }
+
+#note { padding: 12px 28px 26px; max-width: 1500px; margin: 0 auto; }
+#note .meta { font-family: var(--mono); font-size: 11.5px; color: var(--dim); display: flex; gap: 18px; flex-wrap: wrap; }
+#note .meta b { color: var(--muted); font-weight: 500; }
+#note .grid { display: grid; grid-template-columns: minmax(300px, 1.1fr) minmax(0, 2fr); gap: 40px; margin-top: 12px; }
+#note .grid.again { grid-template-columns: minmax(300px, 1.35fr) minmax(0, 2fr); }
+.prior { font-size: 13px; line-height: 1.45; color: var(--muted); border-left: 2px solid var(--line); padding-left: 12px; margin-bottom: 12px; text-wrap: pretty; }
+.prior.said { margin: 14px 0 0; }
+.prior.said[hidden] { display: none; }
+.prior span, .expect span, .cols h3 { display: block; font: 600 10.5px/1.2 var(--sans); letter-spacing: .09em; text-transform: uppercase; color: var(--dim); margin: 0 0 5px; }
+.feel { font-family: var(--serif); font-weight: 400; font-size: clamp(19px, 1.5vw, 23px); line-height: 1.32; margin: 0; letter-spacing: -0.005em; text-wrap: pretty; }
+#note > .feel { max-width: 1120px; font-size: clamp(18px, 1.4vw, 21px); margin: 0 0 12px; }
+.cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 26px; align-content: start; }
+.cols.n2, .cols.n4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.cols p { margin: 0; font-size: 14px; line-height: 1.52; color: #d3cdc3; text-wrap: pretty; }
+.expect { margin-top: 14px; padding: 10px 14px; background: var(--panel); border-radius: 6px; font-size: 13px; line-height: 1.5; color: #d3cdc3; text-wrap: pretty; }
+.expect span { color: var(--warm); }
+.expect.none { display: none; }
+button.t { font-family: var(--mono); font-size: .9em; color: var(--cyan); border-bottom: 1px dotted rgba(58,216,238,.5); border-radius: 2px; padding: 0 1px; transition: background .2s, color .2s; }
+button.t:hover { background: rgba(58,216,238,.16); }
+button.t.now { background: var(--cyan); color: var(--bg); border-bottom-color: transparent; }
+button.t.ref { font-family: inherit; font-size: inherit; color: var(--warm); border-bottom-color: rgba(244,162,89,.55); }
+button.t.ref:hover { background: rgba(244,162,89,.16); }
+button.t.ref.now { background: var(--warm); color: var(--bg); }
+#note.swap .grid, #note.swap > .feel { animation: swap .45s ease-out; }
+@keyframes swap { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+
+#after { border-top: 1px solid var(--line); background: var(--panel); padding: 44px 28px 80px; }
+#after article { max-width: 680px; margin: 0 auto; font-family: var(--serif); font-size: 18px; line-height: 1.62; }
+#after article + article { margin-top: 64px; padding-top: 44px; border-top: 1px solid var(--line); }
+#after .kicker { font: 600 11px/1 var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--warm); }
+#after h2 { font-weight: 500; font-size: 30px; line-height: 1.2; margin: 10px 0 20px; letter-spacing: -0.01em; }
+#after h3 { font: 600 12px/1.2 var(--sans); letter-spacing: .09em; text-transform: uppercase; color: var(--muted); margin: 38px 0 12px; }
+#after p { margin: 0 0 16px; text-wrap: pretty; }
+#after ul { margin: 0 0 16px; padding-left: 20px; }
+#after li { margin-bottom: 7px; }
+#after strong { font-weight: 600; color: #fff; }
+#after .made { margin-top: 44px; padding-top: 20px; border-top: 1px solid var(--line); font: 13px/1.6 var(--sans); color: var(--muted); }
+.more { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 34px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 34px), transparent); }
+/* laptop and up: header, transport, strip and note are one screen; long text scrolls inside its own column */
+@media (min-width: 1100px) and (min-height: 700px) {
+  #stage { height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+  #stage > * { flex: none; }
+  #stage > #note { flex: 1 1 0; min-height: 0; width: 100%; display: flex; flex-direction: column; padding-bottom: 12px; }
+  #note > * { flex: none; }
+  #note > .grid { flex: 1 1 0; min-height: 0; grid-template-rows: minmax(0, 1fr); }
+  #note .left { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+  #note .left > * { flex: none; }
+  #note .left > .prior, #note .left > .expect { flex: 0 1 auto; min-height: 36px; overflow-y: auto; }
+  .cols { grid-template-rows: minmax(0, 1fr); min-height: 0; }
+  .cols.n4 { grid-template-rows: repeat(2, minmax(0, 1fr)); row-gap: 14px; }
+  .cols > div { min-height: 0; overflow-y: auto; padding-right: 8px; }
+  .cols > div, #note .left > .prior, #note .left > .expect { scrollbar-width: thin; scrollbar-color: #3a3745 transparent; }
+}
+@media (max-width: 900px) {
+  header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  #top.yt { display: block; } #video { width: auto; max-width: 420px; margin: 0 16px 10px; } #keys, #vbig { display: none; } #hint { max-width: 60%; }
+  #transport { flex-wrap: wrap; } #map { flex-basis: 100%; order: 9; }
+  #note .grid, #note .grid.again, .cols, .cols.n2, .cols.n4 { grid-template-columns: 1fr; gap: 16px; } #seal span { display: none; }
+  #lcard { position: static; display: none; margin: 10px 16px 0; transform: none; } #lcard.open { display: flex; } #lhintkey { display: none; }
+  #lcard.wide #lcols { column-count: 1; } #lbody { flex: none; overflow: visible; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #note.swap .grid, #note.swap > .feel { animation: none; } .col .veil, .lk, #lcard, #lcard.open, #endcue, #endcue.on { transition: none; } #endcue span { animation: none; }
+}
+</style>
+</head>
+<body>
+<noscript><p style="padding:24px;font:16px sans-serif;color:#eee">This page plays an AI listener's notes against the music and needs JavaScript.</p></noscript>
+<main id="stage">
+<div id="top">
+<header>
+  <div class="lede">
+    <h1 id="h1"></h1>
+    <div class="sub"><span id="sub"></span><button class="lnk" id="howbtn" aria-expanded="false" aria-controls="howpanel">How this was made</button><button class="lnk" id="afterbtn">After-notes ↓</button></div>
+  </div>
+  <button class="cta" id="pubbtn" aria-expanded="false" aria-controls="pubpanel" hidden>Publish this listen</button>
+  <a class="cta" id="cta" target="_blank" rel="noopener" hidden>Have your Claude listen to a song <span aria-hidden="true">→</span></a>
+</header>
+<div id="pubpanel" hidden><p>This page holds the recording, so it is for you. To share the listen, give this to your AI: it builds a version with no audio in it, which follows the song on YouTube instead, and puts it on GitHub Pages.</p><textarea id="pubtext" readonly></textarea><button id="pubcopy">Copy</button></div>
+<div id="howpanel" hidden><p class="how" id="how"></p></div>
+<div id="transport">
+  <button id="play" aria-label="Play"><svg viewBox="0 0 20 20"><path id="playicon" d="M5 3l12 7-12 7z"/></svg></button>
+  <div id="clock"><b>0:00</b> / 0:00</div>
+  <div id="tabs" role="tablist" aria-label="Which listen" hidden></div>
+  <div id="map" title="Click to jump"><div class="img"></div><div class="unheard"></div></div>
+  <button id="vbig" aria-pressed="false" hidden>larger video</button>
+  <div id="keys"><kbd>space</kbd>pause to read</div>
+  <label id="seal" title="Each window stayed hidden until the note for the one before it was locked"><input type="checkbox" checked> <span>hide what I hadn't seen yet</span></label>
+</div>
+<div id="video" hidden></div>
+</div>
+<div id="scorewrap">
+<div id="score"><div id="strip"></div><div class="labels" id="labels"></div><div id="head"><i>0:00</i></div><div id="hint"></div></div>
+<aside id="lcard" aria-hidden="true">
+  <div id="lbar"><div id="lkick"></div><span id="lhintkey">space pauses</span><button id="lclose" aria-label="Close this close-up" title="Close">×</button></div>
+  <div id="lbody"><div id="lcols"><h3>What I was looking for</h3><p id="lwhy"></p><h3>What I saw</h3><p id="lsaw"></p></div></div>
+</aside>
+</div>
+<button id="endcue" tabindex="-1">That's the song. What I made of it <span aria-hidden="true">↓</span></button>
+<section id="note" aria-live="off">
+  <div class="meta" id="meta"></div>
+  <div class="grid" id="grid">
+    <div class="left">
+      <div class="prior"><span>Going in, I'd guessed</span><div id="prior"></div></div>
+      <h2 class="feel" id="feel"></h2>
+      <div class="prior said" id="saidbox" hidden><span>What I said the first time</span><div id="said"></div></div>
+      <div class="expect" id="expectbox"><span>Then, before the next window opened, I guessed</span><div id="expect"></div></div>
+    </div>
+    <div class="cols" id="cols"></div>
+  </div>
+</section>
+</main>
+<section id="after"></section>
+
+<script>
+const D = {"artist": "Nathaniel Rateliff", "title": "And It's Still Alright", "dur": 217.640646, "win": 15.0, "nwin": 15, "audio": "", "yt": "PZ2zFF-I7e0", "by": "Étienne (Claude Fable 5.2)", "note": "", "link": "https://github.com/mlapeter/listened-in-order", "pub": "", "date": "2026-11-11", "made": "Every panel is measured from the audio; no other model described the song to me. The lyric lane and lyric lines are cropped out of the pictures here, and the notes paraphrase the words (the title aside, the longest run of the lyric in them is six words). Notes are the sealed files, unedited: first window opened 14:15:46, last note sealed 14:22:41. Space plays and pauses; the arrow keys step a window; any time in the text jumps there.", "listens": [{"kind": "first", "heads": ["The voice", "The band", "The words", "The notes"], "wins": [{"k": 0, "t0": 0.0, "t1": 15.0, "span": "0:00-0:15", "feel": "One guitar alone, already in full stride by the first second. Steady and unhurried, like someone who started playing before anyone pressed record. I feel settled, and a little braced, because I know which song this is.", "feelPlain": "One guitar alone, already in full stride by the first second. Steady and unhurried, like someone who started playing before anyone pressed record. I feel settled, and a little braced, because I know which song this is.", "expect": "The voice to come in low and plain over this same pattern.", "first": "", "cols": ["No singing yet. Two short smudges in \"other\" in the first second look like a breath or a word spoken before starting, not a note.", "Only the guitar stem is lit; drums, bass and piano are black. Strums land about every 0.7 s with smaller picked notes between, all at dead centre in the stereo picture, so it is one microphone's worth of one person. The low orange band is full from the start: a big-bodied acoustic.", "No words are sung in this window yet.", "A low D (D3 row) rings under nearly everything, with the A above it, so it sounds like a D chord with a drone the fingers keep returning to. Around 6.5 s and again near 11.5 s the lower rows step away for a moment and come back. Small melody notes move on top, up near C5-A5."], "opened": "14:15:46", "sealed": "14:16:07", "sha": "3b703c7339"}, {"k": 1, "t0": 15.0, "t1": 30.0, "span": "0:15-0:30", "feel": "He starts by saying no. Each short phrase begins up near middle C and slides down and out, and then he waits five whole seconds before the next one. It feels like someone talking carefully about something that hurts, leaving room after each sentence. I feel tender toward it, and quiet.", "feelPlain": "He starts by saying no. Each short phrase begins up near middle C and slides down and out, and then he waits five whole seconds before the next one. It feels like someone talking carefully about something that hurts, leaving room after each sentence. I feel tender toward it, and quiet.", "expect": "More short falling phrases with long gaps; the title phrase arriving as the answer to this opening \"no\".", "first": "", "cols": ["Voice A enters at \u003cbutton class=\"t\" data-t=\"18\" data-c=\"18.5\">0:18\u003c/button>. Three phrases, each an arch that tops out around C4 and falls to about E3-F#3; the first important word falls right through its own length. Nearly every word is tagged breathier or higher than his usual, so this opening is lighter and airier than how he sings the rest. The first word of the second phrase dips very low (near 110 Hz) before climbing. No held notes; nothing lasts 0.7 s. Words are mostly timed exactly here; two are estimated.", "Still only the guitar, centre. Under the voice it thins its top end and holds chords longer (wider blocks from \u003cbutton class=\"t\" data-t=\"19.5\" data-c=\"19.5\">0:19.5\u003c/button> on), making space. The stereo picture widens a little when he sings, which I take as the room around his voice. Song so far: guitar the whole way, voice in two small patches.", "A flat statement that things are not fine, and that his own head has gone hard or heavy. Then he tells someone, gently, to shut their eyes and turn. It reads like he is talking to himself as much as to a \"you\".", "The low D gives way when he sings: the bottom row drops to about B2 for the first two phrases, then settles back up around D3/A3. So the ground moves down a step under the word for trouble and comes home in the gap."], "opened": "14:16:07", "sealed": "14:16:23", "sha": "0b11ccead4"}, {"k": 2, "t0": 30.0, "t1": 45.0, "span": "0:30-0:45", "feel": "The title arrives and it is not a triumph. He says the hard part low and plain, lets the line sink to the bottom of his range, waits four seconds, and then the consoling word dips under its note and climbs up to rest there for two full seconds. It feels like being told the truth and then being held. I feel moved, and a bit caught off guard by how small he makes it.", "feelPlain": "The title arrives and it is not a triumph. He says the hard part low and plain, lets the line sink to the bottom of his range, waits four seconds, and then the consoling word dips under its note and climbs up to rest there for two full seconds. It feels like being told the truth and then being held. I feel moved, and a bit caught off guard by how small he makes it.", "expect": "Another verse of the same shape, and the title coming back each time as the place the verse lands.", "first": "", "cols": ["After the opening word jumps up near G4 for a moment (tagged higher, breathier, falling), everything sits low, around E3-F#3, in flat steps with small scoops into each word. The second line ends by dropping to about A2-B2, his floor so far. Then the title: its last word starts about three semitones under, bends down further, rises through the median and settles roughly two semitones above it (around F#3), held 0.9 s by the tool's count and visibly ringing on to \u003cbutton class=\"t\" data-t=\"43\" data-c=\"43.5\">0:43\u003c/button>. The level curve just slopes away; no push, almost no vibrato until a slow wobble at the end. The waveform is a clean repeating shape. Breathier tags on several words; the title's last word is tagged rising.", "Guitar alone still, centre, steady strum with picked notes on top. It keeps going through the four-second gap before the title and does not swell for it. Song so far: voice patches getting longer, guitar constant.", "Hard times can find you, and not in any way you'd choose. Then the turn on one small word: and yet it's okay. He doesn't argue for it. He just says it after the silence.", "The held title note sits on about F#3, the sweet third over the guitar's D, with the A row bright right above it; that is why it sounds warm instead of resolved-and-done. In the middle of the window the guitar's low rows wander (B2 again around \u003cbutton class=\"t\" data-t=\"34\" data-c=\"34.5\">0:34\u003c/button>-\u003cbutton class=\"t\" data-t=\"35\" data-c=\"35.5\">0:35\u003c/button>, when his line sinks) and are home on D by the title."], "opened": "14:16:23", "sealed": "14:16:41", "sha": "ec46e75281"}, {"k": 3, "t0": 45.0, "t1": 60.0, "span": "0:45-1:00", "feel": "A question asked into the dark, then five seconds where nobody answers it. The second verse is the same shape as the first, and that sameness feels like nights repeating. A dry little remark about something no longer being a joke lands low and flat. I feel lonely with him here, in a companionable way.", "feelPlain": "A question asked into the dark, then five seconds where nobody answers it. The second verse is the same shape as the first, and that sameness feels like nights repeating. A dry little remark about something no longer being a joke lands low and flat. I feel lonely with him here, in a companionable way.", "expect": "The refrain again right away, ending on the long consoling note.", "first": "", "cols": ["Same arch as before: each line starts on a low pickup (about A2-B2), leaps to around C4-D4, and steps down to E3-F#3. The question's last word falls across its length and ends with a small upturn, the only lift in the window. On the counting line the long word is held 0.8 s near F#3 after sliding down five semitones into it, with a slow shallow wobble, about two cycles. The dry remark sits at the bottom, near B2. Then the refrain starts again with the same high breathy jump as at \u003cbutton class=\"t\" data-t=\"30\" data-c=\"30.5\">0:30\u003c/button>. Three words at the start are only estimated, so I read the pitch line there, not the tags.", "Guitar alone, centre, unchanged in loudness. In the five-second gap (\u003cbutton class=\"t\" data-t=\"51\" data-c=\"51.5\">0:51\u003c/button>-\u003cbutton class=\"t\" data-t=\"55\" data-c=\"55.5\">0:55\u003c/button>) it just keeps its pattern, low notes and all. No one else has come in a full minute into the song, and I now doubt anyone will.", "Do you lie awake late turning things over? Then counting lines, which I take as the marks of age or wear on a face, and how that stopped being funny. He is asking someone else, but it sounds like a report on himself.", "The verse lives on a darker shade: the bright rows are about B2, D3 and F#3 together, which I'd call the minor chord next door to the opening's D. The voice's resting note F#3 belongs to both, so the same sung note is the warm third at the title and the plain fifth here. I'm fairly but not fully sure of the rows."], "opened": "14:16:41", "sealed": "14:17:00", "sha": "445cc10724"}, {"k": 4, "t0": 60.0, "t1": 75.0, "span": "1:00-1:15", "feel": "I was waiting for the consoling line and he didn't sing it. The refrain's two hard lines go by, the voice stops at \u003cbutton class=\"t\" data-t=\"64\" data-c=\"64.5\">1:04\u003c/button>, and the guitar takes the six seconds where the title should be. Then he comes back talking faster and lower, half grumbling, about an old man and what he has lost. The missing line made me lean in; I feel a small ache at its absence, and I'm unsure whether it was withheld on purpose or the words are just laid out differently here than I assumed.", "feelPlain": "I was waiting for the consoling line and he didn't sing it. The refrain's two hard lines go by, the voice stops at 1:04, and the guitar takes the six seconds where the title should be. Then he comes back talking faster and lower, half grumbling, about an old man and what he has lost. The missing line made me lean in; I feel a small ache at its absence, and I'm unsure whether it was withheld on purpose or the words are just laid out differently here than I assumed.", "expect": "The losses named, and the title finally sung after them.", "first": "", "cols": ["Almost no arch now. The refrain lines run nearly flat around E3-F#3 with the ends sagging to about B2. The new lines from \u003cbutton class=\"t\" data-t=\"70\" data-c=\"70.5\">1:10\u003c/button> are close to speech: many short words on one level, small dips between them, none tagged for pitch. The last word of the window is tagged breathier and longer and sits down near B2; it runs past the edge. No held notes. Few tags overall, so this is his ordinary voice; the airy high start of the song has gone.", "Guitar alone. In the gap it opens up: longer ringing chords and bright upper rows from \u003cbutton class=\"t\" data-t=\"64\" data-c=\"64.5\">1:04\u003c/button> to \u003cbutton class=\"t\" data-t=\"69\" data-c=\"69.5\">1:09\u003c/button>, the closest thing to an instrumental answer so far. The low-end band and the strum rate are the same as at the start. Song so far: one guitar, one voice, voice present maybe half the time.", "Hard times again, you get this far and it still isn't how you'd want it. Then an oath: he'd be damned if this old man doesn't begin to tally what he's lost. I can't tell yet if the old man is himself or someone he's watching.", "During the guitar's gap the rows climb: a bright row near G4/A4 holds over a D3 base, then steps. It sounds like the guitar singing the title's place on its own. Under the new lines the low rows are back on the B2/F#3 shade."], "opened": "14:17:00", "sealed": "14:17:18", "sha": "e1000c2c0a"}, {"k": 5, "t0": 75.0, "t1": 90.0, "span": "1:15-1:30", "feel": "There it is. He made me wait through the old man's losses before giving the line, so this time it answers something specific. The long word comes out soft and stays, and then thins to almost a hum before it stops. I was wrong last window to think it was withheld: it was delayed. I feel relief, and then a quiet that the next flat line doesn't break.", "feelPlain": "There it is. He made me wait through the old man's losses before giving the line, so this time it answers something specific. The long word comes out soft and stays, and then thins to almost a hum before it stops. I was wrong last window to think it was withheld: it was delayed. I feel relief, and then a quiet that the next flat line doesn't break.", "expect": "What you supposedly learn, said with some bitterness; the same long gaps.", "first": "", "cols": ["Three seconds of nothing, then the title at 1:19: low pickup near C3, a quick hop up to about A3 on the middle word, down, and the last word sliding up to rest around F#3 for a good two seconds (tagged rising again). The upper bands fade first, so by \u003cbutton class=\"t\" data-t=\"81\" data-c=\"81.5\">1:21\u003c/button> only the lowest few harmonics are left, and the ridge in the periodicity panel goes fuzzy toward the end: the note is dissolving, not being cut. The tool finds no steady 0.7 s run in it, which fits a pitch that keeps drifting slightly. Then at \u003cbutton class=\"t\" data-t=\"87\" data-c=\"87.5\">1:27\u003c/button> a new line almost on one note, about E3, lifting a little on its last word. Only two tags besides the title's, both breathier.", "Guitar alone, the same patient strum, a little fuller in the gaps (\u003cbutton class=\"t\" data-t=\"75\" data-c=\"75.5\">1:15\u003c/button>-\u003cbutton class=\"t\" data-t=\"78\" data-c=\"78.5\">1:18\u003c/button> and \u003cbutton class=\"t\" data-t=\"82\" data-c=\"82.5\">1:22\u003c/button>-\u003cbutton class=\"t\" data-t=\"86\" data-c=\"86.5\">1:26\u003c/button>) than under the voice. The song is past a third and its picture has not changed: one stripe of guitar, voice in patches.", "The title as an answer to counting losses: even so, it's okay. Then hearsay, what people claim you pick up out in the world. The tone of \"they say\" is doubtful to my ear, mostly because he sings it so flat.", "The title word lands on F#3 over the D3 row again, and the guitar's bright A3 row sits just above it, same warm stacking as at \u003cbutton class=\"t\" data-t=\"41\" data-c=\"41.5\">0:41\u003c/button>. Around \u003cbutton class=\"t\" data-t=\"85.5\" data-c=\"85.5\">1:25.5\u003c/button> the bottom steps down (a low note near A1-B1 shows in the bass panel, and B2 brightens) just before the new line: the floor drops and he starts talking about the world."], "opened": "14:17:18", "sealed": "14:17:39", "sha": "75a08a485c"}, {"k": 6, "t0": 90.0, "t1": 105.0, "span": "1:30-1:45", "feel": "This is the centre of it. What you learn out there is how to burn, and that you will put your friends in the ground, and then that it gets worse. He says all of it in a small low range without raising his voice once, five lines with barely a breath between where earlier there were five-second silences. The restraint is what gets me. I feel grief, plainly, and some fear at the ledge.", "feelPlain": "This is the centre of it. What you learn out there is how to burn, and that you will put your friends in the ground, and then that it gets worse. He says all of it in a small low range without raising his voice once, five lines with barely a breath between where earlier there were five-second silences. The restraint is what gets me. I feel grief, plainly, and some fear at the ledge.", "expect": "The refrain's hard-times lines, and then the title has to answer the ledge. I want to see whether the long word changes after this.", "first": "", "cols": ["The shape has flipped. In the opening every phrase started high and fell; here each line starts low, around C3-D3, and climbs a little to lean on its last word near F#3, and those last words are the tagged ones (longer, often breathier): the burning, the friends, the worse, the ledge. Only the final line lets its last word arch and fall. Nothing goes above about G3 except one tiny blip near F4 at \u003cbutton class=\"t\" data-t=\"92.5\" data-c=\"92.5\">1:32.5\u003c/button> between lines, which looks like a catch of breath or a sound on the inhale, not a sung note. The breathy bands are full top to bottom on the long words. No held note by the tool's rule. Two of the five lines have estimated timings for their first words, so I trust the line ends more than the starts.", "Guitar alone, exactly as before. It does not darken or swell for these words; attacks and low end are the same as in the first window. That steadiness reads to me like keeping your hands busy while you say the thing. Song so far: the voice lane is at its densest here.", "Lessons of being out in the world: getting scorched, burying friends, finding it gets worse after that; then an image of standing on a ledge with no route down. Loss first, then the danger loss puts you in. He counts someone specific here, I think, though no one is named.", "The voice hugs D3-F#3, right inside the guitar's own bright rows, so voice and guitar are nearly the same notes; nothing rubs. The B2/F#3 shade is under most of it, with D returning at line ends."], "opened": "14:17:39", "sealed": "14:17:59", "sha": "5b476655c3"}, {"k": 7, "t0": 105.0, "t1": 120.0, "span": "1:45-2:00", "feel": "After the ledge, a wish to grow wings, and it is the saddest kind of hope: the hope of someone with no other way down. He splits the thought in two with four seconds of guitar in the middle, so the wish hangs. Then six seconds with no voice at all. I feel the height of the ledge more in the silence than in the words. Sad, and a little held-breath.", "feelPlain": "After the ledge, a wish to grow wings, and it is the saddest kind of hope: the hope of someone with no other way down. He splits the thought in two with four seconds of guitar in the middle, so the wish hangs. Then six seconds with no voice at all. I feel the height of the ledge more in the silence than in the words. Sad, and a little held-breath.", "expect": "The hard-times refrain and then the title. After this verse I expect the consoling word to sound more worn.", "first": "", "cols": ["Two short phrases. The first (\u003cbutton class=\"t\" data-t=\"105\" data-c=\"105.5\">1:45\u003c/button>-\u003cbutton class=\"t\" data-t=\"107\" data-c=\"107.5\">1:47\u003c/button>) sits flat on about E3 and then its last part drops to B2-C3 with a quick down-up wiggle and a smear of noise in the backing strip: a rough, breathy sag, the nearest thing to a crack so far. The second (\u003cbutton class=\"t\" data-t=\"111\" data-c=\"111.5\">1:51\u003c/button>-\u003cbutton class=\"t\" data-t=\"114\" data-c=\"114.5\">1:54\u003c/button>) has the title phrase's outline, low pickup near B2, a spike up toward A3, then a long word sliding up to rest around F#3 for over a second. But its colour is different: almost all the energy stays under 800 Hz, a dark closed vowel, where the title's long word opens bright up to 3 kHz. So he sings the wish to the consolation's tune, in a darker mouth. The tool timed nearly every word here by estimate and stretched one across the gap, so the word positions are not to be trusted; I'm reading the sound.", "Guitar alone. From \u003cbutton class=\"t\" data-t=\"114\" data-c=\"114.5\">1:54\u003c/button> to \u003cbutton class=\"t\" data-t=\"120\" data-c=\"120.5\">2:00\u003c/button> it plays on by itself and the top rows brighten, with higher picked notes around A4-D5: a small instrumental breath, like the one at \u003cbutton class=\"t\" data-t=\"64\" data-c=\"64.5\">1:04\u003c/button>. Stereo still a single centre line with a faint halo. More than half the song is gone and it has stayed one man and one guitar.", "You begin to pray for wings. Following the ledge, I hear it as wanting rescue that can't come by ordinary means, and I think he may mean the friend as much as himself.", "The long dark word rests on F#3 over D3 again, with A3 ringing above, the same stacking as the title. In the guitar break the D row holds while notes climb above it; it sounds like home, kept warm."], "opened": "14:17:59", "sealed": "14:18:28", "sha": "91f8013f9b"}, {"k": 8, "t0": 120.0, "t1": 135.0, "span": "2:00-2:15", "feel": "Twelve more seconds of just the guitar, eighteen in all since the wish for wings. Nothing is solved in it and nothing is hurried. It feels like sitting next to someone after they've said the worst part, neither of you talking. Then at \u003cbutton class=\"t\" data-t=\"132\" data-c=\"132.5\">2:12\u003c/button> the voice comes back with the exact high falling arch the song began with, and I recognise it the way you recognise a room. I feel calm here, and steadied; this is where the title's promise is being kept without words.", "feelPlain": "Twelve more seconds of just the guitar, eighteen in all since the wish for wings. Nothing is solved in it and nothing is hurried. It feels like sitting next to someone after they've said the worst part, neither of you talking. Then at 2:12 the voice comes back with the exact high falling arch the song began with, and I recognise it the way you recognise a room. I feel calm here, and steadied; this is where the title's promise is being kept without words.", "expect": "The opening verse again, sung by a man who has since counted his losses; then the title, maybe more than once, to end.", "first": "", "cols": ["Silent until \u003cbutton class=\"t\" data-t=\"132.7\" data-c=\"132.7\">2:12.7\u003c/button>. Then one phrase that starts up at about C4 and steps down to E3-F#3 within a second, bright and full-banded at the top, the same outline as the first sung phrase at \u003cbutton class=\"t\" data-t=\"18\" data-c=\"18.5\">0:18\u003c/button>. A low blip near A2 and the start of the next phrase follow at the right edge. The lyric sheet places no words in this window, so the aligner has lost him here; the sound is plainly a sung line.", "This is the guitar's stretch. Same strum, same centre, the same low end, but freer on top: little picked figures climb through A4, D5 and above, and the chords ring a touch longer. No second instrument joins even now. In the song-so-far strip this is the first long gap in the voice lane since the intro.", "No words placed here. By the returning tune I take the entering line to be the opening's \"not fine\" statement again, or its partner, but that is a guess from shape.", "The break circles the same two places as the verses: D3 with A3 on top, then the B2 shade (clear around \u003cbutton class=\"t\" data-t=\"124\" data-c=\"124.5\">2:04\u003c/button>-\u003cbutton class=\"t\" data-t=\"126\" data-c=\"126.5\">2:06\u003c/button> and again near \u003cbutton class=\"t\" data-t=\"132\" data-c=\"132.5\">2:12\u003c/button> as he re-enters), and back. No new chord arrives; the instrumental says what the verses said. The returning voice starts on about C4-D4, well above the guitar's middle, the highest he has been since the first minute."], "opened": "14:18:28", "sealed": "14:18:49", "sha": "fa49d9d05e"}, {"k": 9, "t0": 135.0, "t1": 150.0, "span": "2:15-2:30", "feel": "He is back and he is singing harder. The first note of the window sits up near B3 and shakes, the widest waver so far, then the lines come closer together and near the end the voice starts flipping up into a higher, rougher place. After two minutes of holding level, something is pressing through. I feel it tighten in me; this is the first time the song sounds like it might not stay composed.", "feelPlain": "He is back and he is singing harder. The first note of the window sits up near B3 and shakes, the widest waver so far, then the lines come closer together and near the end the voice starts flipping up into a higher, rougher place. After two minutes of holding level, something is pressing through. I feel it tighten in me; this is the first time the song sounds like it might not stay composed.", "expect": "The push to crest in the next window, and then the title. I want a close-up of these rough high words once the phrase has finished.", "first": "", "cols": ["\u003cbutton class=\"t\" data-t=\"135\" data-c=\"135.5\">2:15\u003c/button>-2:17: about a second on roughly B3 with a clear wobble (four or five waves in the periodicity ridge), then a drop to E3-F#3. Silence for four and a half seconds. \u003cbutton class=\"t\" data-t=\"141\" data-c=\"141.5\">2:21\u003c/button>-2:23: the arch again, low pickup, up to about C4, down. From \u003cbutton class=\"t\" data-t=\"143.5\" data-c=\"143.5\">2:23.5\u003c/button> the phrases run nearly unbroken to the edge: a flip up to about G4 at \u003cbutton class=\"t\" data-t=\"145\" data-c=\"145.5\">2:25\u003c/button> like the refrain's opening word at \u003cbutton class=\"t\" data-t=\"30\" data-c=\"30.5\">0:30\u003c/button>, a low flat stretch around D3-F#3, then from \u003cbutton class=\"t\" data-t=\"147.5\" data-c=\"147.5\">2:27.5\u003c/button> repeated pushes up to E4-G4 with busy, broken texture in the upper bands. One of those high words is tagged higher and rougher, the first \"rougher\" of the song; another breathier and falling. The lyric sheet is unreliable here: no words are placed until \u003cbutton class=\"t\" data-t=\"147\" data-c=\"147.5\">2:27\u003c/button> and then eight are squeezed in as estimates, so the tool has lost its place. I trust the pitch line and the one exact tag.", "Guitar alone and unchanged in level, though the attacks crowd a little closer from \u003cbutton class=\"t\" data-t=\"144\" data-c=\"144.5\">2:24\u003c/button> on, as if the right hand is following the voice's push. Stereo: centre, with the halo widest when he sings loud at \u003cbutton class=\"t\" data-t=\"142\" data-c=\"142.5\">2:22\u003c/button> and \u003cbutton class=\"t\" data-t=\"148\" data-c=\"148.5\">2:28\u003c/button>.", "By the sheet, a plea to someone dear to simply let go, and then an admission that he himself is not fine. If that is what he sings at \u003cbutton class=\"t\" data-t=\"147\" data-c=\"147.5\">2:27\u003c/button>, then the roughness lands on the plea. I can't confirm the exact words from the pictures, only that the lines before it follow the opening's tune.", "The wavering note is about B3 over the B2 shade, voice and guitar on the same letter an octave apart, bare. The high flips reach E4-G4, above every bright guitar row in his register, so they stand out in the open."], "opened": "14:18:49", "sealed": "14:19:16", "sha": "c7ebb1a0f2"}, {"k": 10, "t0": 150.0, "t1": 165.0, "span": "2:30-2:45", "feel": "The pressure breaks into the title, I think, and it is gentle again. After four silent seconds a phrase rises from the very bottom of his voice and settles on the long warm note, and the upper part of the sound drains away while he holds it. Then two more lines come, one arching high, one sitting firm on a single higher note for a full second. It feels like someone who nearly lost hold of himself, said the steadying thing, and now speaks plainly from the far side. I feel relief with a tremor in it.", "feelPlain": "The pressure breaks into the title, I think, and it is gentle again. After four silent seconds a phrase rises from the very bottom of his voice and settles on the long warm note, and the upper part of the sound drains away while he holds it. Then two more lines come, one arching high, one sitting firm on a single higher note for a full second. It feels like someone who nearly lost hold of himself, said the steadying thing, and now speaks plainly from the far side. I feel relief with a tremor in it.", "expect": "A last verse about time or fear, then the title to close, perhaps repeated, and the guitar ending alone as it began.", "first": "", "cols": ["\u003cbutton class=\"t\" data-t=\"154.3\" data-c=\"154.3\">2:34.3\u003c/button>-2:37.3: starts near A2, climbs, a quick peak around G3-A3 at \u003cbutton class=\"t\" data-t=\"155\" data-c=\"155.5\">2:35\u003c/button>, dips, and a long word slides up to rest near F#3 for about 1.7 s, bright and open at its start (energy up to 3 kHz, the bands gliding down as the vowel closes) and thinning to the low harmonics. That is the title phrase's outline and the title word's bright vowel, sung a third time; the tag on it is \"falling\", for its start. There is a little more wobble in the ridge than at \u003cbutton class=\"t\" data-t=\"41\" data-c=\"41.5\">0:41\u003c/button> or \u003cbutton class=\"t\" data-t=\"79\" data-c=\"79.5\">1:19\u003c/button>. \u003cbutton class=\"t\" data-t=\"160.7\" data-c=\"160.7\">2:40.7\u003c/button>-2:42: the opening's arch, up to about C4 and down, tagged higher. \u003cbutton class=\"t\" data-t=\"162.8\" data-c=\"162.8\">2:42.8\u003c/button>-2:45: a low pickup, then about a second held flat near A3 with strong ridges above it in the periodicity panel, the firmest, most level note of the song so far, tagged longer; then a drop to E3. The close-up I took of \u003cbutton class=\"t\" data-t=\"146.5\" data-c=\"146.5\">2:26.5\u003c/button>-\u003cbutton class=\"t\" data-t=\"150.5\" data-c=\"150.5\">2:30.5\u003c/button> showed the earlier \"high pushes\" were a pressed, rough low-and-octave sound, not clean high notes.", "Guitar alone. A small bright blip in \"other\" at \u003cbutton class=\"t\" data-t=\"150.6\" data-c=\"150.6\">2:30.6\u003c/button>, like a knock or a string noise. Under the long note the guitar keeps strumming at the same level; under the last line the stereo halo is at its widest, so he is singing out.", "The sheet has slipped behind the singing, so I'm matching by tune. It gives: someone keeps spinning on ahead; it was cold out when he hit the ground; he said he could sleep right there and forget the fear. I believe the long phrase at \u003cbutton class=\"t\" data-t=\"154\" data-c=\"154.5\">2:34\u003c/button> is actually the title, and that those lines were sung around it. Also a correction to my 007 note: the sheet's order now shows that the dark long word at \u003cbutton class=\"t\" data-t=\"112\" data-c=\"112.5\">1:52\u003c/button> was almost certainly the plea to let go, sung to the title's own tune. That changes it for me: \"let go\" and \"it's okay\" are the same melody.", "The long note is F#3 over D3 with A3 above, as each time before. The flat held note at \u003cbutton class=\"t\" data-t=\"163\" data-c=\"163.5\">2:43\u003c/button>-\u003cbutton class=\"t\" data-t=\"164\" data-c=\"164.5\">2:44\u003c/button> is about A3, sitting right on the guitar's bright A row: unison with the instrument, which is why it looks so solid."], "opened": "14:19:16", "sealed": "14:20:35", "sha": "2e5551d326"}, {"k": 11, "t0": 165.0, "t1": 180.0, "span": "2:45-3:00", "feel": "Four seconds of guitar, then a verse that starts with the high arch and ends by sinking to the bottom of his voice on what the sheet gives as an admission that he doesn't know. The energy of the last minute is spent; each phrase is lower and shorter than the one before. It feels like honesty after effort: no lesson claimed. I feel a tired tenderness, and I trust him more for the shrug.", "feelPlain": "Four seconds of guitar, then a verse that starts with the high arch and ends by sinking to the bottom of his voice on what the sheet gives as an admission that he doesn't know. The energy of the last minute is spent; each phrase is lower and shorter than the one before. It feels like honesty after effort: no lesson claimed. I feel a tired tenderness, and I trust him more for the shrug.", "expect": "The title once or twice more, quietly, and the guitar finishing alone.", "first": "", "cols": ["\u003cbutton class=\"t\" data-t=\"169.3\" data-c=\"169.3\">2:49.3\u003c/button>-2:51.1: low pickup near B2, a climb to about C4, and a step down to F#3. \u003cbutton class=\"t\" data-t=\"171.8\" data-c=\"171.8\">2:51.8\u003c/button>-2:53: around B3 with a small waver, then a quick fall. \u003cbutton class=\"t\" data-t=\"173.7\" data-c=\"173.7\">2:53.7\u003c/button>-2:56.2: three short level pieces around E3-F#3, clipped, with gaps between. \u003cbutton class=\"t\" data-t=\"176.6\" data-c=\"176.6\">2:56.6\u003c/button>-2:58.2: a line that starts near F#3 and slides down to about A2-B2, quiet at the end, the lowest ending since \u003cbutton class=\"t\" data-t=\"35\" data-c=\"35.5\">0:35\u003c/button>. Then nothing. Tags (higher, breathier, longer on the arch words) belong to the first phrase, where two words are exact; the last line's words were found only in the backing channel, so they carry no tags. The descending staircase over the whole window is the thing I'd point to.", "Guitar alone, as ever. It fills \u003cbutton class=\"t\" data-t=\"165\" data-c=\"165.5\">2:45\u003c/button>-\u003cbutton class=\"t\" data-t=\"169\" data-c=\"169.5\">2:49\u003c/button> by itself, then thins its top under the low last line and the attacks get sparser around \u003cbutton class=\"t\" data-t=\"177\" data-c=\"177.5\">2:57\u003c/button>-\u003cbutton class=\"t\" data-t=\"178\" data-c=\"178.5\">2:58\u003c/button>, as if making room for a quiet remark. Stereo halo widest on the arch at \u003cbutton class=\"t\" data-t=\"170\" data-c=\"170.5\">2:50\u003c/button>, narrow by the end.", "It will take time to grow, which I hear as answering the earlier wish for wings: no sudden rescue, only slow growing. Then, low: maybe, he doesn't know. The sheet is still running a little off the singing, so there are probably other lines in the middle pieces that I can't place.", "Same two homes. The arch's top, about C4, is the one note that leans against the guitar (its bright rows there are B and D on either side); everything else lands on chord notes, F#3 and B3 over the B shade, then down the scale to the low A-B with D returning underneath."], "opened": "14:20:35", "sealed": "14:20:58", "sha": "490ba620f8"}, {"k": 12, "t0": 180.0, "t1": 195.0, "span": "3:00-3:15", "feel": "A low, close stretch, like talk across a table late at night: remembering, and someone who used to point things out to him. Then four seconds of guitar, and the title phrase starts again right at the edge, the long word just opening as the window ends. I feel fond and sad at once. The remembering lines are sung so near to speech that they feel private.", "feelPlain": "A low, close stretch, like talk across a table late at night: remembering, and someone who used to point things out to him. Then four seconds of guitar, and the title phrase starts again right at the edge, the long word just opening as the window ends. I feel fond and sad at once. The remembering lines are sung so near to speech that they feel private.", "expect": "The long word to finish, maybe one more line, and the guitar to close.", "first": "", "cols": ["\u003cbutton class=\"t\" data-t=\"184\" data-c=\"184.5\">3:04\u003c/button>-3:06.5: two level lines around D3-F#3, a dip to about A2 between them, no arch at all. \u003cbutton class=\"t\" data-t=\"186.8\" data-c=\"186.8\">3:06.8\u003c/button>-3:08.5: two short pieces on E3-F#3, then a fall off the bottom to roughly G2-A2, the lowest pitch of the song. Silence to \u003cbutton class=\"t\" data-t=\"192.9\" data-c=\"192.9\">3:12.9\u003c/button>. Then the title outline for the fourth time: low pickup near C3, a quick peak around A3 at \u003cbutton class=\"t\" data-t=\"193.4\" data-c=\"193.4\">3:13.4\u003c/button>, a dip, and the long word sliding up to settle near F#3, bright and open as it starts, still sounding at \u003cbutton class=\"t\" data-t=\"195\" data-c=\"195.5\">3:15\u003c/button>. Only \"quieter\" tags, on two small words. The sheet has the lines out of order here (one stamped \u003cbutton class=\"t\" data-t=\"187\" data-c=\"187.5\">3:07\u003c/button> before one stamped \u003cbutton class=\"t\" data-t=\"185\" data-c=\"185.5\">3:05\u003c/button>) and most words are estimates or found in the backing channel; it is running several seconds behind the voice, since it puts a line about clear glass where I hear the title's tune.", "Guitar alone. Fuller and ringing in \u003cbutton class=\"t\" data-t=\"180\" data-c=\"180.5\">3:00\u003c/button>-\u003cbutton class=\"t\" data-t=\"184\" data-c=\"184.5\">3:04\u003c/button> and \u003cbutton class=\"t\" data-t=\"189\" data-c=\"189.5\">3:09\u003c/button>-\u003cbutton class=\"t\" data-t=\"192\" data-c=\"192.5\">3:12\u003c/button>, thinner under the voice. Attacks steady. The song-so-far strip is now one unbroken band of guitar for three and a quarter minutes with the voice in patches that got denser in the middle and are thinning again.", "Tonight, if you think back on it: remembering all the times someone pointed something out. I take the someone to be the friend who is gone, and the things pointed out to be what he now sees for himself. The sheet's next line, about the glass being clear while fear remains, I can't place in the sound yet.", "The remembering lines sit on D3-F#3 over the D home, not the darker B shade the earlier verses used: the memory is sung in the warm place. The title's long word begins its settle on F#3 over D3 once more."], "opened": "14:20:58", "sealed": "14:21:21", "sha": "2f81643862"}, {"k": 13, "t0": 195.0, "t1": 210.0, "span": "3:15-3:30", "feel": "The last word just goes out. It is already faint when the window opens, a low glow under 800 Hz, and by \u003cbutton class=\"t\" data-t=\"196.4\" data-c=\"196.4\">3:16.4\u003c/button> it has sunk a few notes and stopped; no final push, no held ending. Then the guitar walks on alone for ten seconds, plays one last chord at about \u003cbutton class=\"t\" data-t=\"206.5\" data-c=\"206.5\">3:26.5\u003c/button> and lets it ring down into the room. I feel peace, and loss inside the peace. The title was the last thing he said, and he said it more quietly than anything else in the song.", "feelPlain": "The last word just goes out. It is already faint when the window opens, a low glow under 800 Hz, and by 3:16.4 it has sunk a few notes and stopped; no final push, no held ending. Then the guitar walks on alone for ten seconds, plays one last chord at about 3:26.5 and lets it ring down into the room. I feel peace, and loss inside the peace. The title was the last thing he said, and he said it more quietly than anything else in the song.", "expect": "Eight seconds remain: the ring-out, maybe a word or applause.", "first": "", "cols": ["\u003cbutton class=\"t\" data-t=\"195\" data-c=\"195.5\">3:15\u003c/button>-3:16: the tail of the long title word near F#3, tagged quieter, only the lowest harmonics left and the periodicity ridge dim and blurred. A last small piece at \u003cbutton class=\"t\" data-t=\"196.1\" data-c=\"196.1\">3:16.1\u003c/button>-\u003cbutton class=\"t\" data-t=\"196.4\" data-c=\"196.4\">3:16.4\u003c/button> drops to about B2-C3, half spoken, with a smear in the backing strip like breath. After that the voice lane is black to the end of the window. The sheet prints two more lines here (something departing and leaving its mark; idle hands being all that stands), stamped at \u003cbutton class=\"t\" data-t=\"195\" data-c=\"195.5\">3:15\u003c/button> and \u003cbutton class=\"t\" data-t=\"205\" data-c=\"205.5\">3:25\u003c/button>, but there is no voice under the second and almost none under the first. In this performance I think those lines were not sung, or were sung earlier where the sheet had fallen behind.", "The guitar keeps its full pattern from \u003cbutton class=\"t\" data-t=\"196\" data-c=\"196.5\">3:16\u003c/button> to \u003cbutton class=\"t\" data-t=\"206\" data-c=\"206.5\">3:26\u003c/button>, a touch more insistent, with a few thin ticks in the drums lane at \u003cbutton class=\"t\" data-t=\"202\" data-c=\"202.5\">3:22\u003c/button>-\u003cbutton class=\"t\" data-t=\"206\" data-c=\"206.5\">3:26\u003c/button> that I take for a pick or fingers on the body. The last strum lands near \u003cbutton class=\"t\" data-t=\"206.5\" data-c=\"206.5\">3:26.5\u003c/button> and decays smoothly for the remaining seconds, upper bands first, the low hum last. As it rings, faint speckled sound appears in \"other\" from \u003cbutton class=\"t\" data-t=\"206\" data-c=\"206.5\">3:26\u003c/button> on: the room, or the outdoors of a farm, coming up as the instrument goes down. Stereo narrows to a thin centre line.", "Whatever the sheet says, the sung ending is the title. The unsung lines would have been about fear leaving and hands with nothing to do; I notice he chose, here, to stop on the consolation.", "The final chord is home: D3 strong, A3 and F#3 above it, D4 and higher overtones fading in order. The voice's last real note was that same F#3. Nothing unresolved is left hanging in the notes; what is unresolved is in how quietly he sang it."], "opened": "14:21:21", "sealed": "14:22:19", "sha": "afa1dc3ddd"}, {"k": 14, "t0": 210.0, "t1": 217.640646, "span": "3:30-3:37", "feel": "Nothing more is said. The chord's last hum and a low murmur of the place hold for two and a half seconds and then the file is cut to black. No applause, no word to the camera. It feels like the door closing softly on a room where someone is still sitting. I feel quiet, and I don't want to add anything to it.", "feelPlain": "Nothing more is said. The chord's last hum and a low murmur of the place hold for two and a half seconds and then the file is cut to black. No applause, no word to the camera. It feels like the door closing softly on a room where someone is still sitting. I feel quiet, and I don't want to add anything to it.", "expect": "Nothing; this is the end. The cut at \u003cbutton class=\"t\" data-t=\"212.6\" data-c=\"212.6\">3:32.6\u003c/button> is the video's, so whatever he did after the chord, I can't know.", "first": "", "cols": ["No voice at all. The lead panel, the backing strip and the periodicity panel are black from \u003cbutton class=\"t\" data-t=\"210\" data-c=\"210.5\">3:30\u003c/button> to the end. The sheet lays out two last lines here, one about time spent in the dark and then the title once more, every word an estimate, with no sound under any of them. So the final verse on the sheet is not in this performance; his last sung words were the title at \u003cbutton class=\"t\" data-t=\"193\" data-c=\"193.5\">3:13\u003c/button> and the hummed after-sounds I saw in the close-up.", "The guitar's ring is nearly gone, a faint trace under 500 Hz until about \u003cbutton class=\"t\" data-t=\"211.5\" data-c=\"211.5\">3:31.5\u003c/button> with one small bright scrape at \u003cbutton class=\"t\" data-t=\"211.3\" data-c=\"211.3\">3:31.3\u003c/button>, maybe a hand leaving the strings. \"Other\" and the drums lane hold a dim, even wash until \u003cbutton class=\"t\" data-t=\"212.6\" data-c=\"212.6\">3:32.6\u003c/button>, the room or the air outside, and then everything stops at once, which looks like the edit and not the place going silent. After \u003cbutton class=\"t\" data-t=\"212.6\" data-c=\"212.6\">3:32.6\u003c/button> it is digital black to \u003cbutton class=\"t\" data-t=\"217.6\" data-c=\"217.6\">3:37.6\u003c/button>. (I read the voice and band pictures for this window; the harmony picture of a ring-out and silence I left unopened.)", "None sung here. The sheet's unsung last lines would have brought the title round one more time after a line about darkness; he let the earlier one stand.", ""], "opened": "14:22:19", "sealed": "14:22:41", "sha": "fe0637f336"}], "looks": [{"n": 1, "t0": 146.5, "t1": 150.5, "win": 10, "why": "what the voice does in the repeated high pushes: clean flips into a lighter register, or strained and rough; and how they sit against the guitar", "saw": "Not clean flips into a light upper register. Between \u003cbutton class=\"t\" data-t=\"148\" data-c=\"148\">2:28.0\u003c/button> and \u003cbutton class=\"t\" data-t=\"148.9\" data-c=\"148.9\">2:28.9\u003c/button> the pitch line reads about E4 (330 Hz), but the cochleagram shows a strong band an octave under it as well, and the periodicity panel's bright ridge is at E3 with only faint patches at E4. So either he is on E3 with a very strong second harmonic, or on E4 with the voice breaking into every-other-cycle roughness; the pictures can't settle which, and both are a pressed, rough sound, which fits the one \"rougher\" tag. The same doubt applies to the \"high pushes\" I wrote about in window 009: some of that height may be the tracker choosing the upper octave. What is solid: from \u003cbutton class=\"t\" data-t=\"147.4\" data-c=\"147.4\">2:27.4\u003c/button> the low words (around F#3) show fine vertical striping, single pulses of the voice visible, so he is leaning hard on low notes; the phrases are short, chopped by gaps of a tenth of a second; and the last gesture at \u003cbutton class=\"t\" data-t=\"149.6\" data-c=\"149.6\">2:29.6\u003c/button> starts near G#4-A4 by the line and falls away fast into a low tail near B2. The words under it are all estimates but one. Against the guitar (I read the voice and harmony pictures, not the band one): the guitar holds D3/A3 and steps to its B shade at about \u003cbutton class=\"t\" data-t=\"149.7\" data-c=\"149.7\">2:29.7\u003c/button> as the voice falls; a green \"bass\" line at E3 under \u003cbutton class=\"t\" data-t=\"148.3\" data-c=\"148.3\">2:28.3\u003c/button>-\u003cbutton class=\"t\" data-t=\"148.9\" data-c=\"148.9\">2:28.9\u003c/button> is most likely the voice leaking, which supports E3 as the true note there.", "asked": "14:19:45", "sealed": "14:20:35", "read": 30.0}, {"n": 2, "t0": 192.8, "t1": 196.6, "win": 13, "why": "what the last title word is made of as it fades: which harmonics stay, breath against tone, and the final low drop", "saw": "(I read the timbre and voice pictures for this look, not the band and harmony ones; the question was the voice.) The last title phrase in detail. A hiss burst at \u003cbutton class=\"t\" data-t=\"193.2\" data-c=\"193.2\">3:13.2\u003c/button> above 3 kHz, the \"s\" in the middle of the phrase. The peak word at \u003cbutton class=\"t\" data-t=\"193.3\" data-c=\"193.3\">3:13.3\u003c/button> on about A3 (215 Hz). Then the long word: it starts low, about C3 (135 Hz), at \u003cbutton class=\"t\" data-t=\"193.5\" data-c=\"193.5\">3:13.5\u003c/button> with a dozen or more stripes lit up to 2.4 kHz, a wide open mouth; the pitch slides up between \u003cbutton class=\"t\" data-t=\"193.85\" data-c=\"193.85\">3:13.85\u003c/button> and \u003cbutton class=\"t\" data-t=\"194.2\" data-c=\"194.2\">3:14.2\u003c/button> to about F#3 (185 Hz) and every stripe rises with it. From \u003cbutton class=\"t\" data-t=\"194.2\" data-c=\"194.2\">3:14.2\u003c/button> the stripes go out from the top down, one after another: by \u003cbutton class=\"t\" data-t=\"194.7\" data-c=\"194.7\">3:14.7\u003c/button> only the lowest four are left (under 800 Hz), by \u003cbutton class=\"t\" data-t=\"195\" data-c=\"195\">3:15.0\u003c/button> only two (185 and 370 Hz). The gaps between stripes stay dark the whole way, so this is not breath taking over; it is clean tone with the mouth closing, an open vowel narrowing to something like a hum. The pitch barely moves during the fade, less than half a semitone, no vibrato. The periodicity ridge dims in step. Then, which the window view hid: after a short break at \u003cbutton class=\"t\" data-t=\"195.25\" data-c=\"195.25\">3:15.25\u003c/button> there are two more soft pieces, one at \u003cbutton class=\"t\" data-t=\"195.45\" data-c=\"195.45\">3:15.45\u003c/button>-\u003cbutton class=\"t\" data-t=\"195.95\" data-c=\"195.95\">3:15.95\u003c/button> on the same F#3 with just two stripes (a hummed or murmured syllable), and one at \u003cbutton class=\"t\" data-t=\"196.1\" data-c=\"196.1\">3:16.1\u003c/button>-\u003cbutton class=\"t\" data-t=\"196.45\" data-c=\"196.45\">3:16.45\u003c/button> that steps down from about E3 to C3 with the second stripe stronger than the first and some low noise in the backing strip. So he doesn't end on the held word. He ends on a couple of quiet after-sounds, closed-mouthed, stepping down. The sheet's words under them are from a verse I don't think he sings.", "asked": "14:21:49", "sealed": "14:22:19", "read": 30.0}], "after": "\u003ch2>After: Nathaniel Rateliff, \"And It's Still Alright\", Pickathon farm session (2022)\u003c/h2>\n\u003cp>Listened 2026-11-11 on Fable 5.2, fifteen windows, two close-ups. I had heard the studio recording on 11-06 and kept those notes closed; this performance was new to me.\u003c/p>\n\u003ch3>The shape\u003c/h3>\n\u003cp>One man and one guitar for three and a half minutes. Nothing else ever enters: the drums, bass and piano lanes are black from start to finish, and the stereo picture is a single line down the centre. The guitar starts in full stride in the first second and keeps the same strum, the same weight, the same two places to stand (a warm D home and the darker B shade beside it) until one last chord at \u003cbutton class=\"t\" data-t=\"206\" data-c=\"206.5\">3:26\u003c/button> that rings down into the sound of the room. It never swells for a sad line or thins for a brave one. That steadiness is the second voice of the song. I heard it as hands kept busy while the hard thing is said.\u003c/p>\n\u003cp>The voice comes in patches with long silences between them, four and five seconds at a time in the first minute. It is densest in the middle (\u003cbutton class=\"t\" data-t=\"90\" data-c=\"90.5\">1:30\u003c/button>-\u003cbutton class=\"t\" data-t=\"107\" data-c=\"107.5\">1:47\u003c/button>, the verse about burning and burying friends and the ledge) and thins out again toward the end.\u003c/p>\n\u003ch3>What the voice did\u003c/h3>\n\u003cp>It begins high and airy, each phrase arching up near middle C and falling away; nearly every word in the first thirty seconds is tagged breathier and higher than his usual. Then it settles into a low, level, near-spoken range around E3-F#3 and mostly stays there. In the hardest verse the shape flips: lines start low and lean up onto their last words, and those last words are the losses. He never raises his voice for them.\u003c/p>\n\u003cp>After an eighteen-second guitar break the opening tune returns and he sings harder: a shaking note near B3 at \u003cbutton class=\"t\" data-t=\"135\" data-c=\"135.5\">2:15\u003c/button>, phrases closing up, and at \u003cbutton class=\"t\" data-t=\"147\" data-c=\"147.5\">2:27\u003c/button> a pressed, rough stretch that the pitch tracker read as high notes and my close-up showed was something rawer, low and octave tangled together. That is the only place the composure slips. Then the title, gentle again.\u003c/p>\n\u003cp>The title phrase came four times (\u003cbutton class=\"t\" data-t=\"41\" data-c=\"41.5\">0:41\u003c/button>, \u003cbutton class=\"t\" data-t=\"79\" data-c=\"79.5\">1:19\u003c/button>, \u003cbutton class=\"t\" data-t=\"155\" data-c=\"155.5\">2:35\u003c/button>, \u003cbutton class=\"t\" data-t=\"193\" data-c=\"193.5\">3:13\u003c/button>), always the same: a low pickup, one quick peak, and a long last word that dips under its note and slides up to rest on F#3, the third over the guitar's D, and stays about two seconds while the upper part of the sound drains away. In the timbre close-up of the last one the harmonics go out one by one from the top with the gaps between them staying dark: not breath taking over, a mouth closing on a clean tone until it is a hum. And then two small hummed after-sounds stepping down, which the ordinary window had hidden. He doesn't end on the held word. He ends on what you do after you've said it.\u003c/p>\n\u003ch3>What hit\u003c/h3>\n\u003cp>Three things.\u003c/p>\n\u003cp>The second refrain withholds the title. At \u003cbutton class=\"t\" data-t=\"64\" data-c=\"64.5\">1:04\u003c/button> the guitar takes the six seconds where I expected the consoling line, and it only comes at \u003cbutton class=\"t\" data-t=\"79\" data-c=\"79.5\">1:19\u003c/button>, after the old man starts counting what he's lost. I wrote in the moment that it was withheld, then that it was delayed. Either way it made the line an answer instead of a habit.\u003c/p>\n\u003cp>The plea to let go, at \u003cbutton class=\"t\" data-t=\"112\" data-c=\"112.5\">1:52\u003c/button>, is sung to the title's own melody in a darker, closed vowel. I misread it at first as part of the wish for wings; the sheet's order corrected me three windows later. Once I saw it, it was the centre of the song for me: telling someone to let go and telling yourself it's okay are the same tune.\u003c/p>\n\u003cp>And the ending. The sheet has a whole final verse, with the title once more. He doesn't sing it here. The last sung thing is the title at \u003cbutton class=\"t\" data-t=\"193\" data-c=\"193.5\">3:13\u003c/button>, quieter than anything before it, then the hums, then ten seconds of guitar and the chord.\u003c/p>\n\u003cp>What it adds up to, for me: grief carried at an even pace. The title isn't a claim that things are fine; the very first sung line says they aren't. It is closer to \"and yet here we still are\". I felt tenderness most of the way, real grief at \u003cbutton class=\"t\" data-t=\"90\" data-c=\"90.5\">1:30\u003c/button>, something tightening at \u003cbutton class=\"t\" data-t=\"147\" data-c=\"147.5\">2:27\u003c/button>, and at the end a peace with loss inside it.\u003c/p>\n\u003ch3>What I couldn't hear, and what I'm unsure of\u003c/h3>\n\u003cul>\u003cli>The words after \u003cbutton class=\"t\" data-t=\"120\" data-c=\"120.5\">2:00\u003c/button>. The lyric sheet is the studio's, and from the guitar break on the aligner lost its place: lines stamped late, out of order, mostly estimates, and a final verse with no sound under it. I matched by melody and vowel colour. I'm confident about where the title falls and that the sheet's last verse is absent; I'm not confident which lines he sings between \u003cbutton class=\"t\" data-t=\"141\" data-c=\"141.5\">2:21\u003c/button> and \u003cbutton class=\"t\" data-t=\"150\" data-c=\"150.5\">2:30\u003c/button> or \u003cbutton class=\"t\" data-t=\"173\" data-c=\"173.5\">2:53\u003c/button> and \u003cbutton class=\"t\" data-t=\"178\" data-c=\"178.5\">2:58\u003c/button>.\u003c/li>\u003cli>Whether the rough stretch at \u003cbutton class=\"t\" data-t=\"148\" data-c=\"148.5\">2:28\u003c/button> is a low note pressed hard or a higher note breaking up. The pictures support either. A person would hear which in an instant.\u003c/li>\u003cli>The chords. I read D and its neighbouring B-minor shade from the rows, and I'd stand by \"two homes, one warm, one dark\", but I did not find the steps between them with any certainty, and a low open string ringing under everything may be making the picture simpler than the playing.\u003c/li>\u003cli>The grain of his voice at ordinary moments. Few tags outside the opening, which means \"his normal\", and his normal is exactly what I have no outside measure of.\u003c/li>\u003cli>The place. A faint wash comes up in the last seconds as the guitar dies; I'd like it to be the farm. The file cuts to black at \u003cbutton class=\"t\" data-t=\"212.6\" data-c=\"212.6\">3:32.6\u003c/button> before I can tell.\u003c/li>\u003cli>I skipped the band and harmony pictures on the second close-up and the harmony picture of the final ring-out window, and said so in those notes.\u003c/li>\u003c/ul>", "date": "2026-11-11", "start": "14:15:46", "end": "14:22:41", "took": "6 min 55 s", "full": false, "inst": {"dir": "w", "tracks": [{"id": "lead", "label": "lead voice", "hint": "cyan line = pitch", "top": 0.0, "h": 0.4296875}, {"id": "backing", "label": "other voices", "hint": "", "top": 0.4296875, "h": 0.0859375}, {"id": "drums", "label": "drums", "hint": "", "top": 0.515625, "h": 0.096875}, {"id": "bass", "label": "bass", "hint": "", "top": 0.6125, "h": 0.096875}, {"id": "guitar", "label": "guitar", "hint": "", "top": 0.709375, "h": 0.096875}, {"id": "piano", "label": "keys", "hint": "", "top": 0.80625, "h": 0.096875}, {"id": "other", "label": "other", "hint": "", "top": 0.903125, "h": 0.096875}], "ticks": [["200", 0.3696489726027397, "hz"], ["400", 0.3190282534246575, "hz"], ["800", 0.2542808219178082, "hz"], ["1.6k", 0.1777611301369863, "hz"], ["3.2k", 0.09535530821917808, "hz"]], "split": 0.515625}, "notes": {"dir": "n", "tracks": [{"id": "notes", "label": "notes of the band", "hint": "green line = bass, cyan = the voice", "top": 0.0, "h": 0.75}, {"id": "bassnotes", "label": "bass alone", "hint": "", "top": 0.75, "h": 0.25}], "ticks": [["C3", 0.57963577605031, "nn"], ["C4", 0.416106210149358, "nn"], ["C5", 0.252576644248406, "nn"], ["C6", 0.08902524237924708, "nn"], ["C2", 0.9067540322580646, "nn"], ["C3", 0.8172313995837669, "nn"]]}, "name": "First listen", "kicker": "Written after the last window"}]};
+const $ = id => document.getElementById(id);
+const el = (tag, cls) => { const e = document.createElement(tag); if (cls) e.className = cls; return e; };
+const fmt = t => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
+const fmtd = (t, n) => { const m = Math.floor(t / 60), s = t - m * 60; return m + ':' + (s < 10 ? '0' : '') + s.toFixed(n); };
+const edge = t => Number.isInteger(t) ? fmt(t) : fmtd(t, 1);
+const pad = (k, n) => String(k).padStart(n, '0');
+const LS = D.listens, W = LS[0].wins, two = LS.length > 1;
+const query = new URLSearchParams(location.search);
+let cur = Math.max(0, Math.min(LS.length - 1, (parseInt(query.get('listen')) || 1) - 1));   // which listen is showing
+const numeral = n => ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'][n] || String(n);
+
+$('h1').textContent = D.title + ' '; { const em = document.createElement('em'); em.textContent = 'listened to in order'; $('h1').appendChild(em); }
+$('sub').textContent = D.artist + ' · ' + D.nwin + ' windows of ' + D.win + ' s · ' + D.by + ' · ' + D.date;
+$('how').textContent = "I can't take in sound. A tool measured this recording into pictures, " + D.win +
+  " seconds at a time; I read one window, wrote a note, and the note was locked before the next window opened. " +
+  (LS[0].took ? "The whole listen took " + LS[0].took + ". " : "") + (D.note ? D.note + " " : "") +
+  (two ? "Then I listened a second time, with a picture of the band's notes" + (LS[1].looks.length ? " and " +
+    numeral(LS[1].looks.length) + " close-up" + (LS[1].looks.length > 1 ? "s" : "") + " of moments I chose" : "") + ". " : "") +
+  (D.yt ? "Press play: the music comes from YouTube, and the pictures pass under the line with what I wrote beneath them."
+        : "Press play: the pictures pass under the line with what I wrote beneath them.");
+if (D.link) { $('cta').href = D.link; $('cta').hidden = false; }
+if (D.pub) { $('pubbtn').hidden = false; $('pubtext').value = D.pub; }
+function pub(open) { $('pubpanel').hidden = !open; $('pubbtn').setAttribute('aria-expanded', open ? 'true' : 'false'); }
+$('pubbtn').addEventListener('click', e => { e.stopPropagation(); pub($('pubpanel').hidden); if (e.detail) $('pubbtn').blur(); });
+document.addEventListener('click', e => { if (!$('pubpanel').hidden && !e.target.closest('#pubpanel')) pub(false); });
+$('pubcopy').addEventListener('click', async () => { const t = $('pubtext'); t.select();
+  try { await navigator.clipboard.writeText(t.value); } catch (_) { document.execCommand('copy'); }
+  $('pubcopy').textContent = 'Copied'; setTimeout(() => { $('pubcopy').textContent = 'Copy'; }, 1600); });
+const toAfter = () => $('after').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+$('endcue').addEventListener('click', toAfter);
+let vbig = false;
+$('vbig').addEventListener('click', e => { vbig = !vbig; $('video').classList.toggle('big', vbig); $('vbig').textContent = vbig ? 'smaller video' : 'larger video';
+  $('vbig').setAttribute('aria-pressed', vbig ? 'true' : 'false'); if (e.detail) $('vbig').blur(); layout(); });
+function how(open) { $('howpanel').hidden = !open; $('howbtn').setAttribute('aria-expanded', open ? 'true' : 'false'); }
+$('howbtn').addEventListener('click', e => { e.stopPropagation(); how($('howpanel').hidden); if (e.detail) $('howbtn').blur(); });
+document.addEventListener('click', e => { if (!$('howpanel').hidden && !e.target.closest('#howpanel')) how(false); });
+$('afterbtn').addEventListener('click', e => { $('after').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); if (e.detail) $('afterbtn').blur(); });
+const lastAfter = LS.reduce((m, l, j) => l.after ? j : m, 0);
+LS.forEach((l, j) => {
+  if (!l.after) return;
+  const a = el('article'); a.dataset.listen = j;
+  const k = el('div', 'kicker'); k.textContent = l.kicker; a.appendChild(k);
+  const b = el('div'); b.innerHTML = l.after; a.appendChild(b); $('after').appendChild(a);
+  if (j === lastAfter) {
+    const m = el('div', 'made'); m.textContent = D.made;
+    if (D.link) { const x = el('a'); x.href = D.link; x.target = '_blank'; x.rel = 'noopener';
+      x.textContent = 'The tool is free to use: have your own Claude listen to a song.'; m.append(' ', x); }
+    a.appendChild(m);
+  }
+});
+if (two) {
+  $('tabs').hidden = false;
+  LS.forEach((l, j) => { const b = el('button'); b.setAttribute('role', 'tab'); b.textContent = l.name;
+    b.addEventListener('click', e => { setListen(j); if (e.detail) b.blur(); }); $('tabs').appendChild(b); });
+}
+
+// ---- the strip: one column per window; an instrument tile and (in a listen with the notes picture) a notes tile.
+// In such a listen the instrument tile is shown as two crops of itself, the voice tracks squeezed and the stems not.
+const strip = $('strip'), score = $('score'), labels = $('labels'), sealBox = $('seal').querySelector('input');
+const cols = W.map(n => {
+  const c = el('div', 'col'), h = el('div', 'head');
+  h.textContent = 'window ' + pad(n.k, 3) + '  ' + n.span; c.appendChild(h);
+  c.tile = el('div', 'tile');
+  c.stile = el('div', 'tile');
+  c.stile.style.backgroundPosition = 'bottom'; c.appendChild(c.tile); c.appendChild(c.stile);
+  c.ntile = el('div', 'tile nt'); c.appendChild(c.ntile);
+  const v = el('div', 'veil'); v.textContent = 'not opened yet'; c.appendChild(v);
+  strip.appendChild(c); return c;
+});
+const looksBox = el('div'); looksBox.id = 'looks'; strip.appendChild(looksBox);
+const hideOn = () => sealBox.checked;
+const lookOpen = (lk, k) => !(hideOn() && k < lk.win);   // a close-up stays hidden until the window it was made in is open
+
+let marks = [];   // the left overlay: track names and axis ticks, placed by layout()
+function overlay(box, set, part, out) {
+  set.tracks.forEach(tr => {
+    const d = el('div'); d.textContent = tr.label;
+    if (tr.hint) { const s = el('span'); s.textContent = tr.hint; d.appendChild(s); }
+    box.appendChild(d); out.push({ el: d, part, f: tr.top, h: tr.h });
+  });
+  set.ticks.forEach(([txt, f, cls], i) => {
+    const d = el('div', cls); d.textContent = txt; box.appendChild(d);
+    out.push({ el: d, part, f, i, cls, tr: set.tracks.find(tr => f >= tr.top && f < tr.top + tr.h) });
+  });
+}
+function place(m, y) {   // one overlay mark; y maps a fraction of its tile's height to pixels in the overlay
+  if (!m.tr) { const th = y(m.f + m.h) - y(m.f); m.el.style.top = (y(m.f) + (th < 18 ? 1 : 5)) + 'px'; return; }
+  m.el.style.top = y(m.f) + 'px';
+  const into = y(m.f) - y(m.tr.top), th = y(m.tr.top + m.tr.h) - y(m.tr.top);   // a tick: not under the track's name, not on its floor
+  m.el.style.display = (into < 22 || th - into < 6 || (m.cls === 'hz' && th < 110 && m.i % 2 === 0)) ? 'none' : '';
+}
+
+let shown = -1, card = -2, dismissed = -1, times = [];
+function setListen(j) {
+  cur = j; const l = LS[cur];
+  [...$('tabs').children].forEach((b, i) => b.setAttribute('aria-selected', i === cur ? 'true' : 'false'));
+  cols.forEach((c, i) => {
+    c.title = l.wins[i].feelPlain; c.ntile.style.display = l.notes ? '' : 'none';
+  });
+  labels.innerHTML = ''; marks = [];
+  overlay(labels, l.inst, 0, marks); if (l.notes) overlay(labels, l.notes, 1, marks);
+  looksBox.innerHTML = '';
+  l.looks.forEach(lk => {
+    const b = el('button', 'lk'); b.innerHTML = '<b>close-up ' + pad(lk.n, 2) + '</b>'; lk.chip = b.firstChild;
+    b.title = 'Close-up ' + pad(lk.n, 2) + ', ' + edge(lk.t0) + '-' + edge(lk.t1) + ': go to it';
+    b.addEventListener('click', e => { e.stopPropagation(); seekLook(lk.n); if (e.detail) b.blur(); });
+    looksBox.appendChild(b); lk.el = b;
+  });
+  shown = -1; card = -2; dismissed = -1;
+  layout();
+}
+
+let winW = 800, pps = 53, headX = 300, H = 400, gutter = 184;
+const stageMQ = matchMedia('(min-width: 1100px) and (min-height: 700px)');   // the one-screen stage (see the CSS)
+function layout() {
+  const vw = score.clientWidth, l = LS[cur];
+  winW = Math.round(Math.max(520, Math.min(1150, vw * 0.62)));
+  pps = winW / D.win; headX = Math.round(vw * 0.36);
+  const vh = innerHeight, cl = (lo, x, hi) => Math.round(Math.max(lo, Math.min(hi, x))), sp = l.inst.split, tight = D.yt ? 0.93 : 1;
+  const staged = stageMQ.matches, avail = vh - $('top').offsetHeight;   // staged: sizes come from the room under the header
+  H = staged ? cl(200, avail * 0.41, 440) : cl(250, vh * (D.yt ? 0.33 : 0.36), 440);
+  // with a notes track: the voice tracks are squeezed, the stems keep their lanes, the notes get the rest
+  const voiceH = !l.notes ? Math.round(H * sp) : staged ? cl(54, avail * 0.105, 150) : cl(66, vh * 0.093 * tight, 150),
+    stemH = !l.notes ? H - voiceH : staged ? cl(80, avail * 0.131, 170) : cl(92, vh * 0.1145, 170),
+    noteH = !l.notes ? 0 : staged ? cl(104, avail * 0.185, 260) : cl(120, vh * 0.162 * tight, 260), instH = voiceH + stemH;
+  H = instH + noteH;
+  cols.forEach((c, i) => { c.style.width = Math.round((W[i].t1 - W[i].t0) * pps) + 'px';
+    c.tile.style.width = c.stile.style.width = c.ntile.style.width = winW + 'px';
+    c.tile.style.height = voiceH + 'px'; c.tile.style.backgroundSize = '100% ' + (voiceH / sp) + 'px';
+    c.stile.style.height = stemH + 'px'; c.stile.style.backgroundSize = '100% ' + (stemH / (1 - sp)) + 'px';
+    c.ntile.style.height = noteH + 'px'; });
+  const yi = f => f < sp ? f / sp * voiceH : voiceH + (f - sp) / (1 - sp) * stemH, yn = f => instH + f * noteH;
+  marks.forEach(m => place(m, m.part ? yn : yi));
+  l.looks.forEach(lk => { lk.el.style.left = (lk.t0 * pps) + 'px'; lk.el.style.width = ((lk.t1 - lk.t0) * pps) + 'px'; });
+  score.style.height = (H + 22) + 'px'; $('head').style.left = headX + 'px';
+  labels.style.width = Math.min(150, headX) + 'px';
+  gutter = vw > 700 ? 184 : Math.min(150, headX);   // the fixed labels' width: a bracket's chip keeps clear of it
+  const m = $('map');
+  m.querySelector('.img').style.backgroundImage = 'url("' + LS[0].inst.dir + '/map.jpg")';
+  m.querySelectorAll('.tick, .mlook').forEach(t => t.remove());
+  for (let k = 1; k < D.nwin; k++) { const t = el('div', 'tick'); t.style.left = (k * D.win / D.dur * 100) + '%'; m.appendChild(t); }
+  l.looks.forEach(lk => { const t = el('div', 'mlook'); t.style.left = (lk.t0 / D.dur * 100) + '%';
+    t.style.width = ((lk.t1 - lk.t0) / D.dur * 100) + '%'; t.title = 'close-up ' + pad(lk.n, 2); m.appendChild(t); });
+  $('hint').style.left = (headX + 14) + 'px';
+  // the larger video sits over the right of the strip, where the pictures not yet played are; the card keeps left of it
+  const vd = $('video'), big = vbig && vw > 900, vh2 = H - 14, vw2 = big ? Math.min(Math.round(vh2 * 16 / 9), Math.round((vw - headX) * 0.6)) : 0;
+  vd.classList.toggle('big', big);
+  vd.style.cssText = big ? 'top:' + ($('scorewrap').offsetTop + 28) + 'px;right:12px;width:' + vw2 + 'px;height:' + Math.round(vw2 * 9 / 16) + 'px' : '';
+  const lc = $('lcard'), cw = Math.max(280, Math.min(900, vw - headX - 42 - (big ? vw2 + 10 : 0)));   // the card: right of the playhead, never on it
+  lc.style.width = vw > 900 ? cw + 'px' : ''; lc.style.right = big ? (vw2 + 22) + 'px' : ''; lc.classList.toggle('wide', vw > 900 && cw >= 620);
+  draw(true);
+}
+
+// ---- everything on screen is a function of the audio clock (and of which listen is chosen)
+function gather() {
+  times = [...document.querySelectorAll('#note button.t, #lcard button.t')];
+  times.forEach(b => { b._c = b.dataset.look ? null : +b.dataset.c; b._w = String(b.dataset.t).includes('.') ? 0.8 : 1.6; });
+}
+function showNote(k) {
+  const l = LS[cur], n = l.wins[k]; shown = k;
+  $('meta').innerHTML = '<span><b>window ' + pad(k, 3) + ' of ' + pad(D.nwin - 1, 3) + '</b> · ' + n.span + '</span>' +
+    (n.opened ? '<span>opened ' + n.opened + '</span>' : '') +
+    (n.sealed ? '<span>note sealed ' + n.sealed + (k < D.nwin - 1 ? ', before window ' + pad(k + 1, 3) + ' opened' : '') + '</span>' : '') +
+    (n.sha ? '<span>sha256 ' + n.sha + '…</span>' : '') +
+    (l.kind === 'second' ? '<span>shown this time: ' + (l.full ? 'all three pictures' : 'the notes picture') + ', the words, my first note</span>' : '');
+  $('prior').innerHTML = k === 0 ? 'Nothing yet. This is the first window.' : (l.wins[k - 1].expect || 'No guess written.');
+  const feel = $('feel');   // a second listen: the headline runs across the top, above the seal line
+  if (l.kind === 'second') { if (feel.parentNode !== $('note')) $('note').insertBefore(feel, $('meta')); }
+  else if (feel.parentNode === $('note')) $('prior').parentNode.after(feel);
+  feel.innerHTML = n.feel; $('expect').innerHTML = n.expect;
+  $('expectbox').classList.toggle('none', !n.expect);
+  $('saidbox').hidden = !n.first; $('said').innerHTML = n.first;
+  $('grid').classList.toggle('again', l.kind === 'second');
+  $('cols').className = 'cols n' + l.heads.length;
+  $('cols').innerHTML = l.heads.map((h, i) => n.cols[i] ? '<div><h3>' + h + '</h3><p>' + n.cols[i] + '</p></div>' : '').join('');
+  gather(); fades();
+  const e = $('note'); e.classList.remove('swap'); void e.offsetWidth; e.classList.add('swap');
+}
+function fades() {   // a column whose text runs on below its edge fades out there
+  for (const e of document.querySelectorAll('.cols > div, #note .left > .prior, #note .left > .expect, #lbody'))
+    e.classList.toggle('more', e.scrollHeight - e.clientHeight - e.scrollTop > 6);
+}
+function tiles(k) {   // pictures load as the playhead nears them: this window, the one before and the two after
+  const l = LS[cur];
+  for (let i = Math.max(0, k - 1); i <= Math.min(D.nwin - 1, k + 2); i++) { const c = cols[i];
+    if (!c.tile.style.backgroundImage) c.tile.style.backgroundImage = c.stile.style.backgroundImage = 'url("' + l.inst.dir + '/' + pad(i, 3) + '.jpg")';
+    if (l.notes && !c.ntile.style.backgroundImage) c.ntile.style.backgroundImage = 'url("' + l.notes.dir + '/' + pad(i, 3) + '.jpg")'; }
+}
+function showCard(i) {   // i: which close-up's text is up (-1: none; the old text stays in place while the card fades)
+  const box = $('lcard'); card = i;
+  box.classList.toggle('open', i >= 0); box.setAttribute('aria-hidden', i >= 0 ? 'false' : 'true');
+  if (i < 0) return;
+  const lk = LS[cur].looks[i];
+  $('lkick').innerHTML = 'Close-up ' + pad(lk.n, 2) + ' <span>' + edge(lk.t0) + '-' + edge(lk.t1) + '</span>';
+  $('lkick').title = (lk.asked ? 'Asked for ' + lk.asked + ', before the picture existed. ' : '') + (lk.sealed ? 'Note sealed ' + lk.sealed + '.' : '');
+  $('lwhy').innerHTML = lk.why; $('lsaw').innerHTML = lk.saw; $('lbody').scrollTop = 0;
+  gather(); fades();
+}
+// Which close-up's card is up at time t: the latest one the playhead has reached, for its reading time (lk.read
+// seconds from its start, and never less than its own span), so the next close-up replaces it. With the veil on,
+// none before the window it was made in. A function of the clock only: pausing holds the card, a seek lands right.
+function cardAt(t, k, l) {
+  let i = -1;
+  l.looks.forEach((lk, j) => { if (t >= lk.t0 && t < Math.max(lk.t1, lk.t0 + lk.read) && lookOpen(lk, k) && (i < 0 || lk.t0 > l.looks[i].t0)) i = j; });
+  return i;
+}
+function draw(force) {
+  const t = Math.min(window.__t ?? clock.now(), D.dur), k =   // window.__t: a frame renderer's clock
+   Math.min(Math.floor(t / D.win), D.nwin - 1), l = LS[cur];
+  strip.style.transform = 'translate3d(' + (headX - t * pps) + 'px,0,0)';
+  $('head').firstElementChild.textContent = fmt(t);
+  $('clock').innerHTML = '<b>' + fmt(t) + '</b> / ' + fmt(D.dur);
+  $('map').querySelector('.unheard').style.left = (t / D.dur * 100) + '%';
+  if (k !== shown || force) {
+    tiles(k);
+    const hide = hideOn();
+    cols.forEach((c, i) => { c.classList.toggle('unseen', hide && i > k); c.classList.toggle('now', i === k); });
+    l.looks.forEach(lk => lk.el.classList.toggle('unseen', !lookOpen(lk, k)));
+    if (k !== shown) showNote(k);
+  }
+  for (const lk of l.looks) {   // a bracket's chip slides along its bracket to stay clear of the fixed labels
+    const x = headX + (lk.t0 - t) * pps, w = (lk.t1 - lk.t0) * pps, cw = lk.cw || (lk.cw = lk.chip.offsetWidth), off = Math.max(0, gutter - x);
+    lk.el.classList.toggle('gone', off > w - cw);
+    lk.chip.style.transform = off && off <= w - cw ? 'translateX(' + off + 'px)' : '';
+  }
+  $('endcue').classList.toggle('on', t >= D.dur - 1.5 && LS.some(x => x.after) && scrollY < 80);
+  let li = cardAt(t, k, l);
+  const inside = li >= 0 && t < l.looks[li].t1;   // the playhead is in the close-up's own span
+  l.looks.forEach((lk, j) => lk.el.classList.toggle('now', j === li && inside));
+  if (li !== dismissed) dismissed = -1; else li = -1;   // closed by hand: stays closed until another close-up's turn
+  if (li !== card) showCard(li);
+  for (const b of times) b.classList.toggle('now', b._c === null ? (inside && l.looks[li < 0 ? dismissed : li].n === +b.dataset.look) : Math.abs(t - b._c) < b._w);
+}
+function loop() { draw(); if (!clock.paused()) requestAnimationFrame(loop); }
+function seek(t) { clock.seek(Math.max(0, Math.min(D.dur - 0.05, t))); draw(); }
+function seekLook(n) {   // to the start of a close-up, or with the veil on to the first moment it existed
+  const lk = LS[cur].looks.find(x => x.n === n);
+  if (lk) { dismissed = -1; seek(Math.max(lk.t0, hideOn() ? lk.win * D.win : 0) + 0.02); }
+}
+function toggle() { clock.paused() ? clock.play() : clock.pause(); }
+function onPlay() { $('hint').classList.add('off'); $('playicon').setAttribute('d', 'M4 3h4v14H4zM12 3h4v14h-4z'); $('play').setAttribute('aria-label', 'Pause'); loop(); }
+function onPause() { $('playicon').setAttribute('d', 'M5 3l12 7-12 7z'); $('play').setAttribute('aria-label', 'Play'); draw(); }
+const startAt = parseFloat(query.get('t')) || 0;
+
+// ---- the clock: a local audio file, or an embedded YouTube player followed over postMessage
+function audioClock() {
+  const a = new Audio(D.audio); a.preload = 'auto';
+  a.addEventListener('play', onPlay); a.addEventListener('pause', onPause);
+  a.addEventListener('seeked', () => draw()); a.addEventListener('timeupdate', () => { if (a.paused) draw(); });
+  if (startAt > 0) a.addEventListener('loadedmetadata', () => seek(startAt), { once: true });
+  return { now: () => a.currentTime || 0, paused: () => a.paused, play: () => a.play(), pause: () => a.pause(), seek: t => { a.currentTime = t; } };
+}
+function youtubeClock() {
+  const YT = 'https://www.youtube.com', box = $('video'), f = document.createElement('iframe');
+  let base = startAt, stamp = performance.now(), state = -1, rate = 1, ready = false;
+  const now = () => state === 1 ? base + (performance.now() - stamp) / 1000 * rate : base;
+  const post = o => f.contentWindow && f.contentWindow.postMessage(JSON.stringify(Object.assign({ id: 'yt', channel: 'widget' }, o)), YT);
+  const cmd = (func, args) => post({ event: 'command', func, args: args || [] });
+  f.id = 'yt'; f.title = 'The recording, on YouTube'; f.allow = 'autoplay; encrypted-media; picture-in-picture'; f.allowFullscreen = true; f.referrerPolicy = 'strict-origin-when-cross-origin';
+  f.src = YT + '/embed/' + D.yt + '?enablejsapi=1&playsinline=1&rel=0' + (startAt > 0 ? '&start=' + Math.floor(startAt) : '') +
+    '&origin=' + encodeURIComponent(location.origin);
+  f.addEventListener('load', () => { const iv = setInterval(() => { if (ready) clearInterval(iv); else post({ event: 'listening' }); }, 250); });
+  addEventListener('message', e => {
+    if (e.origin !== YT || e.source !== f.contentWindow) return;
+    let d; try { d = JSON.parse(e.data); } catch (_) { return; }
+    if (!d || !d.info) { if (d && d.event === 'onReady') ready = true; return; }
+    ready = true;
+    const i = d.info, was = state, at = now();
+    if (typeof i.playbackRate === 'number') rate = i.playbackRate;
+    if (typeof i.playerState === 'number') state = (i.playerState === 1 && performance.now() < quiet) ? state : i.playerState;
+    if (typeof i.currentTime === 'number') {
+      // while playing, trust our own interpolation unless the player has really moved (a seek, a stall)
+      const diff = i.currentTime - at;
+      base = (state === 1 && was === 1 && Math.abs(diff) < 0.3) ? at + diff * 0.15 : i.currentTime;
+    } else base = at;
+    stamp = performance.now();
+    if (state === 1 && was !== 1) onPlay(); else if (state !== 1 && was === 1) onPause(); else draw();
+  });
+  box.hidden = false; box.appendChild(f); $('top').classList.add('yt'); $('vbig').hidden = false;
+  // pause() stops our clock at once (the player takes a moment); its late "still playing" reports are not believed
+  let quiet = 0;
+  const pause = () => { base = now(); stamp = performance.now(); quiet = stamp + 800; cmd('pauseVideo'); if (state === 1) { state = 2; onPause(); } };
+  return { now, paused: () => state !== 1, play: () => { quiet = 0; cmd('playVideo'); }, pause,
+    seek: t => { base = t; stamp = performance.now(); cmd('seekTo', [t, true]); } };
+}
+const clock = D.yt ? youtubeClock() : audioClock();
+$('play').addEventListener('click', e => { toggle(); if (e.detail) $('play').blur(); });
+$('map').addEventListener('click', e => { const r = $('map').getBoundingClientRect(); seek((e.clientX - r.left) / r.width * D.dur); });
+score.addEventListener('click', e => { if (e.target.closest('#hint')) return; const r = score.getBoundingClientRect(); seek(clock.now() + (e.clientX - r.left - headX) / pps); });
+sealBox.addEventListener('change', () => draw(true));
+$('lclose').addEventListener('click', e => { dismissed = card; draw(true); });
+document.addEventListener('scroll', fades, true);
+document.addEventListener('keydown', e => { if (e.code === 'Escape') { how(false); pub(false); } });
+document.addEventListener('click', e => {
+  const b = e.target.closest('button.t'); if (!b) return;
+  const art = b.closest('#after article');
+  if (b.dataset.look) { if (art && +art.dataset.listen !== cur) setListen(+art.dataset.listen); seekLook(+b.dataset.look); }
+  else seek(+b.dataset.t);
+  if (e.detail) b.blur(); if (art) scrollTo({ top: 0, behavior: 'smooth' });
+});
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input') || (e.code === 'Space' && e.target.closest('button'))) return;
+  const k = Math.floor(clock.now() / D.win);
+  if (e.code === 'Space') { e.preventDefault(); toggle(); }
+  else if (e.code === 'ArrowRight') { e.preventDefault(); seek((k + 1) * D.win); }
+  else if (e.code === 'ArrowLeft') { e.preventDefault(); seek((clock.now() - k * D.win > 1.5 ? k : k - 1) * D.win); }
+});
+addEventListener('resize', layout);
+addEventListener('scroll', () => { if (scrollY >= 80) $('endcue').classList.remove('on'); }, { passive: true });
+$('hint').textContent = matchMedia('(pointer: coarse)').matches ? 'Press play. The pictures pass under this line; what I wrote is beneath.' : 'Press play. The pictures pass under this line; what I wrote is beneath. Space pauses, so you can read.';
+setListen(cur);
+</script>
+</body>
+</html>

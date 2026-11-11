@@ -645,6 +645,13 @@ What the page shows, by the run's layout:
   room is left and its columns scroll inside themselves, fading at the bottom when there is more. The after-notes
   and the footer are below that. Smaller viewports get an ordinary flowing page.
 - Nothing pauses by itself. Space (or the play button) pauses, and the transport says so.
+- **Larger video** (a `--youtube` page, wide screens): a button in the transport moves the player over the right of
+  the strip, where the pictures not yet played are, and back. A close-up's card keeps to the left of it.
+- **The end.** In the last second and a half of the song a button comes up at the bottom of the screen and leads
+  down to the after-note.
+- **Publish this listen** (the local page only): a button that shows a request to copy and give to one's own AI. It
+  asks for a `--youtube` build, which holds no recording, to be put on GitHub Pages, shown locally first, and not
+  pushed without asking. The text names the run by its folder, never by a path.
 
 Options:
 

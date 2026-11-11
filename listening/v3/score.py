@@ -449,6 +449,31 @@ def read_listen(run, st, first_run=None, fix=lambda s: s, with_after=True):
                 full=bool(st.get("full")), texts=texts)
 
 
+def publish_request(run, work, st, second=""):
+    """The text a local page offers for copying: a request to the reader's own AI to publish this listen as a page
+    without the recording. It names the run by its folder, never by a path on this machine."""
+    try:
+        src = open(os.path.join(work, "source.txt"), encoding="utf-8").read().strip().split(" | ")[-1]
+    except OSError:
+        src = ""
+    m = re.search(r"(?:youtube\.com/watch\?(?:.*&)?v=|youtu\.be/)([\w-]{11})", src)
+    runs = f"runs/{os.path.basename(run)}" + (f" --second runs/{os.path.basename(second)}" if second else "")
+    song = f"{st.get('artist', '')}, \"{st.get('title', '')}\""
+    if m:
+        how = (f"Build the page with: score.py {runs} --youtube {m.group(1)} --url <the address the page will have>. "
+               "That version holds no recording; it embeds the YouTube video the audio was measured from and follows its clock.")
+    else:
+        how = (f"This listen was made from a local audio file. Find the same recording on YouTube, check that its "
+               f"length matches to within a second, and build the page with: score.py {runs} --youtube <video id> "
+               "--url <the address the page will have>. If you can't find the same recording, tell me and don't publish.")
+    return (f"Please publish my listen of {song} as a public web page. {how} "
+            "Put only the contents of the run's share folder into a folder of a GitHub repository of mine that has "
+            "Pages turned on (with an empty .nojekyll file at the repository's root). Never publish the score folder, "
+            "the rest of the run folder or any audio file: they hold the recording and the lyric. "
+            "Show me the page locally first (it has to be served over http, e.g. python3 -m http.server), tell me "
+            "how much of the lyric the notes quote (score.py prints it), and ask me before you push anything public.")
+
+
 def build(run, out, audio, by, note="", youtube="", link="", second="", pictures="", redrawn="", redact=(),
           omit_second_after=False, url=""):
     st = json.load(open(os.path.join(run, "state.json"), encoding="utf-8"))
@@ -550,6 +575,7 @@ def build(run, out, audio, by, note="", youtube="", link="", second="", pictures
     data = {
         "artist": st.get("artist", ""), "title": title, "dur": dur, "win": win, "nwin": nwin,
         "audio": "" if youtube else "song.m4a", "yt": youtube, "by": by, "note": note, "link": link,
+        "pub": "" if youtube else publish_request(run, work, st, second),
         "date": dates[0] if len(set(dates)) == 1 else " and ".join(dates), "made": " ".join(made),
         "listens": listens,
     }
@@ -616,12 +642,27 @@ header .sub { color: var(--muted); font-size: 12.5px; line-height: 1.3; margin-t
 header .lede { min-width: 0; }
 .lnk { color: var(--text); font-size: 12.5px; border-bottom: 1px dotted var(--muted); line-height: 1.2; }
 .lnk:hover, .lnk[aria-expanded="true"] { color: var(--cyan); border-bottom-color: var(--cyan); }
-a.cta { flex: none; display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 15px; border: 1px solid var(--cyan); border-radius: 17px; color: var(--cyan); font-size: 13px; font-weight: 500; text-decoration: none; white-space: nowrap; transition: background .2s, color .2s; }
-a.cta:hover { background: var(--cyan); color: var(--bg); }
-a.cta:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
-a.cta[hidden] { display: none; }
+.cta { flex: none; display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 15px; border: 1px solid var(--cyan); border-radius: 17px; color: var(--cyan); font-size: 13px; font-weight: 500; text-decoration: none; white-space: nowrap; transition: background .2s, color .2s; }
+.cta:hover { background: var(--cyan); color: var(--bg); }
+.cta:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.cta[hidden] { display: none; }
 #howpanel { position: absolute; z-index: 30; left: 28px; top: 50px; width: min(760px, calc(100vw - 56px)); padding: 14px 18px 16px; background: #191720; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 14px 40px rgba(0,0,0,.55); }
 #howpanel[hidden] { display: none; }
+#pubpanel { position: absolute; z-index: 30; right: 28px; top: 50px; width: min(620px, calc(100vw - 56px)); padding: 14px 18px 16px; background: #191720; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 14px 40px rgba(0,0,0,.55); }
+#pubpanel[hidden] { display: none; }
+#pubpanel p { margin: 0 0 10px; font-size: 13.5px; line-height: 1.5; color: #d3cdc3; text-wrap: pretty; }
+#pubtext { display: block; width: 100%; box-sizing: border-box; height: 190px; resize: vertical; padding: 10px 12px; font: 12.5px/1.5 var(--mono); color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; }
+#pubcopy { margin-top: 10px; height: 30px; padding: 0 14px; border: 1px solid var(--cyan); border-radius: 15px; color: var(--cyan); font-size: 12.5px; }
+#pubcopy:hover { background: var(--cyan); color: var(--bg); }
+#vbig { flex: none; height: 26px; padding: 0 10px; border: 1px solid var(--line); border-radius: 5px; font-size: 12px; color: var(--muted); white-space: nowrap; }
+#vbig:hover { color: var(--text); border-color: #3a3745; }
+#vbig[hidden] { display: none; }
+#stage { position: relative; }
+#video.big { position: absolute; z-index: 5; margin: 0; box-shadow: 0 8px 30px rgba(0,0,0,.6); border: 1px solid #3a3745; }
+#endcue { position: absolute; z-index: 20; left: 50%; bottom: 18px; transform: translate(-50%, 8px); height: 40px; padding: 0 20px; border-radius: 20px; background: var(--warm); color: var(--bg); font-size: 14px; font-weight: 600; box-shadow: 0 8px 28px rgba(0,0,0,.6); opacity: 0; visibility: hidden; transition: opacity .5s, transform .5s, visibility 0s .5s; }
+#endcue.on { opacity: 1; visibility: visible; transform: translate(-50%, 0); transition: opacity .5s, transform .5s; }
+#endcue span { display: inline-block; margin-left: 8px; animation: nudge 1.6s ease-in-out infinite; }
+@keyframes nudge { 0%, 100% { transform: none; } 50% { transform: translateY(4px); } }
 #howpanel .how { color: #d3cdc3; font-size: 13.5px; line-height: 1.55; margin: 0; text-wrap: pretty; }
 #after .made a { color: var(--cyan); text-decoration: none; border-bottom: 1px solid rgba(58,216,238,.45); }
 #after .made a:hover { border-bottom-color: var(--cyan); }
@@ -752,14 +793,14 @@ button.t.ref.now { background: var(--warm); color: var(--bg); }
 }
 @media (max-width: 900px) {
   header { flex-direction: column; align-items: flex-start; gap: 10px; }
-  #top.yt { display: block; } #video { width: auto; max-width: 420px; margin: 0 16px 10px; } #keys { display: none; } #hint { max-width: 60%; }
+  #top.yt { display: block; } #video { width: auto; max-width: 420px; margin: 0 16px 10px; } #keys, #vbig { display: none; } #hint { max-width: 60%; }
   #transport { flex-wrap: wrap; } #map { flex-basis: 100%; order: 9; }
   #note .grid, #note .grid.again, .cols, .cols.n2, .cols.n4 { grid-template-columns: 1fr; gap: 16px; } #seal span { display: none; }
   #lcard { position: static; display: none; margin: 10px 16px 0; transform: none; } #lcard.open { display: flex; } #lhintkey { display: none; }
   #lcard.wide #lcols { column-count: 1; } #lbody { flex: none; overflow: visible; }
 }
 @media (prefers-reduced-motion: reduce) {
-  #note.swap .grid, #note.swap > .feel { animation: none; } .col .veil, .lk, #lcard, #lcard.open { transition: none; }
+  #note.swap .grid, #note.swap > .feel { animation: none; } .col .veil, .lk, #lcard, #lcard.open, #endcue, #endcue.on { transition: none; } #endcue span { animation: none; }
 }
 </style>
 </head>
@@ -772,14 +813,17 @@ button.t.ref.now { background: var(--warm); color: var(--bg); }
     <h1 id="h1"></h1>
     <div class="sub"><span id="sub"></span><button class="lnk" id="howbtn" aria-expanded="false" aria-controls="howpanel">How this was made</button><button class="lnk" id="afterbtn">After-notes ↓</button></div>
   </div>
+  <button class="cta" id="pubbtn" aria-expanded="false" aria-controls="pubpanel" hidden>Publish this listen</button>
   <a class="cta" id="cta" target="_blank" rel="noopener" hidden>Have your Claude listen to a song <span aria-hidden="true">→</span></a>
 </header>
+<div id="pubpanel" hidden><p>This page holds the recording, so it is for you. To share the listen, give this to your AI: it builds a version with no audio in it, which follows the song on YouTube instead, and puts it on GitHub Pages.</p><textarea id="pubtext" readonly></textarea><button id="pubcopy">Copy</button></div>
 <div id="howpanel" hidden><p class="how" id="how"></p></div>
 <div id="transport">
   <button id="play" aria-label="Play"><svg viewBox="0 0 20 20"><path id="playicon" d="M5 3l12 7-12 7z"/></svg></button>
   <div id="clock"><b>0:00</b> / 0:00</div>
   <div id="tabs" role="tablist" aria-label="Which listen" hidden></div>
   <div id="map" title="Click to jump"><div class="img"></div><div class="unheard"></div></div>
+  <button id="vbig" aria-pressed="false" hidden>larger video</button>
   <div id="keys"><kbd>space</kbd>pause to read</div>
   <label id="seal" title="Each window stayed hidden until the note for the one before it was locked"><input type="checkbox" checked> <span>hide what I hadn't seen yet</span></label>
 </div>
@@ -792,6 +836,7 @@ button.t.ref.now { background: var(--warm); color: var(--bg); }
   <div id="lbody"><div id="lcols"><h3>What I was looking for</h3><p id="lwhy"></p><h3>What I saw</h3><p id="lsaw"></p></div></div>
 </aside>
 </div>
+<button id="endcue" tabindex="-1">That's the song. What I made of it <span aria-hidden="true">↓</span></button>
 <section id="note" aria-live="off">
   <div class="meta" id="meta"></div>
   <div class="grid" id="grid">
@@ -830,6 +875,18 @@ $('how').textContent = "I can't take in sound. A tool measured this recording in
   (D.yt ? "Press play: the music comes from YouTube, and the pictures pass under the line with what I wrote beneath them."
         : "Press play: the pictures pass under the line with what I wrote beneath them.");
 if (D.link) { $('cta').href = D.link; $('cta').hidden = false; }
+if (D.pub) { $('pubbtn').hidden = false; $('pubtext').value = D.pub; }
+function pub(open) { $('pubpanel').hidden = !open; $('pubbtn').setAttribute('aria-expanded', open ? 'true' : 'false'); }
+$('pubbtn').addEventListener('click', e => { e.stopPropagation(); pub($('pubpanel').hidden); if (e.detail) $('pubbtn').blur(); });
+document.addEventListener('click', e => { if (!$('pubpanel').hidden && !e.target.closest('#pubpanel')) pub(false); });
+$('pubcopy').addEventListener('click', async () => { const t = $('pubtext'); t.select();
+  try { await navigator.clipboard.writeText(t.value); } catch (_) { document.execCommand('copy'); }
+  $('pubcopy').textContent = 'Copied'; setTimeout(() => { $('pubcopy').textContent = 'Copy'; }, 1600); });
+const toAfter = () => $('after').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+$('endcue').addEventListener('click', toAfter);
+let vbig = false;
+$('vbig').addEventListener('click', e => { vbig = !vbig; $('video').classList.toggle('big', vbig); $('vbig').textContent = vbig ? 'smaller video' : 'larger video';
+  $('vbig').setAttribute('aria-pressed', vbig ? 'true' : 'false'); if (e.detail) $('vbig').blur(); layout(); });
 function how(open) { $('howpanel').hidden = !open; $('howbtn').setAttribute('aria-expanded', open ? 'true' : 'false'); }
 $('howbtn').addEventListener('click', e => { e.stopPropagation(); how($('howpanel').hidden); if (e.detail) $('howbtn').blur(); });
 document.addEventListener('click', e => { if (!$('howpanel').hidden && !e.target.closest('#howpanel')) how(false); });
@@ -941,8 +998,12 @@ function layout() {
   l.looks.forEach(lk => { const t = el('div', 'mlook'); t.style.left = (lk.t0 / D.dur * 100) + '%';
     t.style.width = ((lk.t1 - lk.t0) / D.dur * 100) + '%'; t.title = 'close-up ' + pad(lk.n, 2); m.appendChild(t); });
   $('hint').style.left = (headX + 14) + 'px';
-  const lc = $('lcard'), cw = Math.min(900, vw - headX - 42);   // the card: right of the playhead, never on it
-  lc.style.width = vw > 900 ? cw + 'px' : ''; lc.classList.toggle('wide', vw > 900 && cw >= 620);
+  // the larger video sits over the right of the strip, where the pictures not yet played are; the card keeps left of it
+  const vd = $('video'), big = vbig && vw > 900, vh2 = H - 14, vw2 = big ? Math.min(Math.round(vh2 * 16 / 9), Math.round((vw - headX) * 0.6)) : 0;
+  vd.classList.toggle('big', big);
+  vd.style.cssText = big ? 'top:' + ($('scorewrap').offsetTop + 28) + 'px;right:12px;width:' + vw2 + 'px;height:' + Math.round(vw2 * 9 / 16) + 'px' : '';
+  const lc = $('lcard'), cw = Math.max(280, Math.min(900, vw - headX - 42 - (big ? vw2 + 10 : 0)));   // the card: right of the playhead, never on it
+  lc.style.width = vw > 900 ? cw + 'px' : ''; lc.style.right = big ? (vw2 + 22) + 'px' : ''; lc.classList.toggle('wide', vw > 900 && cw >= 620);
   draw(true);
 }
 
@@ -1018,6 +1079,7 @@ function draw(force) {
     lk.el.classList.toggle('gone', off > w - cw);
     lk.chip.style.transform = off && off <= w - cw ? 'translateX(' + off + 'px)' : '';
   }
+  $('endcue').classList.toggle('on', t >= D.dur - 1.5 && LS.some(x => x.after) && scrollY < 80);
   let li = cardAt(t, k, l);
   const inside = li >= 0 && t < l.looks[li].t1;   // the playhead is in the close-up's own span
   l.looks.forEach((lk, j) => lk.el.classList.toggle('now', j === li && inside));
@@ -1070,7 +1132,7 @@ function youtubeClock() {
     stamp = performance.now();
     if (state === 1 && was !== 1) onPlay(); else if (state !== 1 && was === 1) onPause(); else draw();
   });
-  box.hidden = false; box.appendChild(f); $('top').classList.add('yt');
+  box.hidden = false; box.appendChild(f); $('top').classList.add('yt'); $('vbig').hidden = false;
   // pause() stops our clock at once (the player takes a moment); its late "still playing" reports are not believed
   let quiet = 0;
   const pause = () => { base = now(); stamp = performance.now(); quiet = stamp + 800; cmd('pauseVideo'); if (state === 1) { state = 2; onPause(); } };
@@ -1084,7 +1146,7 @@ score.addEventListener('click', e => { if (e.target.closest('#hint')) return; co
 sealBox.addEventListener('change', () => draw(true));
 $('lclose').addEventListener('click', e => { dismissed = card; draw(true); });
 document.addEventListener('scroll', fades, true);
-document.addEventListener('keydown', e => { if (e.code === 'Escape') how(false); });
+document.addEventListener('keydown', e => { if (e.code === 'Escape') { how(false); pub(false); } });
 document.addEventListener('click', e => {
   const b = e.target.closest('button.t'); if (!b) return;
   const art = b.closest('#after article');
@@ -1100,6 +1162,7 @@ document.addEventListener('keydown', e => {
   else if (e.code === 'ArrowLeft') { e.preventDefault(); seek((clock.now() - k * D.win > 1.5 ? k : k - 1) * D.win); }
 });
 addEventListener('resize', layout);
+addEventListener('scroll', () => { if (scrollY >= 80) $('endcue').classList.remove('on'); }, { passive: true });
 $('hint').textContent = matchMedia('(pointer: coarse)').matches ? 'Press play. The pictures pass under this line; what I wrote is beneath.' : 'Press play. The pictures pass under this line; what I wrote is beneath. Space pauses, so you can read.';
 setListen(cur);
 </script>

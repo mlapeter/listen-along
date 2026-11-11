@@ -1,9 +1,10 @@
 <!doctype html>
 <html lang="en">
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Listened to in order</title>
-<meta name="description" content="A tool that lets a Claude Code session listen to a song in order, as pictures measured from the sound, one sealed note per fifteen seconds. An example plays the notes against the music.">
+<meta name="description" content="A Claude Code session listens to a song in order, as pictures measured from the sound, one sealed note per fifteen seconds. The notes play back against the music.">
 <meta property="og:title" content="Listened to in order">
 <meta property="og:description" content="A Claude Code session listens to a song in order, as pictures measured from the sound, one sealed note per fifteen seconds. The notes play back against the music.">
 <meta property="og:type" content="website">
@@ -12,6 +13,33 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta http-equiv="refresh" content="0; url=somebody-that-i-used-to-know/">
-<a href="somebody-that-i-used-to-know/">Somebody That I Used To Know, listened to in order</a>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; style-src 'unsafe-inline'">
+<style>
+  body { margin: 0; background: #0b0a0e; color: #ece7df; font: 16px/1.55 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  main { max-width: 980px; margin: 0 auto; padding: 56px 20px 72px; }
+  h1 { font: 500 34px/1.15 "Iowan Old Style", Palatino, Georgia, serif; margin: 0 0 14px; letter-spacing: -0.01em; }
+  p { margin: 0 0 14px; color: #c9c3b9; max-width: 700px; text-wrap: pretty; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 22px; margin: 34px 0 40px; }
+  a.card { display: block; color: inherit; text-decoration: none; border: 1px solid #2a2833; border-radius: 10px; overflow: hidden; background: #131218; transition: border-color .2s, transform .2s; }
+  a.card:hover, a.card:focus-visible { border-color: #3ad8ee; transform: translateY(-2px); outline: none; }
+  a.card img { display: block; width: 100%; aspect-ratio: 1200 / 630; object-fit: cover; }
+  a.card div { padding: 14px 16px 16px; }
+  a.card b { display: block; font: 500 20px/1.25 "Iowan Old Style", Palatino, Georgia, serif; }
+  a.card span { display: block; margin-top: 4px; font-size: 13.5px; color: #9a948b; }
+  a.cta { display: inline-flex; align-items: center; height: 40px; padding: 0 20px; border: 1px solid #3ad8ee; border-radius: 20px; color: #3ad8ee; text-decoration: none; font-weight: 500; font-size: 14.5px; }
+  a.cta:hover { background: #3ad8ee; color: #0b0a0e; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Listened to in order</h1>
+  <p>A language model can't take in sound. This tool measures a recording into pictures, fifteen seconds at a time, and a Claude Code session reads one window, writes a note, and has that note locked before the next window opens.</p>
+  <p>Each page below plays a listener's notes against the music. Nothing here holds a recording: the pages follow the song on YouTube.</p>
+  <div class="grid">
+    <a class="card" href="somebody-that-i-used-to-know/"><img src="somebody-that-i-used-to-know/card.jpg" alt="" width="1200" height="630"><div><b>Somebody That I Used To Know</b><span>Gotye, live on KCRW · listened to twice, with close-ups</span></div></a>
+    <a class="card" href="and-its-still-alright/"><img src="and-its-still-alright/card.jpg" alt="" width="1200" height="630"><div><b>And It's Still Alright</b><span>Nathaniel Rateliff, at Pickathon · one listen</span></div></a>
+  </div>
+  <a class="cta" href="https://github.com/mlapeter/listened-in-order">Have your Claude listen to a song →</a>
+</main>
+</body>
 </html>
