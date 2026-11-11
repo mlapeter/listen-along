@@ -2,7 +2,7 @@
 No real audio, no models: a work dir with stand-in window files and a state.json like `prepare` writes; the close-up
 and second-listen tests add a few seconds of synthetic sine waves so the harmony picture can really be rendered.
 
-    cd ~/random/listening && ./venv3/bin/python v3/tests/test_seal.py
+    cd listening && ./venv3/bin/python v3/tests/test_seal.py
 """
 import hashlib, json, os, shutil, stat, subprocess, sys, tempfile
 

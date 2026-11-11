@@ -33,7 +33,7 @@ Be sure of these before you start; it is a heavy install.
   model downloads.
 - **Tokens:** `prepare` costs none. The listen does: each 15-second window is three pictures, about 7,400 tokens.
   A 3-minute song is about 100k tokens of context, 4 minutes about 130k, 5 minutes about 160k (each including about 11k
-  for reading the skill and the manual); spending all six close-ups adds about 33k. These are estimates from the
+  for reading the skill and the manual); spending all six close-ups adds about 33k (about 41k if each also asks for the timbre picture). These are estimates from the
   image sizes. Every step re-reads the conversation from cache, so a whole song is a few million cached tokens
   read against your usage limit. Start a fresh session for each song; over about 6 minutes of music, context
   compaction will land mid-song.
@@ -74,7 +74,8 @@ Optional check, no audio needed (about 40 seconds):
    (read-only, hash logged) before it reveals anything more. So every note was provably written before the listener
    saw what came after.
 3. **Close-ups.** Six times per song Claude can ask for a finer look at 2 to 8 seconds it has already heard, and has
-   to say why first.
+   to say why first. A close-up can add a timbre picture: the voice through filters narrower than the ear's, so
+   its harmonics show one by one.
 4. **After.** A free-form note on the whole song. Then, if you have your own take, Claude asks for it before showing
    you its own, and you compare.
 5. **A second listen**, if you want one: the same song again with the first listen's notes alongside.
@@ -87,8 +88,10 @@ models are used only to find *when* each lyric word is sung; nothing names a cho
 
 ## Making a page and sharing it
 
-When a listen is finished (the `after` note sealed), from `listening/`:
+When a listen is finished, `see.py after` prints this command with the video id filled in. Run it from the
+`listening/` folder of the clone:
 
+    cd listening
     ./venv3/bin/python v3/score.py runs/<run> --youtube VIDEO_ID --by "Claude"
 
 This writes `runs/<run>/share/`: one `index.html` and a folder of cropped picture strips, about 1 to 3 MB. The page
@@ -99,13 +102,17 @@ Use the video the audio was fetched from, so the times match; its address is the
 The page has to be served over http(s); YouTube refuses to play inside a page opened as a file. Any static host
 works. With GitHub Pages: put the `share` folder's contents in a folder of a repository of your own, add an empty
 `.nojekyll` file at its root, and turn Pages on. To look at it locally first:
-`python3 -m http.server -d runs/<run>/share 8000`, then open `http://localhost:8000`.
+`python3 -m http.server -d runs/<run>/share 8000`, then open `http://localhost:8000`. If something else is
+already using that port you may be looking at the wrong page; pick another number.
 
 Copy only the `share` folder. The rest of the run folder holds the lyric. Without `--youtube`, `score.py` writes
 `runs/<run>/score/` with the recording in it, for your own use; don't publish that one.
 
-The page shows the voice and the band pictures and the `feel`, `voice`, `band`, `words` and `expect` lines of each
-note. The third picture (the notes) and the optional `harmony:` line are not on the page yet.
+The page shows the voice, band and notes pictures as one strip, each window's note under it, and every close-up
+as a lens that opens when the playhead reaches it, with what the listener was looking for and what it saw. After
+a second listen, add `--second runs/<second run>` and the page shows both behind a switch. `--link URL` adds a
+link of your choice. The notes are shown as written, so anything the listener quoted is on the page; the footer
+states how much of the lyric that is.
 
 ## How it works, briefly
 

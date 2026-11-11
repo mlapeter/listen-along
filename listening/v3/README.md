@@ -30,7 +30,8 @@ the README there is the short introduction, this is the full manual.
     # it is stored in state.json too, and the run's close-ups use it.
 
     # 1b. once, before your first window: the reference card (synthetic notes and synthetic voices, no song)
-    ./venv3/bin/python v3/see.py refcard /tmp/refcard.png     # then read it
+    ./venv3/bin/python v3/see.py refcard /tmp/refcard.png     # then read it (it also writes /tmp/refcard-timbre.png:
+    #                                                           read that one before your first `look --timbre`)
 
     # 2. the listen, window by window
     ./venv3/bin/python v3/see.py next runs/<run>      # reveals windows/000-voice.png, 000-band.png,
@@ -46,6 +47,9 @@ the README there is the short introduction, this is the full manual.
     ./venv3/bin/python v3/see.py look runs/<run> 0:41 0:45 --why "what the bass does under the held word"
     #    read looks/01-voice.png, 01-band.png, 01-harmony.png; then write runs/<run>/looks/01.md:
     #        saw:     what the close-up showed you
+    #    add --timbre for one more picture of the same look, looks/01-timbre.png: the lead voice alone through
+    #    filters a third of the ear's width, so its harmonics show one by one (which are strong: the vowel, the
+    #    colour of the voice). Same budget, ~1.3k tokens more.
     ./venv3/bin/python v3/see.py next runs/<run>      # seals notes/000.md, reveals 001
     ...                                               # until the last window
     ./venv3/bin/python v3/see.py next runs/<run>      # after the last window: seals its note, asks for after.md
@@ -79,7 +83,12 @@ What the seal enforces:
   6, set by `prepare --looks N` / `again --looks N`) is checked and `status` shows used/left; after a look you must
   write `looks/LL.md` with a `saw:` line (two real words), which the next `look`, `next` or `after` seals
   (read-only, sha256 in `seal.log`) and each of them refuses until it exists. A finished listen takes no more
-  looks. A look that fails to render is logged and not counted.
+  looks. A look that fails to render is logged and not counted. **`--timbre`** adds `LL-timbre.png` to the same
+  look (one look of the budget, like any other; see "Close-ups" below). Nothing else about the look changes: the
+  other pictures are byte for byte what they are without it, `LL.txt` and the `look LL rendered:` line of `seal.log`
+  list the extra file, `LL.json` gets a `timbre` entry, and the checks above treat it like the other pictures (an
+  `LL-timbre.png` numbered beyond the looks made is `LOOKED AHEAD`). It needs the lead stem and the song's
+  cochleagram scale; on a cache without them `look --timbre` refuses before the why is logged, nothing spent.
 - **`again RUN1 --run RUN2`** needs RUN1 finished (its `after.md` sealed) and never changes it. RUN2 is a run
   folder of its own over the same cache (`layout: second`). On the cache it runs only what is missing: the
   `harmony` stage and the harmony pictures (it never fetches, separates or re-renders an existing picture, and
@@ -125,7 +134,10 @@ window; "voices so far" counts only voices already heard; the song-so-far strip 
   at the revealed edge;
 - a few tens of ms at the window's right edge: the cochleagram channels are shifted earlier by their group delay
   (under 25 ms) and the stereo STFT frames are centred (+-46 ms). The song-so-far strip has neither: causal filters,
-  non-overlapping 0.5 s blocks, and only blocks that end by the window's end are drawn;
+  non-overlapping 0.5 s blocks, and only blocks that end by the window's end are drawn. A close-up reads nothing
+  past what is revealed, so a look that ends exactly there is black for its channels' group delay at the right
+  edge: under 25 ms in the voice and band pictures, and in `LL-timbre.png`, whose filters are three times as long,
+  58 ms in the lowest row, 40 ms at 200 Hz, 14 ms at 1 kHz;
 - the x axis of the song-so-far strip is the whole song's length (which the header's "window k of N" gives anyway).
 
 Tests (no real audio needed): `./venv3/bin/python v3/tests/test_seal.py` (the seal, `look`, `again`, the scale a
@@ -133,7 +145,10 @@ run and its cache must share: 77 checks), `./venv3/bin/python v3/tests/test_harm
 the harmony picture carry known synthetic notes and a click, in the data and in the rendered pixels: 41 checks) and
 `./venv3/bin/python v3/tests/test_periodicity.py` (the periodicity panel's rows and columns for known synthetic
 voices, the `ear` scale's numbers, every panel box of `geometry.json` against the rendered pixels of all three
-pictures, on a synthetic cache run through the real stages: 51 checks).
+pictures, on a synthetic cache run through the real stages: 51 checks) and
+`./venv3/bin/python v3/tests/test_timbre.py` (the timbre picture: a known tone's harmonics in the right channels and
+on the right pixel rows, two envelopes on one pitch, what the narrow filters cost, the shared time axis, the seal
+with the extra file, a look without `--timbre` unchanged, the timbre card: 47 checks).
 
 **Lyrics and recordings are copyrighted.** Run folders and `v3/audio/` contain the recording and the full lyric; the
 repository's `.gitignore` keeps both out of git. Don't commit or publish them.
@@ -242,7 +257,8 @@ picture and the harmony picture have no `ear` version.
 Read `see.py refcard OUT.png` once first: the same code on known synthetic notes (one plucked A2, a C major and an A
 minor triad, the C major 30 cents sharp, a bass A1, a click, a sung A4), each captioned. Under it, the same card
 teaches the voice picture's periodicity panel on synthetic voices: one voice on A3, two a fifth apart, two a semitone
-apart, one with vibrato, two an octave apart, a click and a hiss.
+apart, one with vibrato, two an octave apart, a click and a hiss. (`refcard` also writes a second card,
+`OUT-timbre.png`, for the timbre picture of a close-up; see "Close-ups".)
 
 1. **Header**, as above, then `tuning +N cents` and `[the notes]`. The tuning is measured once for the song
    (`librosa.estimate_tuning` on the accompaniment: where its spectral peaks sit against A4 = 440 Hz, -50..+50 cents)
@@ -295,6 +311,51 @@ window). `LL-voice.png` (1568 x 887) = lead, backing, the periodicity panel (whe
 which `prepare` and `again` make; without it the picture is 1568 x 650 as before), a three-row word lane;
 `LL-band.png` (1568 x 830) = the five stems, stereo, bass and attacks (no song-so-far strip); `LL-harmony.png`
 (1568 x 750) = all of the harmony picture. A close-up is drawn on the run's own scale (`db` or `ear`).
+
+**`LL-timbre.png` (1568 x 604, or 1568 x 621 on an `ear` run, whose caption is a line longer; only with
+`look ... --timbre`): which harmonics are strong.** Read
+`refcard-timbre.png` once first (`see.py refcard OUT.png` writes it beside the card as `OUT-timbre.png`): one sung
+pitch on two vowel-like envelopes, breathy, with vibrato, an octave up, an octave down, and a click, through this
+picture's own code.
+
+The voice picture's filters are as wide as the ear's (1.019 ERB), so above the first four or five harmonics several
+of a voice's harmonics share a filter and the panel shows a smooth band. This picture measures the lead again
+(the lead stem; the whole vocal under a yellow band, as in the voice picture; same span, same frame step as the
+look's lead panel) through 280 gammatone channels 70 Hz-8 kHz whose filters are **0.34 ERB wide, a third of the
+ear's**, and draws the channels below 2.5 kHz tall (16 px per ERB, where the voice picture has 12 for filters three
+times as wide) and the rest as a strip above a white line (5.8 px per ERB). Each harmonic is then a stripe of its
+own. What to read:
+- **The stripes** are the harmonics: the lowest lies under the thin cyan pitch line, the 2nd at twice that
+  frequency, and so on (on this axis they crowd together upward). Nothing numbers them; count up from the line.
+  They all move together with the pitch, and vibrato is every stripe wobbling at once, wider the higher.
+- **Which stripes are bright** is the shape of the mouth and throat at that moment (the vowel) and the colour of the
+  voice: brightness comes and goes along a stripe as the word changes while the stripes stay where the pitch puts
+  them. Bright regions that stay at the same height while the stripes slide through them are resonances; a voice
+  whose upper stripes stay bright is brighter or more pressed, one where only the lowest two or three show is
+  softer or breathier. That reading is yours: the picture names nothing.
+- **Between the stripes** a clean voice is dark; breath and roughness fill the gaps with haze. The fine dotted
+  texture in a gap is the two neighbouring harmonics beating at the pitch's own period.
+- The y axis is in Hz with more labels than the voice picture (100, 200, 300, 400, 600, 800, 1.2k, 1.6k, 2.4k), the
+  time axis and word onsets are the look's, and a thin word lane sits under it. Colour is the song's dB scale, on
+  an `ear` run too (that scale would black out the weaker harmonics; the caption says so).
+
+Where it misleads (the caption carries the first two):
+- **Onsets and endings are softer than in the voice picture.** A filter a third as wide rings three times as
+  long: a sudden start takes about 50 ms to rise (10 to 90%) at 200 Hz, 34 ms at 400 Hz, 17 ms at 1 kHz, 8 ms at
+  2.5 kHz, against 17, 11, 6 and 3 ms in the voice picture. Consonants, glottal attacks and quick ornaments blur;
+  read timing in `LL-voice.png`.
+- **Stripes part only while the pitch is high enough.** Measured valley between two neighbouring equal harmonics:
+  at 2.5 kHz 9 dB or more for a voice above about 200 Hz, 4 dB at 150 Hz, 1 dB at 100 Hz; a 150 Hz voice has clear
+  stripes (10 dB) up to 1.6 kHz, a 100 Hz voice up to 1 kHz. Above that the harmonics merge and a bright patch is a
+  region holding several of them, which is easy to take for one strong harmonic.
+- **Noise is about 5 dB fainter against the stripes** than in the voice picture (10 log10(1.019 / 0.34) = 4.8 dB:
+  a narrower filter catches less noise and the same harmonic), so breath and "s" sounds look weaker here than they
+  are; judge breathiness by the haze between the stripes and against the voice picture, not by brightness alone.
+- **Under a yellow band it is the whole vocal stem**, backing voices included: a second voice puts stripes of its
+  own between the lead's, and they are not extra harmonics (stripes that are not at whole multiples of the cyan
+  line belong to something else). The same goes for instrument bleed in the stem.
+- A stripe's brightness is the harmonic's level within 0.5 dB when it sits between two channels; the first
+  harmonic lies partly under the cyan line.
 
 `NNN.txt` has the same lines, then every word with start-end, voice, `~` (estimated) or `{` (backing), tags and
 all its z-scores, the held notes (word, span, pitch held, median Hz), and a footer: lead pitched frames, words timed
@@ -378,7 +439,10 @@ size and `panels`, each with an `id` (`lead`, `backing`, `periodicity`, `words`,
 `stereo`, `attacks`, `sofar`, `lanes`; `notes`, `bassnotes`, `classes`, `words`), its pixel box `x0`, `x1` (from the
 left edge), `y0` (top), `y1` (bottom, from the top edge; fractions of a pixel kept), `time: true` when x0..x1 is the
 window's 15 s, and for `notes` / `bassnotes` / `periodicity` `midi_lo`, `midi_hi` and `notes`: the pixel row of every labelled note
-(`"C4": 267.01`); for `classes`, `rows`. `looks/LL.json` has the same for a close-up. `--redo STAGE` reruns it and every stage that depends on it; `--only STAGE` runs one; `--window SECONDS` sets
+(`"C4": 267.01`); for `classes`, `rows`. `looks/LL.json` has the same for a close-up; a look made with `--timbre`
+also has `pictures.timbre` (and only then): the picture's size, `filter_erb`, `frame_ms`, and the panels
+`timbretop`, `timbre` (each with its box, `hz_lo` and `hz_hi`, the frequencies at its bottom and top edges, between
+which a frequency's row is linear in ERB-rate, and `hz`, the pixel row of every labelled frequency) and `words`. `--redo STAGE` reruns it and every stage that depends on it; `--only STAGE` runs one; `--window SECONDS` sets
 the window length; `--lyrics-offset S` forces a global LRC shift (normally measured and
 applied only if over 0.3 s); `--no-split` skips the lead/backing split (lead = whole vocal stem, strip says so; on Krazy it gives 77.8% exact,
 the split-apart ad-lib parts alone accounting for the gain over 74.6%).
@@ -393,8 +457,8 @@ that. The cache grows by ~220 MB (five stems) + ~17 MB (`sound.npz`). The harmon
 9:30 song: `harmony` 13 s (0.34 s per window) and 11-13 s to draw 38 harmony pictures (0.3 s each), `harmony.npz`
 25 MB; so `again` on a finished listen takes under half a minute. The periodicity panel adds, on the same song:
 `periodicity` 20 s (0.5 s per window; 24 gammatone passes and their spectra), `periodicity.npz` 6 MB, and nothing
-measurable to the render. A 4 s `look` with all three pictures takes about
-4 s. First run downloads models
+measurable to the render. A 4 s `look` with all three pictures takes about 4 s, an 8 s one about 6 s; `--timbre`
+adds 2.5 s to the first and 4 s to the second (280 narrow filters, twice over under a yellow band). First run downloads models
 (htdemucs, htdemucs_6s, whisper medium.en, MMS_FA 1.2 GB, Resemblyzer, the karaoke roformer ~900 MB into
 `v3/audio/_models`): 3.8 GB in all, measured from empty caches. A 2:06 song took 5 min 52 s end to end on the
 M3 Pro, downloads included, and its cache is 269 MB.
@@ -431,7 +495,9 @@ images are scaled down first, which blurs thin panels; every picture is exactly 
 `NNN-harmony.png` 1568 x 750 = **~1,570 tokens**: ~6,700 per window for the pictures, plus `next`'s output, the Read
 calls and the note (~600-900): **~7,400 tokens per 15 s window** (estimate from the image sizes; not yet measured in
 a session; a two-picture run is ~5,300). A **close-up** is 1568 x 887 + 830 + 750 = ~1,850 + ~1,740 + ~1,570 =
-~5,200 for the pictures, **~5,500 tokens per look** with its output and `saw:` note (six looks: ~33k). A **second
+~5,200 for the pictures, **~5,500 tokens per look** with its output and `saw:` note (six looks: ~33k). With
+`--timbre` a look has a fourth picture, 1568 x 604 = ~1,260 tokens: **~6,800 tokens per look** (six such: ~41k); the
+timbre card (1568 x 889) is ~1,860, once, and only if you use it. A **second
 listen** window is the harmony picture, the text and your first note: **~2,400 tokens** (with `--full` ~7,500). The
 reference card (1568 x 1397) is ~2,900, once. That is about the same per second of music as the
 old one-picture 10 s windows (1600 x 1360, scaled to 1568 x 1333: ~2,800 tokens; measured ~3,300-3,500 per window in
@@ -445,7 +511,7 @@ one whole-song session). Reading SKILL.md and this manual once adds ~10k.
 | 5 min  | 20             | ~160k                        | ~195k          | ~60k          |
 
 (Each column includes ~11k for SKILL.md, this manual and the reference card; second listen without looks, each look
-adds ~5.5k.) Start a fresh session: from a ~30k start a 5-minute song ends near 190k, 225k with every look spent; over ~6 minutes, or in a long session, compaction will land mid-song. Usage limits feel more than context size, since every step re-reads
+adds ~5.5k, or ~6.8k with `--timbre`.) Start a fresh session: from a ~30k start a 5-minute song ends near 190k, 225k with every look spent; over ~6 minutes, or in a long session, compaction will land mid-song. Usage limits feel more than context size, since every step re-reads
 the conversation from cache: a 5-minute song is a few million cached tokens read (estimated, not measured for
 a whole song). Reading only `NNN-voice.png` for a window would cut its cost by more than half, but the band
 picture is what carries the instruments and the harmony picture the notes.
@@ -469,7 +535,9 @@ Close-ups: LOOKS 6, LOOK_MIN 2 s, LOOK_MAX 8 s, LOOK_PAD 1 s, LOOK_WHY_WORDS 3, 
 0.05 s, EAR_ADAPT 0.5, EAR_TOP_PCT 99.5). Periodicity panel: PER_SR 22050, PER_HOP 10 ms, PER_FRAME 46 ms, PER_N 24
 channels, PER_FMIN..FMAX 80 Hz..4 kHz, PER_COMPRESS 0.3, PER_CUT 50 Hz, PER_LO..HI MIDI 36..84 (C2..C6),
 PER_TOP_PCT 99.5, PER_H 2.25 in (4.6 px per semitone, the bass panel's density), PER_GAP 0.12 in (a voice picture
-with the panel is VOICE_H + 2.37 in = 1387 px, a voice close-up 887 px). Set on Makaveli "Krazy" (rap, 5:19) and checked on Iron & Wine
+with the panel is VOICE_H + 2.37 in = 1387 px, a voice close-up 887 px). Timbre picture: TIMBRE_BW 0.34 ERB,
+TIMBRE_N 280 channels from TIMBRE_FMIN 70 Hz to COCH_FMAX (9 per ERB, 3 per filter width), TIMBRE_SPLIT 2.5 kHz,
+TIMBRE_H 3.3 in for the channels below it, TIMBRE_TOP_H 0.6 in for the strip above. Set on Makaveli "Krazy" (rap, 5:19) and checked on Iron & Wine
 "The Trapeze Swinger" (quiet, sung, acoustic, 9:30).
 
 ## Measured quality
@@ -528,18 +596,87 @@ tried (+1 point) and left out (2.5 min more).
   voices, its width above A4 and the merging of voices a semitone or an octave apart are described under "Reading
   the pictures" and shown on the reference card; nothing is done to remove them. It reads the whole vocal stem, so
   bleed has ridges too.
+- **The timbre picture trades time for frequency** and resolves less the lower the voice; under a yellow band it
+  holds every voice in the stem. See "Where it misleads" under "Close-ups". Its height (604 px) is the least that
+  kept the stripes of the dev song's 165 Hz held notes apart up to 2.4 kHz by eye (9 px from stripe to stripe
+  there); the prototype was twice as dense. TIMBRE_H is the one number to raise if they prove too fine.
 - **Caches whose `sound` stage ran with an earlier version (their `sound.npz` stores a `lead_hop` of exactly 0.005)
   draw every cochleagram panel late**, by 0.23% of the time since the song's start (0.3 s at 2:00, 0.7 s at 5:00).
   The pitch line, the words, the attacks, the stereo picture, the harmony picture and every close-up were always on
   true time. `sound` now stores the true frame steps; an existing cache keeps its pictures until
   `prepare ... --redo sound` (about 2 min for a 4-minute song).
 
+## The score page (`score.py`)
+
+    ./venv3/bin/python v3/score.py runs/<run>                         # RUN/score/index.html + song.m4a (local only)
+    ./venv3/bin/python v3/score.py runs/<run> --youtube VIDEO_ID      # RUN/share/: no audio, follows a YouTube embed
+    ./venv3/bin/python v3/score.py runs/<run> --second runs/<second>  # both listens on one page, behind a switch
+    #   [--pictures DIR] [--omit-second-after] [--redact NAME=REPLACEMENT ...] [--link URL] [--by WHO] [--note "..."]
+
+`score.py` turns a finished listen into one self-contained page (inline CSS and JS, no external scripts or fonts): the
+windows' pictures cropped to their panels and tiled into a strip that scrolls under a fixed playhead driven by the
+audio clock, the sealed note of the current window under it, the after-note below. It only reads the run (and the
+cache, for `geometry.json`, the lyric and `song.wav`); it writes nothing but its output folder. Notes are shown as
+written: escaped, `**bold**`, and every `m:ss` or `m:ss.ss` made a button that seeks there.
+
+What the page shows, by the run's layout:
+
+- **`voice+band`**: the lead and backing panels and the five stems as tracks; the note as `feel` (headline), `voice`,
+  `band`, `words`; the guess going in (the previous note's `expect`) and the guess made next.
+- **`voice+band+harmony`**: the same, plus a **notes track** under the stems (the harmony picture's piano roll and its
+  bass panel, with a few note names from the geometry's labelled rows) and the optional `harmony:` line as a fourth
+  column.
+- **`--second RUN2`** (a `layout: second` run of the same recording): a switch between the two listens; the playhead
+  and playback carry across. The second listen has the notes track, its own `feel` across the top, `harmony` and
+  `changed` as columns, "what I said the first time" (the `feel` of `NNN-first.md`), its own `expect` guesses and
+  its own seal times. Both after-notes follow, each under its own heading.
+- **Close-ups** (any layout with `looks/`): a numbered bracket over each look's span on the strip, and ticks on the
+  minimap. While the playhead is inside a look a **lens** opens under the strip: the look's own lead panel and piano
+  roll (and the `timbre` panel of a look made with `--timbre`) with a playhead of their own, beside the why (logged
+  before the picture existed) and the `saw:` note. Clicking a bracket, or "close-up NN" in a note, goes there.
+- The "hide what I hadn't seen yet" box (on by default) veils every later window, and every close-up until the
+  window it was made in is open.
+
+Options:
+
+- **`--youtube ID`** writes `RUN/share/` instead of `RUN/score/`: `index.html` and the cropped strips (`w/` instruments,
+  `n/` notes, `c/` close-ups) and nothing else. **It holds no audio** (the sound is the embedded video, followed over
+  postMessage; use the video the audio was fetched from so time zero matches) **and no lyric lane**: no image on
+  the page contains lyric text. It has to be served over http(s). Without `--youtube` the folder also holds the
+  recording as `song.m4a`, so it stays local.
+- **`--pictures DIR`** takes `NNN-voice.png` / `NNN-band.png` and their `geometry.json` from DIR instead of
+  `RUN/windows/`, e.g. from a copy of the cache re-rendered after a fix in the tool (`prepare --work COPY --redo
+  sound` into a scratch run folder). The footer then says the strips were redrawn (`--redrawn "..."` replaces that
+  sentence).
+- **`--omit-second-after`** leaves the second listen's after-note off the page. **`--redact NAME=REPLACEMENT`**
+  (repeatable) replaces a whole-word name in all displayed note text at build time. Neither touches a sealed file;
+  the hashes shown are those of the files as written, and the footer says in a sentence what was done.
+- **`--link URL`** adds a "get the tool" link; `--by` and `--note` set the byline and a sentence of the intro;
+  `--audio FILE` and `--out DIR` override the defaults. `?t=SECONDS` and `?listen=2` in the page's URL choose where
+  it opens, and `window.__t` is a clock hook for rendering frames.
+
+Every crop is made **by panel id** from the tool's own boxes (`windows/geometry.json` beside the pictures or in the
+cache, `looks/LL.json` for a close-up), with the in-panel caption rows left out; a run whose cache is gone falls back
+to the two-picture layout's hardcoded rows. The code asserts that a picture has the size its geometry says, and that
+no crop touches a panel that holds lyric text (`words`, `held`) or reaches below the first of them, where the lyric
+lines are.
+
+**The lyric sentence is measured.** At build time the displayed text of each listen (window notes, close-up whys and
+notes, after-note) is compared with the cached lyric (`lyrics.json` / `lyrics.lrc`), with the song's title left out:
+the longest run of consecutive lyric words anywhere, the longest inside quotation marks, and how many quoted phrases
+hold three or more lyric words. The footer's wording follows from those numbers ("paraphrase the words", "mostly
+paraphrase ... quoting one phrase of three words or more", or "quote short phrases of the lyric (seven of three words
+or more, none longer than six words, the title aside)"), and the numbers are printed to stderr. Without a cached
+lyric the footer makes no claim about the notes. The notes themselves may quote the lyric, so read them before
+publishing a share folder.
+
 ## Files
 
 - `see.py`: the tool. `score.py`: the playable page of a finished listen. `refcard.png`: a rendered reference card
   (`see.py refcard`). `tests/test_seal.py`: the seal tests (three-, two- and one-picture runs, `look`, `again`).
   `tests/test_harmony.py`: the harmony picture's axis tests. `tests/test_periodicity.py`: the periodicity panel, the
-  `ear` scale and every panel box against the pixels.
+  `ear` scale and every panel box against the pixels. `tests/test_timbre.py`: the timbre picture of `look --timbre`.
+  `refcard.png`, `refcard-timbre.png`: the two rendered reference cards (`see.py refcard`). `score.py`: the playable score page of a finished listen, or of a first and a second listen together (see "The score page").
 - `../words.py`: the LRCLIB lookup. `../constraints.txt`: the pinned versions. `../venv3/`, `../venv/`: built by
   `setup.sh`, gitignored.
 - `audio/<run>/` (gitignored): the cache per run: the recording, the stems, the lyric, every window (with

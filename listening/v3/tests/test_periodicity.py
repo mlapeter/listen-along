@@ -3,7 +3,7 @@ synthetic voices, in the measured data and in the rendered voice picture; that t
 other panels; that every panel box in geometry.json is where the PNG has it, for all three pictures; that a cache
 without the panel still renders the old voice picture. No real audio, no models, no lyric text.
 
-    cd ~/random/listening && ./venv3/bin/python v3/tests/test_periodicity.py
+    cd listening && ./venv3/bin/python v3/tests/test_periodicity.py
 """
 import hashlib, json, os, shutil, sys, tempfile
 

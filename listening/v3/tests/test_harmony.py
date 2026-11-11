@@ -2,7 +2,7 @@
 measured data and in the rendered PNG, and that the labels, the geometry file and the time axis agree with them.
 No real audio, no models.
 
-    cd ~/random/listening && ./venv3/bin/python v3/tests/test_harmony.py
+    cd listening && ./venv3/bin/python v3/tests/test_harmony.py
 """
 import json, os, shutil, sys, tempfile
 

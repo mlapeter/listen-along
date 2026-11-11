@@ -5,14 +5,17 @@ Sealed listening (the normal way to use it):
                        all heavy stages; windows rendered into W (a cache outside DIR); DIR gets only state.json, notes/
                        (--scale db|ear: how the cochleagrams map intensity to colour; stored in state.json)
   see.py next DIR      seal notes/NNN.md of the window just read, then reveal exactly one more window into DIR/windows/
-  see.py look DIR START END --why "..."   a close-up of 2-8 s you choose inside what is revealed, recomputed at a finer
-                       step into DIR/looks/ (a budget per run; write looks/NN.md with a 'saw:' line after each)
+  see.py look DIR START END --why "..." [--timbre]   a close-up of 2-8 s you choose inside what is revealed, recomputed
+                       at a finer step into DIR/looks/ (a budget per run; write looks/NN.md with a 'saw:' line after
+                       each). --timbre adds NN-timbre.png: the lead voice through filters a third of the ear's width,
+                       so its harmonics show one by one (same look, same budget)
   see.py status DIR    where the listen is, close-ups used and left, and a check of every seal
   see.py after DIR     after the last window: seal notes/after.md (the whole-song note) and copy summary.json into DIR
   see.py again DIR --run DIR2 [--looks N] [--full]   a second listen of a finished one, over the same cache: per window
                        the harmony picture, the text and your own first note (--full: the first listen's pictures too)
   see.py refcard OUT.png   known synthetic notes through the harmony picture's own code, and known synthetic voices
-                       through the periodicity panel's: how to read both
+                       through the periodicity panel's: how to read both. Also writes OUT-timbre.png: one sung pitch
+                       on two vowel-like envelopes, breathy, with vibrato, through the timbre picture's code
 
 Stages of prepare (each cached in WORK, skipped if its output exists and nothing it reads from ran; --redo STAGE
 reruns one and every stage that depends on it; --window SECONDS sets the window, default 15):
@@ -140,6 +143,12 @@ C = dict(
     PER_LO=36, PER_HI=84,  # rows: MIDI C2..C6, 3 per semitone like the harmony picture
     PER_TOP_PCT=99.5,      # colour scale 0 .. this percentile over the whole song (linear)
     PER_H=2.25, PER_GAP=0.12,  # in: the panel's height in the voice picture and the gap under it
+    # ---- the timbre picture of a close-up (`look --timbre`): the lead voice through filters narrower than the ear's
+    TIMBRE_BW=0.34,        # filter bandwidth in ERBs (the cochleagrams: 1.019): narrow enough to part a voice's harmonics
+    TIMBRE_FMIN=70.0,      # Hz, the lowest centre frequency (the pitch floor); the highest is COCH_FMAX
+    TIMBRE_N=280,          # channels, ERB-spaced: 9 per ERB, 3 per filter width
+    TIMBRE_SPLIT=2500.0,   # Hz; the channels below it get the tall panel, those above a strip (harmonics merge there)
+    TIMBRE_H=3.3, TIMBRE_TOP_H=0.6,  # in: the tall panel (16 px per ERB) and the strip above it (5.8 px per ERB)
 )
 MODELS_DIR = os.path.join(HERE, "audio", "_models")   # audio-separator model cache (gitignored with audio/)
 
@@ -853,12 +862,13 @@ def erb_space(fmin, fmax, n):
     return (10 ** (e / 21.4) - 1.0) / 0.00437
 
 
-def cochleagram(y, sr, cfs, hop_s, align=True):
+def cochleagram(y, sr, cfs, hop_s, align=True, bw=1.019):
     """Gammatone filterbank envelopes, dB. Each channel is a 4th-order complex gammatone (the signal shifted down by
     the centre frequency, then four one-pole low-passes of bandwidth 1.019 ERB: unity gain at the centre), and the
     envelope power is averaged over non-overlapping frames of hop_s (frame j = [j*hop, (j+1)*hop)). The filters are
     causal; with align=True each channel is shifted earlier by its group delay (under 25 ms, more for low channels) so
-    onsets line up across channels and with the word lines. Returns (n_ch, n_frames) float32, 10*log10(power)."""
+    onsets line up across channels and with the word lines. bw = the filters' bandwidth in ERBs (the timbre picture
+    uses TIMBRE_BW; narrower filters ring longer). Returns (n_ch, n_frames) float32, 10*log10(power)."""
     from scipy.signal import lfilter
     hop = int(round(hop_s * sr))
     nfr = len(y) // hop
@@ -866,7 +876,7 @@ def cochleagram(y, sr, cfs, hop_s, align=True):
     out = np.empty((len(cfs), nfr), np.float32)
     for i, fc in enumerate(cfs):
         erb = 24.7 * (4.37 * fc / 1000.0 + 1.0)
-        a_ = np.exp(-2 * np.pi * 1.019 * erb / sr)
+        a_ = np.exp(-2 * np.pi * bw * erb / sr)
         z = lfilter([(1 - a_) ** 4], np.poly([a_] * 4), y * np.exp(-2j * np.pi * fc * t))
         p = np.abs(z) ** 2
         if align:
@@ -1566,6 +1576,93 @@ def refcard(out):
                         annot=annot, foot=foot, extra_h=per_h + foot_h, foot_h=foot_h,
                         under=lambda fig, H: refcard_period(fig, H, C["HARM_H"] + 0.2))
     say(f"refcard: {out} ({geom['w']} x {geom['h']} px)")
+    geom["timbre"] = refcard_timbre(os.path.splitext(out)[0] + "-timbre.png")
+    return geom
+
+
+def synth_vowel(f, dur, sr, formants, vib=0.0, tilt=1.0, breath=0.0):
+    """A voice-like tone for the timbre card: harmonics of f, harmonic h at amplitude vowel_env(h * f) / h**tilt
+    (vowel_env: a resonance at each of `formants`, the 'mouth shape'), 30 ms attack. vib = depth in semitones of a
+    5.5 Hz vibrato (each harmonic's level follows the envelope as it moves). breath = the level of noise shaped by
+    the same envelope (with tilt=2 the upper harmonics sink into it: a breathy voice)."""
+    t = np.arange(int(dur * sr)) / sr
+    fi = f * 2.0 ** (vib * np.sin(2 * np.pi * 5.5 * t) / 12.0)
+    ph = 2 * np.pi * np.cumsum(fi) / sr
+    y = sum(np.sin(h * ph) * vowel_env(h * fi, formants) / h ** tilt for h in range(1, int(sr / 2.2 / f) + 1))
+    if breath:
+        N = np.fft.rfft(np.random.default_rng(3).standard_normal(len(t)))
+        y = y + breath * np.fft.irfft(N * vowel_env(np.fft.rfftfreq(len(t), 1.0 / sr), formants), len(t))
+    return (0.3 * y * np.minimum(1, t / 0.03) * np.minimum(1, (dur - t) / 0.05)).astype(np.float32)
+
+
+def vowel_env(f, formants, width=130.0, floor=0.05):
+    """The spectral envelope of synth_vowel(): 1 at each formant, falling to a half `width` Hz away, plus a floor."""
+    f = np.asarray(f, float)
+    return floor + sum(1.0 / (1.0 + ((f - F_) / width) ** 2) for F_ in formants)
+
+
+AH, EE = (700.0, 1100.0), (300.0, 2250.0)   # two vowel-like envelopes of the timbre card (resonance centres, Hz)
+
+
+def refcard_timbre_audio(sr):
+    """15 s of synthetic 'lead voice' for the timbre card: the events as [(start, end, midi, envelope, vibrato
+    semitones, tilt, breath, short name)], and the time of a click."""
+    y = np.zeros(int(15 * sr), np.float32)
+    ev = [(0.4, 2.2, 57, AH, 0, 1, 0, "1. A3, 'ah'"), (2.6, 4.4, 57, EE, 0, 1, 0, "2. A3, 'ee'"),
+          (4.8, 6.6, 57, AH, 0, 2, 0.12, "3. A3, 'ah', breathy"), (7.0, 8.8, 57, AH, 0.5, 1, 0, "4. A3, 'ah', vibrato"),
+          (9.2, 11.0, 69, AH, 0, 1, 0, "5. A4, 'ah'"), (11.4, 13.2, 45, AH, 0, 1, 0, "6. A2, 'ah'")]
+    for s_, e, m, env, vib, tilt, br, _ in ev:
+        x = synth_vowel(midi_hz(m), e - s_, sr, env, vib, tilt, br)
+        y[int(s_ * sr):int(s_ * sr) + len(x)] += x
+    click = 14.0
+    nc = int(0.004 * sr)
+    y[int(click * sr) - nc // 2:int(click * sr) - nc // 2 + nc] += np.random.default_rng(0).uniform(-1, 1, nc).astype(np.float32)
+    return y, ev, click
+
+
+def refcard_timbre(out):
+    """The timbre card: known synthetic voices through the same measuring and drawing as `look --timbre`: one sung
+    pitch on two vowel-like envelopes, breathy, with vibrato, an octave up, an octave down, and a click."""
+    import librosa, textwrap
+    sr = 22050
+    hop = int(round(C["COCH_HOP_LEAD"] * sr))
+    y, ev, click = refcard_timbre_audio(sr)
+    M, cf, k = timbre_data(y, sr, hop / sr)
+    top = float(np.percentile(M[:, ::3], C["COCH_TOP_PCT"]))
+    fv, _, _ = librosa.pyin(y, fmin=C["F0_FLOOR"], fmax=C["F0_CEIL"], sr=sr, frame_length=2048,
+                            hop_length=int(C["HOP"] * sr), center=True)
+    tv = np.arange(len(fv)) * int(C["HOP"] * sr) / sr
+    fv[~np.any([(tv >= s_) & (tv <= e) for s_, e, *_ in ev], axis=0)] = np.nan
+    ww = [dict(text=nm, s=s_, e=e, approx=False, tags=[]) for s_, e, *_, nm in ev]
+    ww.append(dict(text="7. click", s=click, e=click + 0.05, approx=False, tags=[]))
+    lines = ["REFERENCE CARD for `look --timbre`: synthetic voices through the same measuring and drawing as every "
+             "timbre picture. The lane names each event.",
+             "1. A3 (220 Hz) on an 'ah'-like mouth shape: every stripe is one harmonic (220, 440, 660 Hz...); the "
+             "bright ones (660, 880, 1100 Hz) are where this shape lets sound through.",
+             "2. the same note on an 'ee'-like shape: the same stripes at the same heights, but now the lowest two "
+             "and those near 2.2 kHz are the bright ones. Same pitch, a different vowel.",
+             "3. the 'ah' again, breathy: the upper stripes are weaker, and a haze of noise fills the gaps between "
+             "them and the strip above 2.5 kHz.",
+             "4. the 'ah' with vibrato: every stripe wobbles together, the higher the wider, and a stripe brightens "
+             "as it swings through a strong region.",
+             "5. the 'ah' an octave higher (A4): half as many stripes, twice as far apart in Hz, and the bright "
+             "region stays at the same height. The vowel is in the heights, the pitch in the spacing.",
+             "6. the 'ah' an octave lower (A2, 110 Hz): stripes part only up to about 1 kHz, above that they merge. "
+             "The bright band near 1.1 kHz is still the strong region, but no longer one harmonic.",
+             "7. a click: no stripes, and it is smeared wider the lower the row (the filters ring: about 50 ms at "
+             "200 Hz). A sung onset is that soft here too.",
+             "Nothing is numbered or named in a real picture. For the nth harmonic, count stripes up from the cyan "
+             "line (it lies on the first)."]
+    foot = "\n".join(l for ln in lines for l in textwrap.wrap(ln, width=168, subsequent_indent="   "))
+    geom = draw_timbre(out, "REFERENCE CARD   0:00-0:15   synthetic voices", M, hop / sr, cf, k, 0.0, 0.0, 15.0, 15.0,
+                       top - C["COCH_RANGE_DB"], top,
+                       timbre_caption(hop / sr, what="synthetic voices, at", scale="This card's own dB scale"),
+                       line=(tv, fv), ww=ww, look=False, lane="events", foot=foot,
+                       foot_h=0.204 * (foot.count("\n") + 1) + 0.2, tag="[the timbre picture]")
+    geom.update(file=os.path.basename(out), click=click,
+                events=[dict(start=s_, end=e, midi=m, formants=list(env), vibrato=vib, tilt=tilt, breath=br, name=nm)
+                        for s_, e, m, env, vib, tilt, br, nm in ev])
+    say(f"refcard: {out} ({geom['w']} x {geom['h']} px)")
     return geom
 
 
@@ -2189,6 +2286,115 @@ def stage_render(a, W, OUT):
           os.path.join(wd, "render.json"))   # no "scale" key = db (as every render before the switch existed)
 
 
+# ------------------------------------------------------------------ the timbre picture (`look --timbre`, refcard)
+def erb_hz(e):
+    """ERB-rate (Cams) -> Hz: the inverse of erb_rate()."""
+    return (10 ** (np.asarray(e, float) / 21.4) - 1.0) / 0.00437
+
+
+def timbre_bank():
+    """The timbre picture's filterbank: TIMBRE_N centre frequencies, ERB-spaced TIMBRE_FMIN..COCH_FMAX, and how many
+    of them lie below TIMBRE_SPLIT (those are drawn in the tall panel, the rest in the strip above it)."""
+    cf = erb_space(C["TIMBRE_FMIN"], C["COCH_FMAX"], C["TIMBRE_N"])
+    return cf, int(np.searchsorted(cf, C["TIMBRE_SPLIT"]))
+
+
+def timbre_data(y, sr, hop_s):
+    """The timbre picture's measure: cochleagram() of y on timbre_bank() with filters TIMBRE_BW ERB wide (a third
+    of the ear's), so the harmonics of a voice fall into separate channels instead of sharing one. Unity gain at
+    each centre frequency: a harmonic alone in its filter reads at its own level, as in the voice picture; noise
+    reads 10*log10(1.019 / TIMBRE_BW) = 4.8 dB lower than there. Returns (M dB, cf, channels below the split)."""
+    cf, k = timbre_bank()
+    return cochleagram(y, sr, cf, hop_s, bw=C["TIMBRE_BW"]), cf, k
+
+
+def timbre_caption(hop_s, what="the lead voice alone, recomputed for this span at", scale="The song's dB scale"):
+    """The caption every timbre picture carries (the reference card's too): what it is, and what narrow filters cost.
+    The rise times are measured (10 to 90% of the amplitude after a sudden start, a 0.34 and a 1.019 ERB filter)."""
+    import textwrap
+    par = (f"{what} {hop_s * 1000:.2f} ms frames through {C['TIMBRE_N']} filters a third of the "
+           f"ear's width ({C['TIMBRE_BW']:g} ERB; the voice picture: 1.019), so a voice's harmonics show as separate "
+           f"stripes; which stripes are bright is the vowel and the colour of the voice. {scale}"
+           f"; thin cyan = the lead pitch (on the lowest stripe); yellow band on top = the whole vocal "
+           f"there.",
+           "THESE FILTERS ARE NARROWER THAN THE EAR'S, SO THEY RING LONGER: onsets and endings are softer here than in "
+           "the voice picture (a sudden start takes about 50 ms to rise at 200 Hz, 17 ms at 1 kHz; there 17 and 6 ms), "
+           "and breath or noise is about 5 dB fainter against the stripes. Read timing in the voice picture. "
+           "Stripes part only while the pitch is high enough: up to 2.5 kHz for a voice above about 200 Hz, 1.6 kHz at "
+           "150 Hz, 1 kHz at 100 Hz; above that a bright patch is several harmonics in one filter. Over the white line "
+           f"({C['TIMBRE_SPLIT'] / 1000:g} kHz): the same picture, squeezed.")
+    return "\n".join(l for p_ in par for l in textwrap.wrap(p_, width=196))
+
+
+def draw_timbre(path, head, M, hop, cf, k, toff, t0, t1, tend, lo, hi, caption, line=None, ww=(), yellow=None,
+                look=True, lane="words", foot=None, foot_h=0.0, tag="[the voice's timbre, close-up]"):
+    """One timbre picture. M, cf, k from timbre_data() (frame j covers toff + [j, j+1) * hop), drawn on the dB
+    scale lo..hi in two panels on one time axis: channels below TIMBRE_SPLIT tall, the rest as a strip above.
+    line: (times, Hz) of the lead pitch; yellow: (frame times, bool) where M is the whole vocal; ww: the words (a
+    thin lane under the panel); foot: text under the picture (foot_h inches; the reference card).
+    Returns the picture's geometry: each panel's pixel box, the Hz at its bottom and top edges (the rows between
+    are linear in ERB-rate) and the pixel row of every labelled frequency."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    FW, DPI, ML, MR = C["FIG_W2"], C["DPI"], C["MARG_L"], C["MARG_R"]
+    plt.rcParams.update({"font.family": "DejaVu Sans"})
+    cap_h = 0.165 * (caption.count("\n") + 1) + 0.12
+    top_in = 0.08 + 0.28 + cap_h                      # header and caption above the strip
+    gap = 0.05                                        # between the strip, the tall panel and the lane
+    H = top_in + C["TIMBRE_TOP_H"] + gap + C["TIMBRE_H"] + gap + 0.44 + 0.3 + foot_h
+    fig = plt.figure(figsize=(FW, H), dpi=DPI)
+
+    def axes(top, h):
+        return fig.add_axes([ML, 1 - (top + h) / H, MR - ML, h / H])
+    fit_header(fig, fig.text(ML, 1 - 0.22 / H, head + "   " + tag, fontsize=13.5, va="center",
+                             ha="left", weight="bold"))
+    fig.text(ML, 1 - 0.40 / H, caption, fontsize=8.6, va="top", ha="left", linespacing=1.32)
+    span = t1 - t0
+    axt = axes(top_in, C["TIMBRE_TOP_H"])
+    nt = draw_coch(axt, M[k:], hop, cf[k:], t0, t1, tend, lo, hi, ticks=(3200, 6400), fs=9, toff=toff)
+    axt.set_ylabel("above", fontsize=10)
+    ax = axes(top_in + C["TIMBRE_TOP_H"] + gap, C["TIMBRE_H"])
+    ticks = (100, 200, 300, 400, 600, 800, 1200, 1600, 2400)
+    draw_coch(ax, M[:k], hop, cf[:k], t0, t1, tend, lo, hi, ticks=ticks, fs=10, toff=toff)
+    ax.set_ylabel("lead vocal, narrow filters, Hz", fontsize=12)
+    if line is not None:
+        ax.plot(line[0], hz2ch(cf[:k], line[1]), color="#00e5ff", lw=1.1, alpha=0.95, zorder=4)
+    for w in ww:
+        for axx in (ax, axt):
+            axx.axvline(w["s"], color="white", lw=0.6, alpha=0.3 if not w["approx"] else 0.13,
+                        ls="-" if not w["approx"] else ":")
+    if yellow is not None and yellow[1].any():
+        axt.fill_between(yellow[0], nt - 0.5 - nt * 0.12, nt - 0.5, where=yellow[1], color="#ffd600", lw=0, step="mid",
+                         zorder=4)
+    axw = axes(top_in + C["TIMBRE_TOP_H"] + C["TIMBRE_H"] + 2 * gap, 0.44)
+    draw_words(axw, ww, t0, t1, tend, span, FW * DPI * (MR - ML), C["HARM_WORD_ROWS"], C["HARM_WORD_FS"], thin=True)
+    axw.set_ylabel(lane, fontsize=10, labelpad=30)
+    for x in time_ticks(axw, t0, t1, look):
+        if t0 < x < t1:
+            for axx in (axt, ax, axw):
+                axx.axvline(x, color="#4fc3f7" if axx is not axw else "#bbbbbb", lw=0.5, alpha=0.3,
+                            zorder=0.5 if axx is axw else 3.5)
+    if foot:
+        fig.text(ML, (foot_h - 0.08) / H, foot, fontsize=10.5, va="top", ha="left", linespacing=1.4)
+    fig.canvas.draw()
+    e = erb_rate(cf)
+    de = (e[-1] - e[0]) / (len(cf) - 1)
+
+    def panel(id_, axx, c0, c1, tk):
+        return dict(id=id_, **px_box(fig, axx), time=True, hz_lo=round(float(erb_hz(e[c0] - de / 2)), 2),
+                    hz_hi=round(float(erb_hz(e[c1 - 1] + de / 2)), 2), channels=c1 - c0,
+                    hz={str(f): px_row(fig, axx, float(hz2ch(cf[c0:c1], f))) for f in tk if cf[c0] <= f <= cf[c1 - 1]})
+    geom = dict(w=fig.canvas.get_width_height()[0], h=fig.canvas.get_width_height()[1], filter_erb=C["TIMBRE_BW"],
+                frame_ms=round(hop * 1000, 3), axis="in timbre and timbretop a frequency's row is linear in ERB-rate "
+                "(21.4 * log10(1 + 0.00437 * Hz)) between hz_lo at y1 and hz_hi at y0",
+                panels=[panel("timbretop", axt, k, len(cf), (3200, 6400)), panel("timbre", ax, 0, k, ticks),
+                        dict(id="words", **px_box(fig, axw), time=True)])
+    fig.savefig(path, dpi=DPI)
+    plt.close(fig)
+    return geom
+
+
 # ------------------------------------------------------------------ close-ups (`look`): recomputed at a finer step
 def excerpt(path, a, b, sr, mono=True):
     """Audio of [a, b) seconds only (nothing after b is read)."""
@@ -2239,10 +2445,11 @@ def pan_image(Lc, Rc, sr, hop_p):
     return 10 * np.log10(H + 1e-10)
 
 
-def look_render(W, st, n, ts, te, limit, out, kinds):
+def look_render(W, st, n, ts, te, limit, out, kinds, timbre=False):
     """Render close-up n of [ts, te] into `out` from the cached audio, recomputed at look_steps(): only audio in
     [ts - LOOK_PAD, min(te + LOOK_PAD, limit)] is read (limit = the end of what is revealed), and every colour scale
-    and gate is the whole song's, as in the windows. Returns (files written, info for NN.json)."""
+    and gate is the whole song's, as in the windows. timbre=True adds NN-timbre.png (the cache must support the
+    voice picture); without it nothing about the other files changes. Returns (files written, info for NN.json)."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -2452,6 +2659,24 @@ def look_render(W, st, n, ts, te, limit, out, kinds):
         geom["harmony"] = draw_harmony(os.path.join(out, f"{n:02d}-harmony.png"), head, ts, te, te, D, ww, toff=a0,
                                        lines=lines, look=True)
         files.append(f"{n:02d}-harmony.png")
+
+    # ---------------- the voice's timbre (only when asked for): the lead again, through narrow filters
+    if timbre:
+        hl = steps["lead"] / sr
+        M, cf_t, k = timbre_data(yl, sr, hl)
+        tl = a0 + (np.arange(M.shape[1]) + 0.5) * hl
+        use_full = F["use_full"] if "use_full" in F.files else np.zeros(len(ft), bool)
+        uf = use_full[np.clip(np.searchsorted(ft, tl), 0, len(ft) - 1)]
+        if uf.any():   # the whole vocal where the voice picture shows it (the yellow band); the pitch stays the lead's
+            V = timbre_data(excerpt(os.path.join(W, "vocals.wav"), a0, b0, sr), sr, hl)[0]
+            n_ = min(M.shape[1], V.shape[1])
+            M[:, :n_][:, uf[:n_]] = V[:, :n_][:, uf[:n_]]
+        geom["timbre"] = draw_timbre(
+            os.path.join(out, f"{n:02d}-timbre.png"), head, M, hl, cf_t, k, a0, ts, te, te, float(S["floor"]),
+            float(S["top"]), timbre_caption(hl, scale="The song's dB scale" + (" (always dB here, whatever the run's "
+                                                                                 "scale)" if ear else "")),
+            line=lead_line, ww=ww, yellow=(tl, uf))
+        files.append(f"{n:02d}-timbre.png")
     info = dict(look=n, start=ts, end=te, window=C["WIN"], steps_ms={k: round(v / sr * 1000, 3) for k, v in steps.items()},
                 time_axis="in every panel x0 is start and x1 is end", pictures=geom)
     # the words of the span, as text
@@ -2926,6 +3151,10 @@ def look(a):
     if not kinds:
         sys.exit(f"REFUSED: the cache {s['work']} can't give a close-up (no stems or no whole-song scales in it). "
                  f"Nothing was spent.")
+    if a.timbre and "voice" not in kinds:
+        sys.exit(f"REFUSED: --timbre is measured from the lead stem on the song's cochleagram scale, and the cache "
+                 f"{s['work']} has no lead stem, sound.npz or features.npz. Nothing was spent; the same look without "
+                 f"--timbre works.")
     C["WIN"] = float(win)
     C["SCALE"] = s.get("scale", "db")   # the run's own scale (runs prepared before the switch have none: db)
     ld = os.path.join(d, "looks")
@@ -2936,7 +3165,7 @@ def look(a):
     shutil.rmtree(tmp, ignore_errors=True)
     os.makedirs(tmp)
     try:
-        files, _ = look_render(s["work"], s, n, ts, te, limit, tmp, kinds)
+        files, _ = look_render(s["work"], s, n, ts, te, limit, tmp, kinds, timbre=a.timbre)
     except BaseException as ex:
         shutil.rmtree(tmp, ignore_errors=True)
         log_line(d, f"look {n:02d} could not be rendered ({type(ex).__name__}); not counted")
@@ -2976,6 +3205,16 @@ def after(d):
     if os.path.exists(src):
         shutil.copyfile(src, os.path.join(d, "summary.json"))
         print(f"whole-song technical numbers (no lyrics): {d}/summary.json")
+    try:                                   # how to make the page, with the video the audio came from
+        url = open(os.path.join(s["work"], "source.txt"), encoding="utf-8").read().strip().split(" | ")[-1]
+    except OSError:
+        url = ""
+    m = re.search(r"(?:youtube\.com/watch\?(?:.*&)?v=|youtu\.be/)([\w-]{11})", url)
+    here = os.path.join(os.path.dirname(os.path.abspath(__file__)), "score.py")
+    if m:
+        print(f"a page to share (no audio in it; it follows this YouTube video): {sys.executable} {here} {d} --youtube {m.group(1)}")
+    else:
+        print(f"a page for yourself (it holds the recording; don't publish it): {sys.executable} {here} {d}")
 
 
 def status(d):
@@ -3020,7 +3259,7 @@ def main():
         return dict(next=nxt, status=status, after=after)[cmd](sys.argv[2])
     if cmd == "refcard":
         if len(sys.argv) != 3:
-            sys.exit("usage: see.py refcard OUT.png")
+            sys.exit("usage: see.py refcard OUT.png   (also writes OUT-timbre.png, the card for `look --timbre`)")
         return refcard(sys.argv[2])
     if cmd == "look":
         p = argparse.ArgumentParser(prog="see.py look", description="a close-up of a span you choose, inside what is "
@@ -3029,6 +3268,9 @@ def main():
         p.add_argument("start", help="m:ss, m:ss.s or seconds")
         p.add_argument("end", help=f"m:ss, m:ss.s or seconds; {C['LOOK_MIN']:g} to {C['LOOK_MAX']:g} s after start")
         p.add_argument("--why", required=True, help="what you are looking for (logged before anything is rendered)")
+        p.add_argument("--timbre", action="store_true", help="one more picture, LL-timbre.png: the lead voice alone "
+                       "through filters a third of the ear's width, tall, so its harmonics show one by one (same look, "
+                       "same budget; about 1,400 tokens more to read)")
         return look(p.parse_args(sys.argv[2:]))
     if cmd == "again":
         p = argparse.ArgumentParser(prog="see.py again", description="a second listen of a finished one: the harmony "
