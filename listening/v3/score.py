@@ -254,27 +254,35 @@ def parse_seal_log(path):
 TIME = re.compile(r"(?<![\d:])(\d):([0-5]\d)(\.\d{1,3})?(?![\d:]|\.\d)")
 
 
-def headline(feel, words=32):
-    """The opening of a feel line that fits a window's reading time: whole sentences up to about `words` words.
-    Nothing is rewritten; a first sentence that is too long alone is cut at a comma and marked with an ellipsis."""
+def headline(feel, words=50):
+    """The part of a feel line that fits a window's reading time. A short one is shown whole. From a long one whole
+    sentences are chosen, in their own order: the first, then the ones where the listener speaks of themself
+    (I, me, my), then the rest, while they fit in about `words` words. A gap is marked with an ellipsis. Nothing
+    is rewritten; a first sentence that is too long alone is cut at a comma."""
     text = " ".join(feel.split())
     sents = [x for x in re.split(r"(?<=[.!?])\s", text) if x]
-    if not sents:
-        return ""
-    head = sents[0]
-    for x in sents[1:]:
-        if len((head + " " + x).split()) > words:
-            break
-        head += " " + x
-    ws = head.split()
-    if len(ws) > words + 8:
-        cut = " ".join(ws[:words])
+    if not sents or len(text.split()) <= words + 8:
+        return text
+    n = [len(x.split()) for x in sents]
+    if n[0] > words + 8:
+        cut = " ".join(sents[0].split()[:words])
         at = max(cut.rfind(c) for c in ",;:")
         if at > 0 and len(cut[:at].split()) >= 12:
             cut = cut[:at]
         head = cut.rstrip(",;:") + "\u2026"
-    elif head != text:
-        head += " \u2026"
+    else:
+        own = [i for i in range(1, len(sents)) if re.search(r"\b(I|me|my|myself|mine)\b", sents[i])]
+        keep, total = {0}, n[0]
+        for i in own + [i for i in range(1, len(sents)) if i not in own]:
+            if total + n[i] <= words:
+                keep.add(i)
+                total += n[i]
+        head, last = "", -1
+        for i in sorted(keep):
+            head += ("" if last < 0 else " \u2026 " if i > last + 1 else " ") + sents[i]
+            last = i
+        if last < len(sents) - 1:
+            head += " \u2026"
     if head.count("**") % 2:
         head = head.replace("**", "")
     return head
@@ -838,11 +846,13 @@ header .lede { min-width: 0; }
 .expect { margin-top: 14px; padding: 10px 14px; background: var(--panel); border-radius: 6px; font-size: 13px; line-height: 1.5; color: #d3cdc3; text-wrap: pretty; }
 .expect span { color: var(--warm); }
 .expect.none { display: none; }
-#briefhint { display: none; margin: 14px 0 0; font-size: 12px; color: var(--dim); }
+#morebtn { display: none; margin: 14px 0 0; padding: 5px 12px; font: 500 12px/1.2 var(--sans); color: var(--muted); border: 1px solid var(--line); border-radius: 999px; align-self: flex-start; cursor: pointer; }
+#morebtn:hover { color: var(--text); border-color: var(--dim); }
+#note.pinned #morebtn { display: inline-block; }
 #note.brief .prior, #note.brief .expect, #note.brief .cols { display: none; }
 #note.brief .grid { display: block; margin-top: 16px; }
-#note.brief .feel, #note.brief > .feel { font-size: clamp(22px, 2.1vw, 32px); line-height: 1.28; max-width: 1000px; }
-#note.brief #briefhint { display: block; }
+#note.brief .feel, #note.brief > .feel { font-size: clamp(21px, 1.9vw, 29px); line-height: 1.3; max-width: 1060px; }
+#note.brief #morebtn { display: inline-block; }
 @media (min-height: 1px) { #stage > #note.brief > .grid { flex: none; } }
 button.t { font-family: var(--mono); font-size: .9em; color: var(--cyan); border-bottom: 1px dotted rgba(58,216,238,.5); border-radius: 2px; padding: 0 1px; transition: background .2s, color .2s; }
 button.t:hover { background: rgba(58,216,238,.16); }
@@ -913,8 +923,8 @@ button.t.ref.now { background: var(--warm); color: var(--bg); }
   <div id="tabs" role="tablist" aria-label="Which listen" hidden></div>
   <div id="map" title="Click to jump"><div class="img"></div><div class="unheard"></div></div>
   <button id="vbig" aria-pressed="false" hidden>larger video</button>
-  <div id="keys"><kbd>space</kbd>pause for the full note</div>
-  <label id="full" title="While the song plays the page shows the opening of each note; paused, it shows all of it"><input type="checkbox"> <span>full notes while playing</span></label>
+  <div id="keys"><kbd>space</kbd>pause</div>
+  <label id="full" title="While the song plays the page shows the heart of each note; this shows all of it"><input type="checkbox"> <span>full notes while playing</span></label>
   <label id="seal" title="Each window stayed hidden until the note for the one before it was locked"><input type="checkbox" checked> <span>hide what I hadn't seen yet</span></label>
 </div>
 <div id="video" hidden></div>
@@ -938,7 +948,7 @@ button.t.ref.now { background: var(--warm); color: var(--bg); }
     </div>
     <div class="cols" id="cols"></div>
   </div>
-  <p id="briefhint">The opening of this window's note. Pause for all of it.</p>
+  <button id="morebtn" aria-expanded="false">Show the whole note <span aria-hidden="true">\u2193</span></button>
 </section>
 </main>
 <section id="after"></section>
@@ -1017,6 +1027,7 @@ const cols = W.map(n => {
 const looksBox = el('div'); looksBox.id = 'looks'; strip.appendChild(looksBox);
 const hideOn = () => sealBox.checked;
 $('full').firstElementChild.addEventListener('change', setBrief);
+$('morebtn').addEventListener('click', e => { const c = $('full').firstElementChild; c.checked = !c.checked; e.currentTarget.blur(); setBrief(); });
 const lookOpen = (lk, k) => !(hideOn() && k < lk.win);   // a close-up stays hidden until the window it was made in is open
 
 let marks = [];   // the left overlay: track names and axis ticks, placed by layout()
@@ -1106,7 +1117,10 @@ function gather() {
 }
 let brief = false, playing = false;   // while the song plays: the opening of each note; paused, all of it
 function setBrief() {
-  const b = playing && !$('full').firstElementChild.checked;
+  const pin = $('full').firstElementChild.checked, b = playing && !pin;
+  $('note').classList.toggle('pinned', pin);
+  $('morebtn').innerHTML = pin ? 'Show less <span aria-hidden="true">\u2191</span>' : 'Show the whole note <span aria-hidden="true">\u2193</span>';
+  $('morebtn').setAttribute('aria-expanded', pin ? 'true' : 'false');
   if (b === brief) return;
   brief = b; $('note').classList.toggle('brief', b);
   if (shown >= 0) showNote(shown);
