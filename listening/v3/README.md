@@ -640,19 +640,20 @@ What the page shows, by the run's layout:
   sits under the strip. Clicking a bracket, or "close-up NN" in a note, goes there.
 - The "hide what I hadn't seen yet" box (on by default) veils every later window, and every close-up until the
   window it was made in is open.
-- **One screen.** The header is one slim row (title, byline, "How this was made", which opens the intro text, a
-  link down to the after-notes, and with `--link` a button for it). On a viewport of at least about 1100 x 700 the
+- **One screen.** The header is one slim row (title, byline, "How this was made", which opens the intro text and the page's own fine print, a
+  link down to the after-notes, a line about memory, and a button that shows the words to paste into Claude Code to
+  install the tool). On a viewport of at least about 1100 x 700 the
   header, transport, strip and current note together are exactly the viewport's height: the note takes what
   room is left and its columns scroll inside themselves, fading at the bottom when there is more. The after-notes
-  and the footer are below that. Smaller viewports get an ordinary flowing page.
+  and a row of links are below that. Smaller viewports get an ordinary flowing page.
 - Nothing pauses by itself. Space (or the play button) pauses, and the transport says so.
 - A window's note is several times longer than its 15 s allows a reader. While the song plays the page shows only
   `feel:`, whole when it is under about 58 words; from a longer one it keeps whole sentences in their order (the
   first, then those where the listener says I or me, then others while they fit in 50 words) and marks gaps with
   an ellipsis. Nothing is rewritten. "Show the whole note" under it (or "full notes while playing") opens the rest
-  without pausing; paused, the whole note shows.
-- **Larger video** (a `--youtube` page, wide screens): a button in the transport moves the player over the right of
-  the strip, where the pictures not yet played are, and back. A close-up's card keeps to the left of it.
+  without pausing; paused mid-song, the whole note shows. Before the first play the page shows the short form too.
+- **Larger video** (a `--youtube` page, wide screens): the player sits over the right of the strip, where the
+  pictures not yet played are; a button in the transport moves it up into the header and back. A close-up's card keeps to the left of it.
 - **The end.** In the last second and a half of the song a button comes up at the bottom of the screen and leads
   down to the after-note.
 - **Publish this listen** (the local page only): a button that shows a request to copy and give to one's own AI. It
@@ -668,12 +669,12 @@ Options:
   recording as `song.m4a`, so it stays local.
 - **`--pictures DIR`** takes `NNN-voice.png` / `NNN-band.png` and their `geometry.json` from DIR instead of
   `RUN/windows/`, e.g. from a copy of the cache re-rendered after a fix in the tool (`prepare --work COPY --redo
-  sound` into a scratch run folder). The footer then says the strips were redrawn (`--redrawn "..."` replaces that
+  sound` into a scratch run folder). The "How this was made" panel then says the strips were redrawn (`--redrawn "..."` replaces that
   sentence).
 - **`--omit-second-after`** leaves the second listen's after-note off the page. **`--redact NAME=REPLACEMENT`**
   (repeatable) replaces a whole-word name in all displayed note text at build time. Neither touches a sealed file;
-  the hashes shown are those of the files as written, and the footer says in a sentence what was done.
-- **`--link URL`** adds a "get the tool" link; `--by` and `--note` set the byline and a sentence of the intro;
+  the hashes shown are those of the files as written, and a sentence under the after-note says what was done.
+- **`--link URL`** changes where the "on GitHub" and "Get the tool" links go (default: this repository); `--by` and `--note` set the byline and a sentence of the intro;
   `--audio FILE` and `--out DIR` override the defaults. `?t=SECONDS` and `?listen=2` in the page's URL choose where
   it opens, and `window.__t` is a clock hook for rendering frames.
 - **`--url ADDRESS`** (the page's public address) adds link-preview tags; a 1200 x 630 `card.jpg` put in the output
@@ -690,10 +691,10 @@ lines are.
 **The lyric sentence is measured.** At build time the displayed text of each listen (window notes, close-up whys and
 notes, after-note) is compared with the cached lyric (`lyrics.json` / `lyrics.lrc`), with the song's title left out:
 the longest run of consecutive lyric words anywhere, the longest inside quotation marks, and how many quoted phrases
-hold three or more lyric words. The footer's wording follows from those numbers ("paraphrase the words", "mostly
+hold three or more lyric words. The wording in the "How this was made" panel follows from those numbers ("paraphrase the words", "mostly
 paraphrase ... quoting one phrase of three words or more", or "quote short phrases of the lyric (seven of three words
 or more, none longer than six words, the title aside)"), and the numbers are printed to stderr. Without a cached
-lyric the footer makes no claim about the notes. The notes themselves may quote the lyric, so read them before
+lyric the panel makes no claim about the notes. The notes themselves may quote the lyric, so read them before
 publishing a share folder.
 
 ## Files

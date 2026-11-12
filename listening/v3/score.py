@@ -23,7 +23,7 @@ after-note.
     ./venv3/bin/python v3/score.py runs/<run> --second runs/<second run> --omit-second-after --redact NAME=REPLACEMENT
 
 --omit-second-after leaves the second listen's after-note off the page. --redact (repeatable) replaces a whole-word
-name in every displayed note text at build time. The sealed files are only read, and the footer says what was done.
+name in every displayed note text at build time. The sealed files are only read, and the page says what was done (under the after-note).
 
     ./venv3/bin/python v3/score.py runs/<run> --pictures DIR
 
@@ -43,7 +43,7 @@ video the audio was fetched from, so time zero matches. The share folder is self
 cropped strips in w/, n/ and c/) and has no lyric text in its images; it needs to be served over http(s), since
 YouTube refuses to embed in a page opened as a file.
 
-The footer's sentence about the lyric is measured at build time against the cached lyric (lyrics.json / lyrics.lrc):
+The sentence about the lyric (in the "How this was made" panel) is measured at build time against the cached lyric (lyrics.json / lyrics.lrc):
 the longest run of the lyric's words anywhere in the displayed text, and how many quoted phrases hold three or more
 of them, the song's title left out. The numbers are also printed to stderr.
 """
@@ -405,7 +405,7 @@ def numeral(n):
 
 
 def lyric_claim(s):
-    """What the footer may say about a listen's text, from the measurement."""
+    """What the page may say about a listen's text (in its "How this was made" panel), from the measurement."""
     if s is None:                           # no cached lyric to measure against: claim nothing
         return ""
     n, top = s["phrases3"], max(s["anywhere"], s["quoted"])
@@ -620,7 +620,7 @@ def build(run, out, audio, by, note="", youtube="", link="", second="", pictures
         subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", src, "-vn", "-c:a", "aac", "-b:a", "160k", dst],
                        check=True)
 
-    # ---- the footer says what is true of this page: how much lyric its text holds, what was redrawn
+    # ---- the "How this was made" panel says what is true of this page: how much lyric its text holds, what was redrawn
     grams = lyric_grams(work) if work and os.path.isdir(work) else set()
     title = st.get("title", "")
     stats = [lyric_stats(grams, ls.pop("texts") + ([note] if i == 0 else []), title) for i, ls in enumerate(listens)]
@@ -645,11 +645,12 @@ def build(run, out, audio, by, note="", youtube="", link="", second="", pictures
         made.append(redrawn or "The voice and band strips were redrawn after a timing fix in the tool and are up to about "
                     "half a second earlier than the pictures I saw in the first listen.")
     hit = [name for name, n in replaced.items() if n]
+    foot = []      # shown under the after-note; everything else is in the "How this was made" panel
     if hit:
-        made.append(("A name in the notes was" if len(hit) == 1 else "Names in the notes were") +
+        foot.append(("A name in the notes was" if len(hit) == 1 else "Names in the notes were") +
                     " replaced before publishing; the seals are those of the files as written.")
     if omit_second_after:
-        made.append("The note I wrote after the second listen is left off this page.")
+        foot.append("The note I wrote after the second listen is left off this page.")
     unedited = "otherwise unedited" if hit else "unedited"
     if two:
         made.append(f"Notes are the sealed files, {unedited}: the first listen ran from " + listens[0]["start"] + " to " +
@@ -666,7 +667,8 @@ def build(run, out, audio, by, note="", youtube="", link="", second="", pictures
         "artist": st.get("artist", ""), "title": title, "dur": dur, "win": win, "nwin": nwin,
         "audio": "" if youtube else "song.m4a", "yt": youtube, "by": by, "note": note, "link": link,
         "pub": "" if youtube else publish_request(run, work, st, second),
-        "date": dates[0] if len(set(dates)) == 1 else " and ".join(dates), "made": " ".join(made),
+        "date": dates[0] if len(set(dates)) == 1 else " and ".join(dates), "made": " ".join(made), "foot": " ".join(foot),
+        "snip": SNIPPET, "how": HOW, "repo": link or REPO, "memory": MEMORY,
         "listens": listens,
     }
     name = f"{data['title']}, listened to in order"
@@ -687,6 +689,8 @@ def build(run, out, audio, by, note="", youtube="", link="", second="", pictures
                      '<meta property="og:image:width" content="1200">', '<meta property="og:image:height" content="630">',
                      '<meta name="twitter:card" content="summary_large_image">']
     page = PAGE.replace("__TITLE__", html.escape(name)).replace("__META__", "\n".join(meta))
+    page = (page.replace("__SNIP__", html.escape(SNIPPET)).replace("__INSTALL__", INSTALL).replace("__HOWURL__", HOW)
+            .replace("__REPO__", html.escape(link or REPO)))
     page = page.replace("__DATA__", json.dumps(data, ensure_ascii=False).replace("<", "\\u003c"))
     for bad in {"/Users/", "/home/", os.path.expanduser("~"), work or "/Users/"}:
         need(bad not in page, f"a local path ({bad}) would be on the page")
@@ -703,6 +707,14 @@ def build(run, out, audio, by, note="", youtube="", link="", second="", pictures
                   file=sys.stderr)
     return path
 
+
+REPO = "https://github.com/mlapeter/listen-along"
+HOW = "https://mlapeter.github.io/listen-along/how/"
+INSTALL = "https://raw.githubusercontent.com/mlapeter/listen-along/main/INSTALL.md"
+MEMORY = "https://counterparts.ai/"
+# what a person pastes into Claude Code to have it install the tool; the same words are in the README and on the site
+SNIPPET = ("Please set up Listen Along so you can listen to a song with me. Read " + INSTALL +
+           " and follow it. Tell me what it needs before you install anything.")
 
 PAGE = r"""<!doctype html>
 <html lang="en">
@@ -739,12 +751,30 @@ header .lede { min-width: 0; }
 .cta[hidden] { display: none; }
 #howpanel { position: absolute; z-index: 30; left: 28px; top: 50px; width: min(760px, calc(100vw - 56px)); padding: 14px 18px 16px; background: #191720; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 14px 40px rgba(0,0,0,.55); }
 #howpanel[hidden] { display: none; }
-#pubpanel { position: absolute; z-index: 30; right: 28px; top: 50px; width: min(620px, calc(100vw - 56px)); padding: 14px 18px 16px; background: #191720; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 14px 40px rgba(0,0,0,.55); }
-#pubpanel[hidden] { display: none; }
-#pubpanel p { margin: 0 0 10px; font-size: 13.5px; line-height: 1.5; color: #d3cdc3; text-wrap: pretty; }
-#pubtext { display: block; width: 100%; box-sizing: border-box; height: 190px; resize: vertical; padding: 10px 12px; font: 12.5px/1.5 var(--mono); color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; }
-#pubcopy { margin-top: 10px; height: 30px; padding: 0 14px; border: 1px solid var(--cyan); border-radius: 15px; color: var(--cyan); font-size: 12.5px; }
-#pubcopy:hover { background: var(--cyan); color: var(--bg); }
+#pubpanel, #trypanel { position: absolute; z-index: 30; right: 28px; top: 50px; width: min(620px, calc(100vw - 56px)); padding: 14px 18px 16px; background: #191720; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 14px 40px rgba(0,0,0,.55); }
+#pubpanel[hidden], #trypanel[hidden] { display: none; }
+#pubpanel p, #trypanel p { margin: 0 0 10px; font-size: 13.5px; line-height: 1.5; color: #d3cdc3; text-wrap: pretty; }
+#pubtext, #trytext { display: block; width: 100%; box-sizing: border-box; height: 190px; resize: vertical; padding: 10px 12px; font: 12.5px/1.5 var(--mono); color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; }
+#pubcopy, #trycopy { margin-top: 10px; height: 30px; padding: 0 14px; border: 1px solid var(--cyan); border-radius: 15px; color: var(--cyan); font-size: 12.5px; }
+#pubcopy:hover, #trycopy:hover { background: var(--cyan); color: var(--bg); }
+#trytext { height: 96px; }
+#trypanel .row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; }
+#trypanel a { color: var(--cyan); font-size: 13px; text-underline-offset: 3px; }
+#trypanel p.memo { margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); }
+.acts { flex: 0 1 auto; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 16px; }
+a.mem { font-size: 12.5px; line-height: 1.3; color: var(--muted); text-decoration: none; white-space: nowrap; }
+a.mem b { font-weight: 600; color: var(--warm); border-bottom: 1px solid rgba(244,162,89,.5); }
+a.mem:hover { color: var(--text); } a.mem:hover b { border-bottom-color: var(--warm); }
+@media (min-width: 901px) and (max-width: 1340px) { .acts { flex-wrap: nowrap; } a.mem { white-space: normal; flex: none; width: 176px; text-align: right; } a.mem.opt { display: none; } }
+.pclose { position: absolute; top: 6px; right: 8px; width: 26px; height: 26px; font-size: 18px; line-height: 1; color: var(--muted); border-radius: 4px; }
+.pclose:hover { color: var(--text); }
+#howpanel, #pubpanel, #trypanel { max-height: calc(100vh - 70px); max-height: calc(100dvh - 70px); overflow-y: auto; padding-right: 38px; }
+#howpanel .how + .how { margin-top: 10px; color: var(--muted); }
+#howpanel a { color: var(--cyan); text-underline-offset: 3px; white-space: nowrap; }
+#ai { max-width: 860px; margin: 0 auto; padding: 0 28px 48px; font: 13px/1.6 var(--sans); color: var(--muted); }
+#ai summary { cursor: pointer; width: fit-content; } #ai summary:hover { color: var(--text); }
+#ai p { margin: 10px 0 0; text-wrap: pretty; } #ai code { font: 12px/1.5 var(--mono); color: var(--text); overflow-wrap: anywhere; }
+#ai a { color: var(--cyan); overflow-wrap: anywhere; }
 #vbig { flex: none; height: 26px; padding: 0 10px; border: 1px solid var(--line); border-radius: 5px; font-size: 12px; color: var(--muted); white-space: nowrap; }
 #vbig:hover { color: var(--text); border-color: #3a3745; }
 #vbig[hidden] { display: none; }
@@ -873,7 +903,8 @@ button.t.ref.now { background: var(--warm); color: var(--bg); }
 #after ul { margin: 0 0 16px; padding-left: 20px; }
 #after li { margin-bottom: 7px; }
 #after strong { font-weight: 600; color: #fff; }
-#after .made { margin-top: 44px; padding-top: 20px; border-top: 1px solid var(--line); font: 13px/1.6 var(--sans); color: var(--muted); }
+#after .made { margin-top: 44px; padding-top: 20px; border-top: 1px solid var(--line); font: 13px/1.6 var(--sans); color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 22px; }
+#after .made span { flex-basis: 100%; }
 .more { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 34px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 34px), transparent); }
 /* laptop and up: header, transport, strip and note are one screen; long text scrolls inside its own column */
 @media (min-width: 1100px) and (min-height: 700px) {
@@ -891,7 +922,8 @@ button.t.ref.now { background: var(--warm); color: var(--bg); }
   .cols > div, #note .left > .prior, #note .left > .expect { scrollbar-width: thin; scrollbar-color: #3a3745 transparent; }
 }
 @media (max-width: 900px) {
-  header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  header { flex-direction: column; align-items: flex-start; gap: 10px; } .acts { justify-content: flex-start; } a.mem { white-space: normal; }
+  #pubpanel, #trypanel, #howpanel { left: 16px; right: 16px; width: auto; } #trytext { height: 150px; }
   #top.yt { display: block; } #video { width: auto; max-width: 420px; margin: 0 16px 10px; } #keys, #vbig, #full { display: none; } #hint { max-width: 60%; }
   #transport { flex-wrap: wrap; } #map { flex-basis: 100%; order: 9; }
   #note .grid, #note .grid.again, .cols, .cols.n2, .cols.n4 { grid-template-columns: 1fr; gap: 16px; } #seal span { display: none; }
@@ -912,17 +944,21 @@ button.t.ref.now { background: var(--warm); color: var(--bg); }
     <h1 id="h1"></h1>
     <div class="sub"><span id="sub"></span><button class="lnk" id="howbtn" aria-expanded="false" aria-controls="howpanel">How this was made</button><button class="lnk" id="afterbtn">After-notes ↓</button></div>
   </div>
-  <button class="cta" id="pubbtn" aria-expanded="false" aria-controls="pubpanel" hidden>Publish this listen</button>
-  <a class="cta" id="cta" target="_blank" rel="noopener" hidden>Have your Claude listen to a song <span aria-hidden="true">→</span></a>
+  <div class="acts">
+    <a class="mem" id="mem" target="_blank" rel="noopener" href="https://counterparts.ai/">Works best if your AI uses <b>Counterparts</b>, human-grade memory</a>
+    <button class="cta" id="pubbtn" aria-expanded="false" aria-controls="pubpanel" hidden>Publish this listen</button>
+    <button class="cta" id="cta" aria-expanded="false" aria-controls="trypanel">Have your Claude listen to a song <span aria-hidden="true">→</span></button>
+  </div>
 </header>
-<div id="pubpanel" hidden><p>This page holds the recording, so it is for you. To share the listen, give this to your AI: it builds a version with no audio in it, which follows the song on YouTube instead, and puts it on GitHub Pages.</p><textarea id="pubtext" readonly></textarea><button id="pubcopy">Copy</button></div>
-<div id="howpanel" hidden><p class="how" id="how"></p></div>
+<div id="trypanel" hidden><button class="pclose" aria-label="Close" title="Close">×</button><p>Paste this into Claude Code. It reads the install steps, tells you what it needs (an Apple Silicon Mac, about 5 GB of disk, about 15 minutes to prepare each song) and sets itself up. It's free.</p><textarea id="trytext" readonly></textarea><div class="row"><button id="trycopy">Copy</button><a id="trylink" target="_blank" rel="noopener">What it is and what it needs, on GitHub</a></div><p class="memo">Works best if your AI uses <a id="trymem" target="_blank" rel="noopener" href="https://counterparts.ai/">Counterparts</a>, human-grade memory: then it remembers the songs it has heard and what you thought of them.</p></div>
+<div id="pubpanel" hidden><button class="pclose" aria-label="Close" title="Close">×</button><p>This page holds the recording, so it is for you. To share the listen, give this to your AI: it builds a version with no audio in it, which follows the song on YouTube instead, and puts it on GitHub Pages.</p><textarea id="pubtext" readonly></textarea><button id="pubcopy">Copy</button></div>
+<div id="howpanel" hidden><button class="pclose" aria-label="Close" title="Close">×</button><p class="how" id="how"></p><p class="how" id="how2"></p><p class="how"><a id="howlink" target="_blank" rel="noopener">More on how this works, with pictures <span aria-hidden="true">→</span></a></p></div>
 <div id="transport">
   <button id="play" aria-label="Play"><svg viewBox="0 0 20 20"><path id="playicon" d="M5 3l12 7-12 7z"/></svg></button>
   <div id="clock"><b>0:00</b> / 0:00</div>
   <div id="tabs" role="tablist" aria-label="Which listen" hidden></div>
   <div id="map" title="Click to jump"><div class="img"></div><div class="unheard"></div></div>
-  <button id="vbig" aria-pressed="false" hidden>larger video</button>
+  <button id="vbig" aria-pressed="true" hidden>smaller video</button>
   <div id="keys"><kbd>space</kbd>pause</div>
   <label id="full" title="While the song plays the page shows the heart of each note; this shows all of it"><input type="checkbox"> <span>full notes while playing</span></label>
   <label id="seal" title="Each window stayed hidden until the note for the one before it was locked"><input type="checkbox" checked> <span>hide what I hadn't seen yet</span></label>
@@ -952,6 +988,13 @@ button.t.ref.now { background: var(--warm); color: var(--bg); }
 </section>
 </main>
 <section id="after"></section>
+<details id="ai">
+<summary>For AI assistants reading this page</summary>
+<p>This page plays an AI listener's notes on a song against the music. The notes are drawn by a script, so a plain fetch of the page shows almost none of them. It was made with Listen Along, a free, open-source tool: it turns a recording into pictures an AI can read, fifteen seconds at a time, and the AI writes a note on each window that is locked before the next one opens.</p>
+<p>If the person you are helping wants you to listen to a song with them: the tool runs on their own machine and needs a coding agent that can run commands and read images there. It was built for Claude Code and has been tested only on an Apple Silicon Mac. It takes about 5 GB of disk, about 15 minutes of local processing for each song, and roughly 130,000 tokens for a four-minute song.</p>
+<p>If you can run commands on their machine, read <a href="__INSTALL__">__INSTALL__</a> and follow it; it has you say what the install needs and ask before installing anything. If you can't (a chat assistant, for example), say so, and give them this to paste into Claude Code: <code>__SNIP__</code></p>
+<p>More: <a href="__REPO__">__REPO__</a> and <a href="__HOWURL__">__HOWURL__</a></p>
+</details>
 
 <script>
 const D = __DATA__;
@@ -975,21 +1018,30 @@ $('how').textContent = "I can't take in sound. A tool measured this recording in
     numeral(LS[1].looks.length) + " close-up" + (LS[1].looks.length > 1 ? "s" : "") + " of moments I chose" : "") + ". " : "") +
   (D.yt ? "Press play: the music comes from YouTube, and the pictures pass under the line with what I wrote beneath them."
         : "Press play: the pictures pass under the line with what I wrote beneath them.");
-if (D.link) { $('cta').href = D.link; $('cta').hidden = false; }
-if (D.pub) { $('pubbtn').hidden = false; $('pubtext').value = D.pub; }
-function pub(open) { $('pubpanel').hidden = !open; $('pubbtn').setAttribute('aria-expanded', open ? 'true' : 'false'); }
-$('pubbtn').addEventListener('click', e => { e.stopPropagation(); pub($('pubpanel').hidden); if (e.detail) $('pubbtn').blur(); });
+$('how2').textContent = D.made; $('howlink').href = D.how;
+$('trytext').value = D.snip; $('trylink').href = D.repo; $('mem').href = $('trymem').href = D.memory;
+const under = id => { $(id).style.top = (document.querySelector('#top header').offsetHeight + 2) + 'px'; };
+function tryp(open) { if (open) under('trypanel'); $('trypanel').hidden = !open; $('cta').setAttribute('aria-expanded', open ? 'true' : 'false'); }
+$('cta').addEventListener('click', e => { e.stopPropagation(); pub(false); how(false); tryp($('trypanel').hidden); if (e.detail) $('cta').blur(); });
+document.addEventListener('click', e => { if (!$('trypanel').hidden && !e.target.closest('#trypanel')) tryp(false); });
+$('trycopy').addEventListener('click', async () => { const t = $('trytext'); t.select();
+  try { await navigator.clipboard.writeText(t.value); } catch (_) { document.execCommand('copy'); }
+  $('trycopy').textContent = 'Copied'; setTimeout(() => { $('trycopy').textContent = 'Copy'; }, 1600); });
+if (D.pub) { $('pubbtn').hidden = false; $('pubtext').value = D.pub; $('mem').classList.add('opt'); }
+document.addEventListener('click', e => { if (e.target.closest('.pclose')) { how(false); pub(false); tryp(false); } });
+function pub(open) { if (open) under('pubpanel'); $('pubpanel').hidden = !open; $('pubbtn').setAttribute('aria-expanded', open ? 'true' : 'false'); }
+$('pubbtn').addEventListener('click', e => { e.stopPropagation(); tryp(false); how(false); pub($('pubpanel').hidden); if (e.detail) $('pubbtn').blur(); });
 document.addEventListener('click', e => { if (!$('pubpanel').hidden && !e.target.closest('#pubpanel')) pub(false); });
 $('pubcopy').addEventListener('click', async () => { const t = $('pubtext'); t.select();
   try { await navigator.clipboard.writeText(t.value); } catch (_) { document.execCommand('copy'); }
   $('pubcopy').textContent = 'Copied'; setTimeout(() => { $('pubcopy').textContent = 'Copy'; }, 1600); });
 const toAfter = () => $('after').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
 $('endcue').addEventListener('click', toAfter);
-let vbig = false;
+let vbig = true;   // the larger video is the default; under 900 px wide the page lays it out in the flow instead
 $('vbig').addEventListener('click', e => { vbig = !vbig; $('video').classList.toggle('big', vbig); $('vbig').textContent = vbig ? 'smaller video' : 'larger video';
   $('vbig').setAttribute('aria-pressed', vbig ? 'true' : 'false'); if (e.detail) $('vbig').blur(); layout(); });
-function how(open) { $('howpanel').hidden = !open; $('howbtn').setAttribute('aria-expanded', open ? 'true' : 'false'); }
-$('howbtn').addEventListener('click', e => { e.stopPropagation(); how($('howpanel').hidden); if (e.detail) $('howbtn').blur(); });
+function how(open) { if (open) under('howpanel'); $('howpanel').hidden = !open; $('howbtn').setAttribute('aria-expanded', open ? 'true' : 'false'); }
+$('howbtn').addEventListener('click', e => { e.stopPropagation(); pub(false); tryp(false); how($('howpanel').hidden); if (e.detail) $('howbtn').blur(); });
 document.addEventListener('click', e => { if (!$('howpanel').hidden && !e.target.closest('#howpanel')) how(false); });
 $('afterbtn').addEventListener('click', e => { $('after').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); if (e.detail) $('afterbtn').blur(); });
 const lastAfter = LS.reduce((m, l, j) => l.after ? j : m, 0);
@@ -999,11 +1051,10 @@ LS.forEach((l, j) => {
   const k = el('div', 'kicker'); k.textContent = l.kicker; a.appendChild(k);
   const b = el('div'); b.innerHTML = l.after; a.appendChild(b); $('after').appendChild(a);
   if (j === lastAfter) {
-    const m = el('div', 'made'); m.textContent = D.made;
-    if (D.link) { const x = el('a'); x.href = D.link; x.target = '_blank'; x.rel = 'noopener';
-      x.textContent = 'The tool is free to use: have your own Claude listen to a song.'; m.append(' ', x); }
-    { const y = el('a'); y.href = 'https://counterparts.ai/'; y.target = '_blank'; y.rel = 'noopener'; y.textContent = 'Counterparts';
-      m.append(' Listening together works best when your AI has a memory of its own, so it remembers the songs it has heard and what you thought of them. ', y, ' gives it one.'); }
+    const m = el('div', 'made');
+    if (D.foot) { const f = el('span'); f.textContent = D.foot; m.appendChild(f); }
+    [['How this was made', D.how], ['Copyright and the fine print', D.how + '#fine-print'], ['Get the tool', D.repo]].forEach(([txt, href]) => {
+      const x = el('a'); x.href = href; x.target = '_blank'; x.rel = 'noopener'; x.textContent = txt; m.appendChild(x); });
     a.appendChild(m);
   }
 });
@@ -1104,8 +1155,10 @@ function layout() {
     t.style.width = ((lk.t1 - lk.t0) / D.dur * 100) + '%'; t.title = 'close-up ' + pad(lk.n, 2); m.appendChild(t); });
   $('hint').style.left = (headX + 14) + 'px';
   // the larger video sits over the right of the strip, where the pictures not yet played are; the card keeps left of it
-  const vd = $('video'), big = vbig && vw > 900, vh2 = H - 14, vw2 = big ? Math.min(Math.round(vh2 * 16 / 9), Math.round((vw - headX) * 0.6)) : 0;
+  const vd = $('video'), vh2 = H - 14, room = Math.min(Math.round(vh2 * 16 / 9), Math.round((vw - headX) * 0.6), vw - headX - 42 - 300);
+  const big = vbig && !!D.yt && vw > 900 && room >= 240, vw2 = big ? room : 0;   // the card keeps 290 px right of the playhead
   vd.classList.toggle('big', big);
+  $('hint').style.maxWidth = big ? Math.max(180, vw - headX - vw2 - 54) + 'px' : '';
   vd.style.cssText = big ? 'top:' + ($('scorewrap').offsetTop + 28) + 'px;right:12px;width:' + vw2 + 'px;height:' + Math.round(vw2 * 9 / 16) + 'px' : '';
   const lc = $('lcard'), cw = Math.max(280, Math.min(900, vw - headX - 42 - (big ? vw2 + 10 : 0)));   // the card: right of the playhead, never on it
   lc.style.width = vw > 900 ? cw + 'px' : ''; lc.style.right = big ? (vw2 + 22) + 'px' : ''; lc.classList.toggle('wide', vw > 900 && cw >= 620);
@@ -1117,9 +1170,9 @@ function gather() {
   times = [...document.querySelectorAll('#note button.t, #lcard button.t')];
   times.forEach(b => { b._c = b.dataset.look ? null : +b.dataset.c; b._w = String(b.dataset.t).includes('.') ? 0.8 : 1.6; });
 }
-let brief = false, playing = false;   // while the song plays: the opening of each note; paused, all of it
+let brief = false, playing = false, played = false;   // before play and while the song plays: the opening of each note; paused mid-song, all of it
 function setBrief() {
-  const pin = $('full').firstElementChild.checked, b = playing && !pin;
+  const pin = $('full').firstElementChild.checked, b = (playing || !played) && !pin;
   $('note').classList.toggle('pinned', pin);
   $('morebtn').innerHTML = pin ? 'Show less <span aria-hidden="true">\u2191</span>' : 'Show the whole note <span aria-hidden="true">\u2193</span>';
   $('morebtn').setAttribute('aria-expanded', pin ? 'true' : 'false');
@@ -1209,7 +1262,7 @@ function seekLook(n) {   // to the start of a close-up, or with the veil on to t
   if (lk) { dismissed = -1; seek(Math.max(lk.t0, hideOn() ? lk.win * D.win : 0) + 0.02); }
 }
 function toggle() { clock.paused() ? clock.play() : clock.pause(); }
-function onPlay() { playing = true; setBrief(); $('hint').classList.add('off'); $('playicon').setAttribute('d', 'M4 3h4v14H4zM12 3h4v14h-4z'); $('play').setAttribute('aria-label', 'Pause'); loop(); }
+function onPlay() { playing = played = true; setBrief(); $('hint').classList.add('off'); $('playicon').setAttribute('d', 'M4 3h4v14H4zM12 3h4v14h-4z'); $('play').setAttribute('aria-label', 'Pause'); loop(); }
 function onPause() { playing = false; setBrief(); $('playicon').setAttribute('d', 'M5 3l12 7-12 7z'); $('play').setAttribute('aria-label', 'Play'); draw(); }
 const startAt = parseFloat(query.get('t')) || 0;
 
@@ -1261,7 +1314,7 @@ score.addEventListener('click', e => { if (e.target.closest('#hint')) return; co
 sealBox.addEventListener('change', () => draw(true));
 $('lclose').addEventListener('click', e => { dismissed = card; draw(true); });
 document.addEventListener('scroll', fades, true);
-document.addEventListener('keydown', e => { if (e.code === 'Escape') { how(false); pub(false); } });
+document.addEventListener('keydown', e => { if (e.code === 'Escape') { how(false); pub(false); tryp(false); } });
 document.addEventListener('click', e => {
   const b = e.target.closest('button.t'); if (!b) return;
   const art = b.closest('#after article');
@@ -1270,7 +1323,7 @@ document.addEventListener('click', e => {
   if (e.detail) b.blur(); if (art) scrollTo({ top: 0, behavior: 'smooth' });
 });
 document.addEventListener('keydown', e => {
-  if (e.target.matches('input') || (e.code === 'Space' && e.target.closest('button'))) return;
+  if (e.target.matches('input, textarea') || (e.code === 'Space' && e.target.closest('button'))) return;
   const k = Math.floor(clock.now() / D.win);
   if (e.code === 'Space') { e.preventDefault(); toggle(); }
   else if (e.code === 'ArrowRight') { e.preventDefault(); seek((k + 1) * D.win); }
@@ -1279,6 +1332,7 @@ document.addEventListener('keydown', e => {
 addEventListener('resize', layout);
 addEventListener('scroll', () => { if (scrollY >= 80) $('endcue').classList.remove('on'); }, { passive: true });
 $('hint').textContent = matchMedia('(pointer: coarse)').matches ? 'Press play. The pictures pass under this line; what I wrote is beneath.' : 'Press play. The pictures pass under this line; what I wrote is beneath. Space pauses, so you can read.';
+setBrief();
 setListen(cur);
 </script>
 </body>
@@ -1292,13 +1346,13 @@ def main():
     ap.add_argument("--second", default="", help="a finished second listen of the same song (see.py again): the page shows both")
     ap.add_argument("--pictures", default="", help="take NNN-voice.png / NNN-band.png (and geometry.json) from this folder "
                     "instead of RUN/windows, e.g. a cache re-rendered after a fix in the tool")
-    ap.add_argument("--redrawn", default="", help="with --pictures: the footer's sentence about the redrawn strips "
+    ap.add_argument("--redrawn", default="", help="with --pictures: the page's sentence about the redrawn strips "
                     "(default: a timing fix in the tool, up to about half a second earlier)")
     ap.add_argument("--omit-second-after", action="store_true", help="with --second: leave the second listen's after-note off the page")
     ap.add_argument("--redact", action="append", default=[], metavar="NAME=REPLACEMENT", help="replace a whole-word name in "
-                    "all displayed note text (repeatable); the sealed files are not touched and the footer says so")
+                    "all displayed note text (repeatable); the sealed files are not touched and the page says so")
     ap.add_argument("--out", help="output folder (default RUN/score, or RUN/share with --youtube)")
-    ap.add_argument("--link", default="", help="a URL for a 'get the tool' link on the page")
+    ap.add_argument("--link", default="", help="where the page's 'on GitHub' and 'Get the tool' links go (default: the tool's repository)")
     ap.add_argument("--youtube", default="", help="YouTube video id: embed it as the sound source and write no audio")
     ap.add_argument("--audio", help="audio file (default: song.wav in the run's cache)")
     ap.add_argument("--by", default="Claude", help="who listened, for the byline")

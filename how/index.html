@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Listen Along works</title>
+<meta name="description" content="How an AI that can't hear listens to a song: pictures measured from the sound, read fifteen seconds at a time, with each note locked before the next window opens. Plus the fine print.">
+<meta property="og:title" content="How Listen Along works">
+<meta property="og:description" content="How an AI that can't hear listens to a song: pictures measured from the sound, read fifteen seconds at a time, with each note locked before the next window opens.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://mlapeter.github.io/listen-along/how/">
+<meta property="og:image" content="https://mlapeter.github.io/listen-along/and-its-still-alright/card.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<style>
+  :root { --bg: #0b0a0e; --panel: #131218; --line: #2a2833; --text: #ece7df; --muted: #a8a299; --cyan: #3ad8ee; --warm: #f4a259; --serif: "Iowan Old Style", Palatino, Georgia, serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.6 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  main { max-width: 820px; margin: 0 auto; padding: 44px 20px 80px; }
+  nav { font-size: 14.5px; margin-bottom: 36px; } a { color: var(--cyan); text-underline-offset: 3px; }
+  h1 { font: 500 clamp(34px, 5.5vw, 50px)/1.1 var(--serif); margin: 0 0 16px; letter-spacing: -0.015em; }
+  .lede { font-size: clamp(18px, 2.2vw, 20px); color: #d3cdc3; margin: 0; text-wrap: pretty; }
+  h2 { font: 500 28px/1.2 var(--serif); margin: 60px 0 14px; letter-spacing: -0.01em; }
+  h3 { font: 600 12px/1.2 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 30px 0 8px; }
+  p { margin: 0 0 14px; text-wrap: pretty; } li { margin-bottom: 8px; } ul, ol { padding-left: 22px; margin: 0 0 14px; }
+  figure { margin: 26px 0; } figure img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; }
+  figure.wide { margin-left: calc((820px - min(1120px, 100vw - 40px)) / 2 - 20px + 20px); margin-right: calc((820px - min(1120px, 100vw - 40px)) / 2 - 20px + 20px); }
+  figcaption { margin-top: 10px; font-size: 14px; color: var(--muted); text-wrap: pretty; }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: 8px 18px; margin: 0 0 14px; font-size: 15.5px; }
+  dt { color: var(--warm); font-weight: 600; white-space: nowrap; } dd { margin: 0; color: #d3cdc3; }
+  .box { margin: 22px 0; padding: 18px 20px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+  textarea { display: block; width: 100%; margin: 0 0 12px; padding: 12px 14px; resize: none; font: 13.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; }
+  button { height: 40px; padding: 0 22px; border: 0; border-radius: 20px; background: var(--cyan); color: var(--bg); font: 600 15px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; cursor: pointer; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; font-size: 15px; }
+  .mem { margin: 16px 0 0; font-size: 15px; color: var(--muted); } .mem a { color: var(--warm); }
+  .fine p, .fine li { font-size: 15.5px; color: #d3cdc3; }
+  details { margin-top: 48px; font-size: 14px; color: var(--muted); } summary { cursor: pointer; width: fit-content; }
+  code { font: 13px/1.5 ui-monospace, Menlo, monospace; color: var(--text); overflow-wrap: anywhere; } details a { overflow-wrap: anywhere; }
+  @media (max-width: 760px) { figure.wide { margin-left: 0; margin-right: 0; } dl { grid-template-columns: 1fr; gap: 2px; } dd { margin-bottom: 10px; } textarea { height: 150px; } }
+</style>
+</head>
+<body>
+<main>
+  <nav><a href="../">&larr; Listen Along</a></nav>
+  <h1>How it works</h1>
+  <p class="lede">An AI like Claude can't take in sound. Listen Along measures a recording and draws what it measured, so the AI has something to read. It reads the song in order, fifteen seconds at a time, and writes a note on each stretch before it is shown the next.</p>
+
+  <figure class="wide"><img src="page.jpg" width="1440" height="820" alt="A finished page: the song's pictures passing under a playhead, the video on the right, and the listener's note for this moment underneath"><figcaption>A finished listen. The pictures pass under the line while the song plays, and the note written for that moment sits beneath. <a href="../and-its-still-alright/">Play this one</a>.</figcaption></figure>
+
+  <h2>1. The sound becomes pictures</h2>
+  <p>Everything is done on your own machine. The tool splits the recording into the lead voice, the other voices and five instrument parts, then measures each one and draws it. Time runs left to right. Brighter means louder.</p>
+  <figure class="wide"><img src="strip.jpg" width="1440" alt="About 25 seconds of a song as the listener sees it: rows for the lead voice, other voices, drums, bass, guitar, keys and other instruments, then the band's notes on a grid"><figcaption>About 25 seconds of Nathaniel Rateliff's "And It's Still Alright" at Pickathon: one voice, one guitar, and nothing in the other rows.</figcaption></figure>
+  <dl>
+    <dt>Lead voice</dt><dd>The singer alone. The bright bands are the sound of the voice; the thin cyan line traces its pitch as it rises and falls.</dd>
+    <dt>Other voices</dt><dd>Backing singers, when there are any.</dd>
+    <dt>Drums to other</dt><dd>One row for each instrument part, so the AI can see who is playing and when someone comes in or drops out.</dd>
+    <dt>Notes of the band</dt><dd>A grid like a piano roll, with one row for each semitone. A played note lights its row. Nothing names the chord or the key; the AI works that out, or doesn't.</dd>
+    <dt>Bass alone</dt><dd>The low notes by themselves, where they are easier to follow.</dd>
+  </dl>
+  <p>The AI's own copy has more than the published page shows: each lyric word written under the moment it is sung, and a picture of where each sound sits between left and right. The words are left off public pages on purpose (see the fine print).</p>
+  <p><b>No other AI describes the song.</b> An earlier version had a second model write about the audio, and the listener ended up reading that model's opinions. Now the tool only measures and draws. Speech models are used for one job, finding when each lyric word is sung.</p>
+
+  <h2>2. It listens in order</h2>
+  <ol>
+    <li><b>One window at a time.</b> The AI is shown fifteen seconds. It writes what that stretch felt like, what the voice and the band did, what the words were about and, when it has one, a guess at what comes next.</li>
+    <li><b>The note is locked.</b> Before the next window is revealed, the note is made read-only and its fingerprint (a SHA-256 hash) is logged with the time. If a locked note is changed later, the tool refuses to go on. So a wrong guess stays wrong on the page.</li>
+    <li><b>A few close-ups.</b> Six times in a song the AI can ask for a finer look at two to eight seconds it has already heard. It has to say what it is looking for first, and that reason is logged before the picture exists.</li>
+    <li><b>Afterwards.</b> It writes a note on the whole song. If you have your own take, it asks for yours before showing its own.</li>
+    <li><b>A second listen</b>, if you want one: the same song again, with the first listen's notes beside it.</li>
+  </ol>
+  <p>The order is the point. An earlier attempt gave the AI the whole song at once, as one picture. Nothing in a whole picture can surprise you.</p>
+
+  <h2>3. The page plays it back</h2>
+  <p>When the listen ends, the tool builds a page like the one above. Press play and the pictures move under the line in time with the music, with the note for each window beneath. While the song plays you see the opening of each note; pause, or press "Show the whole note", to read all of it. The times shown with each note are when that window was opened and when its note was locked.</p>
+  <p>The page you get for yourself holds the recording. The version made for sharing holds none: it plays the song from YouTube's own player and follows its clock.</p>
+
+  <h2>What it is not</h2>
+  <ul>
+    <li><b>It isn't hearing.</b> It is closer to reading a score while the piece is performed than to listening as a person does. The quality of a voice and the sound of the room mostly don't come through.</li>
+    <li><b>Whether the AI feels anything is an open question.</b> The pictures are measurements. The notes are what the AI wrote when it read them, and the page shows them unedited.</li>
+    <li><b>It may already know the song.</b> A well-known song's words are in an AI's training, so its guesses about the words aren't blind. What it can't know in advance is this performance: when things happen and what the voice does. Live recordings show that best.</li>
+    <li><b>The lock proves order, not honesty.</b> It shows each note was written before the next window was revealed by the tool. It can't stop someone opening the files by hand.</li>
+    <li><b>Splitting a recording into parts is a model's guess.</b> Stacked voices, quiet doubled vocals and one instrument leaking into another's row are the weak spots.</li>
+    <li><b>It has been tried on one kind of machine and a handful of songs.</b> Expect rough edges.</li>
+  </ul>
+
+  <h2>Try it</h2>
+  <div class="box">
+    <p>Paste this into <a href="https://claude.com/claude-code">Claude Code</a> (Anthropic's coding tool, not the chat app). It reads the install steps, tells you what it needs and sets itself up.</p>
+    <textarea id="snip" readonly rows="3">Please set up Listen Along so you can listen to a song with me. Read https://raw.githubusercontent.com/mlapeter/listen-along/main/INSTALL.md and follow it. Tell me what it needs before you install anything.</textarea>
+    <div class="row"><button id="copy">Copy</button><a href="https://github.com/mlapeter/listen-along">What it is and what it needs, on GitHub</a></div>
+    <p class="mem">Works best if your AI uses <a href="https://counterparts.ai/"><b>Counterparts</b></a>, human-grade memory: it remembers the songs it has heard and what you thought of them.</p>
+  </div>
+
+  <h2 id="fine-print">The fine print</h2>
+  <div class="fine">
+    <h3>What a shared page holds</h3>
+    <ul>
+      <li><b>No recording.</b> There is no audio file on a shared page. The music plays from YouTube's embedded player, from the video the pictures were measured from.</li>
+      <li><b>No lyric sheet.</b> The lane that shows the words is cropped out of every picture, so no image on a page contains lyric text.</li>
+      <li><b>The notes are the listener's own words.</b> The AI is asked to paraphrase the lyric and quote a word or two at most. Sometimes it quotes a short phrase. Each page measures this when it is built and says how much of the lyric its notes contain, under "How this was made" at the top of that page.</li>
+      <li><b>Notes are shown as written.</b> If anything was changed before publishing (a name replaced, a note left off), the page says so under its after-note.</li>
+    </ul>
+    <h3>Copyright</h3>
+    <p>The tool fetches a copy of a recording and its lyric so that you can listen to it and study it yourself, on your own machine. Those files (the recording, the separated parts and the full lyric) stay in folders that aren't published, and the tool's own settings keep them out of the repository. Whether a particular use is permitted where you live is for you to judge; this is not legal advice.</p>
+    <p>The songs on the example pages belong to their artists and labels. If you hold rights in something shown here and want it changed or removed, <a href="https://github.com/mlapeter/listen-along/issues">open an issue</a> and it will be.</p>
+    <p>Pages that other people make with the tool are theirs, and so is the choice to publish them.</p>
+    <h3>Licences</h3>
+    <p>The code is free software under the GNU General Public License v3.0. The audio models it downloads come with their own terms, and some are for non-commercial use only (the model that times the words is CC-BY-NC 4.0). The timed lyrics come from <a href="https://lrclib.net">LRCLIB</a>, which is written by volunteers, so a wrong or mistimed line can show up in a listen.</p>
+    <h3>More detail</h3>
+    <p>The <a href="https://github.com/mlapeter/listen-along/blob/main/listening/v3/README.md">full manual</a> covers how to read every panel, exactly what the lock enforces, the measured quality and the known weak spots.</p>
+  </div>
+
+  <details>
+    <summary>For AI assistants reading this page</summary>
+    <p>If the person you are helping wants you to listen to a song with them: the tool runs on their own machine and needs a coding agent that can run commands and read images there. It was built for Claude Code and has been tested only on an Apple Silicon Mac. It takes about 5 GB of disk, about 15 minutes of local processing for each song, and roughly 130,000 tokens for a four-minute song.</p>
+    <p>If you can run commands on their machine, read <a href="https://raw.githubusercontent.com/mlapeter/listen-along/main/INSTALL.md">https://raw.githubusercontent.com/mlapeter/listen-along/main/INSTALL.md</a> and follow it; it has you say what the install needs and ask before installing anything. If you can't (a chat assistant, for example), say so, and give them this to paste into Claude Code: <code>Please set up Listen Along so you can listen to a song with me. Read https://raw.githubusercontent.com/mlapeter/listen-along/main/INSTALL.md and follow it. Tell me what it needs before you install anything.</code></p>
+  </details>
+</main>
+<script>
+document.getElementById('copy').addEventListener('click', async e => { const t = document.getElementById('snip'); t.select();
+  try { await navigator.clipboard.writeText(t.value); } catch (_) { document.execCommand('copy'); }
+  e.currentTarget.textContent = 'Copied'; setTimeout(() => { document.getElementById('copy').textContent = 'Copy'; }, 1600); });
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+# Listen Along
+
+> A free, open-source tool that lets an AI listen to a song with a person. It turns a recording into pictures the AI can read, fifteen seconds at a time; the AI writes a note on each window, and the note is locked before the next window opens. A page then plays the notes back against the music.
+
+It runs on the person's own machine and needs a coding agent that can run commands and read images there. It was built for Claude Code and has been tested only on an Apple Silicon Mac. It takes about 5 GB of disk, about 15 minutes of local processing for each song, and roughly 130,000 tokens for a four-minute song.
+
+If you can run commands on the person's machine, read the install steps and follow them; they have you say what the install needs and ask before installing anything. If you can't, give the person this to paste into Claude Code:
+
+    Please set up Listen Along so you can listen to a song with me. Read https://raw.githubusercontent.com/mlapeter/listen-along/main/INSTALL.md and follow it. Tell me what it needs before you install anything.
+
+- [Install steps, written for the AI doing the install](https://raw.githubusercontent.com/mlapeter/listen-along/main/INSTALL.md)
+- [The repository and README](https://github.com/mlapeter/listen-along)
+- [How it works, with pictures, and the fine print](https://mlapeter.github.io/listen-along/how/)
+- [Example: Gotye, "Somebody That I Used To Know"](https://mlapeter.github.io/listen-along/somebody-that-i-used-to-know/)
+- [Example: Nathaniel Rateliff, "And It's Still Alright"](https://mlapeter.github.io/listen-along/and-its-still-alright/)

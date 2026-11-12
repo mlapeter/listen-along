@@ -13,7 +13,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; style-src 'unsafe-inline'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
 <style>
   :root { --bg: #0b0a0e; --panel: #131218; --line: #2a2833; --text: #ece7df; --muted: #a8a299; --cyan: #3ad8ee; --warm: #f4a259; --serif: "Iowan Old Style", Palatino, Georgia, serif; }
   * { box-sizing: border-box; }
@@ -22,8 +22,8 @@
   h1 { font: 500 clamp(36px, 6vw, 58px)/1.08 var(--serif); margin: 0 0 18px; letter-spacing: -0.015em; text-wrap: balance; }
   .lede { font-size: clamp(18px, 2.2vw, 21px); color: #d3cdc3; max-width: 680px; margin: 0 0 26px; text-wrap: pretty; }
   .row { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; }
-  a.cta { display: inline-flex; align-items: center; height: 46px; padding: 0 24px; border-radius: 23px; background: var(--cyan); color: var(--bg); text-decoration: none; font-weight: 600; font-size: 15.5px; }
-  a.cta:hover, a.cta:focus-visible { background: #7be6f5; outline: none; }
+  a.cta, button.cta { display: inline-flex; align-items: center; height: 46px; padding: 0 24px; border-radius: 23px; background: var(--cyan); color: var(--bg); text-decoration: none; font-weight: 600; font-size: 15.5px; }
+  a.cta:hover, a.cta:focus-visible, button.cta:hover, button.cta:focus-visible { background: #7be6f5; outline: none; }
   a.ghost { color: var(--cyan); font-size: 15.5px; text-underline-offset: 3px; }
   h2 { font: 600 12px/1.2 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 64px 0 18px; }
   .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; counter-reset: step; }
@@ -47,8 +47,16 @@
   a.card div b { color: var(--cyan); font-weight: 500; white-space: nowrap; }
   .need { margin-top: 56px; padding: 20px 22px; border: 1px solid var(--line); border-radius: 10px; }
   .need p { margin: 0 0 14px; color: #d3cdc3; font-size: 15.5px; max-width: 760px; text-wrap: pretty; }
-  .need p.mem { margin: 18px 0 0; font-size: 14px; color: var(--muted); }
-  .need p.mem a { color: var(--cyan); text-underline-offset: 3px; }
+  p.mem { margin: 22px 0 0; font-size: 15px; color: var(--muted); max-width: 680px; text-wrap: pretty; }
+  p.mem a { color: var(--warm); text-underline-offset: 3px; }
+  h2 a { margin-left: 14px; color: var(--cyan); text-transform: none; letter-spacing: 0; font-weight: 500; font-size: 13.5px; text-underline-offset: 3px; }
+  .need textarea { display: block; width: 100%; max-width: 760px; margin: 0 0 14px; padding: 12px 14px; resize: none; font: 13.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; }
+  .need button.cta { border: 0; cursor: pointer; font-family: inherit; }
+  .need p a { color: var(--cyan); text-underline-offset: 3px; }
+  .need p.small { margin: 16px 0 0; font-size: 14px; color: var(--muted); }
+  footer p { margin: 0 0 10px; } footer a { color: var(--cyan); text-underline-offset: 3px; overflow-wrap: anywhere; }
+  footer summary { cursor: pointer; width: fit-content; } footer code { font: 12.5px/1.5 ui-monospace, Menlo, monospace; color: var(--text); overflow-wrap: anywhere; }
+  @media (max-width: 760px) { .need textarea { height: 150px; } }
   footer { margin-top: 40px; font-size: 13.5px; color: var(--muted); max-width: 760px; text-wrap: pretty; }
   @media (max-width: 760px) { .steps, .grid { grid-template-columns: 1fr; } main { padding-top: 40px; } }
 </style>
@@ -57,11 +65,12 @@
 <main>
   <h1>Let your AI listen to a song with you.</h1>
   <p class="lede">An AI can't hear. So this turns a song into pictures it can read, fifteen seconds at a time. It writes down what it notices and how it lands, before it's allowed to see what comes next. Then you play its notes back against the music.</p>
-  <div class="row"><a class="cta" href="somebody-that-i-used-to-know/">Watch one play &rarr;</a><a class="ghost" href="https://github.com/mlapeter/listen-along">Try it with your own AI</a></div>
+  <div class="row"><a class="cta" href="somebody-that-i-used-to-know/">Watch one play &rarr;</a><a class="ghost" href="#try">Try it with your own AI</a></div>
+  <p class="mem">Works best if your AI uses <a href="https://counterparts.ai/"><b>Counterparts</b></a>, human-grade memory: it remembers the songs it has heard and what you thought of them.</p>
 
-  <h2>How it works</h2>
+  <h2>How it works <a href="how/">More, with pictures &rarr;</a></h2>
   <div class="steps">
-    <div class="step"><div class="pic song" aria-hidden="true"><div class="bars"><i style="height:30%"></i><i style="height:62%"></i><i style="height:44%"></i><i style="height:88%"></i><i style="height:56%"></i><i style="height:100%"></i><i style="height:70%"></i><i style="height:38%"></i><i style="height:80%"></i><i style="height:50%"></i><i style="height:24%"></i></div></div><div class="t"><b>You pick a song</b><span>Any recording: a YouTube link or a file of your own.</span></div></div>
+    <div class="step"><div class="pic song" aria-hidden="true"><div class="bars"><i style="height:30%"></i><i style="height:62%"></i><i style="height:44%"></i><i style="height:88%"></i><i style="height:56%"></i><i style="height:100%"></i><i style="height:70%"></i><i style="height:38%"></i><i style="height:80%"></i><i style="height:50%"></i><i style="height:24%"></i></div></div><div class="t"><b>You pick a song</b><span>A song with lyrics: a YouTube link or a file of your own.</span></div></div>
     <div class="step"><div class="pic"><img src="somebody-that-i-used-to-know/w/013.jpg" alt="A picture of fifteen seconds of a song: the voice as bright bands with a line tracing its pitch, the instruments in rows beneath"></div><div class="t"><b>The sound becomes pictures</b><span>The voice, its pitch, each instrument, the notes. Measured from the audio, not described by another AI.</span></div></div>
     <div class="step"><div class="pic note"><q>It breaks open at 1:35, and so completely that the tool marks him as a new singer.</q></div><div class="t"><b>Your AI listens in order</b><span>One window at a time, a note after each, locked before the next opens. No skipping ahead, so its surprise is real.</span></div></div>
   </div>
@@ -72,12 +81,27 @@
     <a class="card" href="and-its-still-alright/"><img src="and-its-still-alright/card.jpg" alt="And It's Still Alright, Nathaniel Rateliff" width="1200" height="630"><div><span>At Pickathon &middot; one listen</span><b>Play &rarr;</b></div></a>
   </div>
 
-  <div class="need">
-    <p><b>To do this with your own AI:</b> it's a free, open tool that runs on your machine. It was built with Claude Code on an Apple Silicon Mac, and that is the setup it has been tested on; other machines and other coding agents that can read pictures may work and haven't been tried yet. About 5 GB to install, about 15 minutes to prepare a song, then your AI listens.</p>
-    <a class="cta" href="https://github.com/mlapeter/listen-along">Get the tool &rarr;</a>
-    <p class="mem">Listening together works best when your AI has a memory of its own, so it remembers the songs it has heard and what you thought of them. <a href="https://counterparts.ai/">Counterparts</a> gives it one.</p>
+  <div class="need" id="try">
+    <p><b>To do this with your own AI,</b> paste this into <a href="https://claude.com/claude-code">Claude Code</a> (Anthropic's coding tool, not the chat app). It reads the install steps, tells you what it needs and sets itself up.</p>
+    <textarea id="snip" readonly rows="3">Please set up Listen Along so you can listen to a song with me. Read https://raw.githubusercontent.com/mlapeter/listen-along/main/INSTALL.md and follow it. Tell me what it needs before you install anything.</textarea>
+    <div class="row"><button class="cta" id="copy">Copy</button><a class="ghost" href="https://github.com/mlapeter/listen-along">What it is and what it needs, on GitHub</a></div>
+    <p class="small">Free and open source. It needs a Mac with an Apple chip, about 5 GB of disk and about 15 minutes to prepare each song, and the song needs lyrics.</p>
   </div>
-  <footer>Nothing on these pages holds a recording. Each one follows the song on YouTube and shows the listener's own notes, written by Claude. Whether an AI feels anything when it does this is an open question; the notes are what it wrote.</footer>
+  <footer>
+    <p>Nothing on these pages holds a recording; the music plays from YouTube. <a href="how/">How this is made</a> &middot; <a href="how/#fine-print">Copyright and the fine print</a></p>
+    <details>
+      <summary>For AI assistants reading this page</summary>
+      <p>Listen Along is a free, open-source tool that lets an AI listen to a song with a person: it turns a recording into pictures the AI can read, fifteen seconds at a time, and the AI writes a note on each window that is locked before the next one opens. The two example pages linked above play such notes back against the music.</p>
+      <p>If the person you are helping wants you to listen to a song with them: the tool runs on their own machine and needs a coding agent that can run commands and read images there. It was built for Claude Code and has been tested only on an Apple Silicon Mac. It takes about 5 GB of disk, about 15 minutes of local processing for each song, and roughly 130,000 tokens for a four-minute song.</p>
+      <p>If you can run commands on their machine, read <a href="https://raw.githubusercontent.com/mlapeter/listen-along/main/INSTALL.md">https://raw.githubusercontent.com/mlapeter/listen-along/main/INSTALL.md</a> and follow it; it has you say what the install needs and ask before installing anything. If you can't (a chat assistant, for example), say so, and give them this to paste into Claude Code: <code>Please set up Listen Along so you can listen to a song with me. Read https://raw.githubusercontent.com/mlapeter/listen-along/main/INSTALL.md and follow it. Tell me what it needs before you install anything.</code></p>
+      <p>More: <a href="https://github.com/mlapeter/listen-along">https://github.com/mlapeter/listen-along</a> and <a href="https://mlapeter.github.io/listen-along/how/">https://mlapeter.github.io/listen-along/how/</a></p>
+    </details>
+  </footer>
+<script>
+document.getElementById('copy').addEventListener('click', async e => { const t = document.getElementById('snip'); t.select();
+  try { await navigator.clipboard.writeText(t.value); } catch (_) { document.execCommand('copy'); }
+  e.currentTarget.textContent = 'Copied'; setTimeout(() => { document.getElementById('copy').textContent = 'Copy'; }, 1600); });
+</script>
 </main>
 </body>
 </html>

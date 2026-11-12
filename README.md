@@ -1,26 +1,55 @@
-# Listen along
+# Listen Along
 
-**Let your AI listen to a song with you.** An AI can't hear, so this tool turns a recording into pictures it can
-read, fifteen seconds at a time. A Claude Code session reads one window, writes down what it notices and how it
-lands, and has that note locked before the next window opens. At the end you get a page that plays its notes back
-against the music.
+**Let your AI listen to a song with you.** An AI can't hear, so this turns a recording into pictures it can read,
+fifteen seconds at a time. Your AI reads one stretch, writes down what it notices and how it lands, and that note
+is locked before it sees what comes next. At the end you get a page that plays its notes back against the music.
 
-**Live examples** (nothing to install; they play in a browser):
+**See one first** (nothing to install; they play in a browser):
 
 - [Gotye, "Somebody That I Used To Know" (live on KCRW)](https://mlapeter.github.io/listen-along/somebody-that-i-used-to-know/), listened to twice
 - [Nathaniel Rateliff, "And It's Still Alright" (Pickathon)](https://mlapeter.github.io/listen-along/and-its-still-alright/)
 
 [![An example page: pictures of the song scrolling under a playhead, with the listener's notes beneath](somebody-that-i-used-to-know/card.jpg)](https://mlapeter.github.io/listen-along/somebody-that-i-used-to-know/)
 
-**What this is:** a command-line tool (Python, runs on your own machine) plus a Claude Code skill that drives it.
-There is no server, no MCP server and no hosted service. `setup.sh` installs both. To run it yourself you need
-about 5 GB of disk, about 15 minutes of local processing per song, and Claude Code (a 4-minute
-song uses roughly 130,000 tokens of your plan or API usage). It has only been tested on an Apple Silicon Mac; other
-machines may need small changes, and reports from them are welcome.
+[How it works, with pictures](https://mlapeter.github.io/listen-along/how/)
 
-## Requirements
+## Try it with your own AI
 
-Be sure of these before you start; it is a heavy install.
+Open [Claude Code](https://claude.com/claude-code) and paste this in:
+
+```
+Please set up Listen Along so you can listen to a song with me. Read https://raw.githubusercontent.com/mlapeter/listen-along/main/INSTALL.md and follow it. Tell me what it needs before you install anything.
+```
+
+Claude reads the [install steps](INSTALL.md), tells you what it needs, asks before installing anything, and sets
+itself up. Then you start a new session and type:
+
+```
+/listen-to-song Artist, Title
+```
+
+**What you need:**
+
+- **A Mac with an Apple chip** (M1 or later). That is the only kind of machine it has been tested on.
+- **Claude Code.** The listener is a Claude Code session.
+- **About 5 GB of free disk**, most of it audio models that download with your first song.
+- **About 15 minutes per song** while your Mac prepares the pictures. After that your AI listens, which took
+  about four to seven minutes for each of the two example songs.
+- **A song with timed lyrics** on [LRCLIB](https://lrclib.net). Most well-known songs have them; instrumentals
+  don't work yet.
+
+It's free and runs on your own machine. Listening uses your Claude plan like a long working session: a four-minute song
+fills roughly 130,000 tokens of context.
+
+## Works best with a memory
+
+Without one, your AI forgets the song when the session ends. With one, it remembers the songs it has heard and what
+you thought of them, so the next listen builds on the last. We use
+**[Counterparts](https://counterparts.ai), human-grade memory for your AI**. Listen Along works without it.
+
+## Requirements, in full
+
+The short list above is enough to start. This is the detail.
 
 - **Tested on an Apple Silicon Mac only.** It was developed and tested on one machine: an M3 Pro, 18 GB RAM, macOS 14. Nothing
   else has been tried. Intel Macs, Linux and Windows may work with changes, but the pinned versions and the use of
@@ -48,7 +77,9 @@ Be sure of these before you start; it is a heavy install.
 - **The song needs synced lyrics on [LRCLIB](https://lrclib.net).** Without them `prepare` stops. Instrumentals and
   songs LRCLIB doesn't have timed lines for don't work.
 
-## Install
+## Install by hand
+
+If you'd rather not have Claude do it:
 
     git clone https://github.com/mlapeter/listen-along.git
     cd listen-along
@@ -121,9 +152,9 @@ Copy only the `share` folder. The rest of the run folder holds the lyric. Withou
 
 The page shows the voice, band and notes pictures as one strip, each window's note under it, and every close-up
 as a card of text that comes up when the playhead reaches it: what the listener was looking for and what it saw. After
-a second listen, add `--second runs/<second run>` and the page shows both behind a switch. `--link URL` adds a
-link of your choice, and `--url ADDRESS` (where the page will live) adds link-preview tags. The notes are shown as written, so anything the listener quoted is on the page; the footer
-states how much of the lyric that is.
+a second listen, add `--second runs/<second run>` and the page shows both behind a switch. `--link URL` changes
+where the page's "on GitHub" link goes, and `--url ADDRESS` (where the page will live) adds link-preview tags. The notes are shown as written, so anything the listener quoted is on the page; its
+"How this was made" panel states how much of the lyric that is.
 
 ## How it works, briefly
 
