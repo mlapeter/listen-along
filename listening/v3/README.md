@@ -37,7 +37,8 @@ the README there is the short introduction, this is the full manual.
     ./venv3/bin/python v3/see.py next runs/<run>      # reveals windows/000-voice.png, 000-band.png,
     #                                                   000-harmony.png, 000.txt
     #    read the three PNGs, then write runs/<run>/notes/000.md:
-    #        feel:    what this 15 s adds up to for you (say when you are unsure)
+    #        feel:    what this 15 s adds up to for you (say when you are unsure); its first sentence or two
+    #                 is what the page shows while the song plays
     #        voice:   what the voice does here (pitch line, grain, held notes, tags, a new voice, backing voices)
     #        band:    what the instruments, the stereo picture and the beat do; where the song is so far
     #        words:   what the lines mean to you so far
@@ -608,7 +609,7 @@ tried (+1 point) and left out (2.5 min more).
 
 ## The score page (`score.py`)
 
-    ./venv3/bin/python v3/score.py runs/<run>                         # RUN/score/index.html + song.m4a (local only)
+    ./venv3/bin/python v3/score.py runs/<run> --open                  # RUN/score/index.html + song.m4a (local only), opened in the browser
     ./venv3/bin/python v3/score.py runs/<run> --youtube VIDEO_ID      # RUN/share/: no audio, follows a YouTube embed
     ./venv3/bin/python v3/score.py runs/<run> --second runs/<second>  # both listens on one page, behind a switch
     #   [--pictures DIR] [--omit-second-after] [--redact NAME=REPLACEMENT ...] [--link URL] [--by WHO] [--note "..."]
@@ -645,6 +646,9 @@ What the page shows, by the run's layout:
   room is left and its columns scroll inside themselves, fading at the bottom when there is more. The after-notes
   and the footer are below that. Smaller viewports get an ordinary flowing page.
 - Nothing pauses by itself. Space (or the play button) pauses, and the transport says so.
+- A window's note is several times longer than its 15 s allows a reader. While the song plays the page shows only
+  the opening of `feel:` (whole sentences, up to about 32 words; nothing is rewritten); paused, it shows the whole
+  note. "Full notes while playing" turns that off.
 - **Larger video** (a `--youtube` page, wide screens): a button in the transport moves the player over the right of
   the strip, where the pictures not yet played are, and back. A close-up's card keeps to the left of it.
 - **The end.** In the last second and a half of the song a button comes up at the bottom of the screen and leads

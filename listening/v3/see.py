@@ -3212,7 +3212,7 @@ def after(d):
     m = re.search(r"(?:youtube\.com/watch\?(?:.*&)?v=|youtu\.be/)([\w-]{11})", url)
     here = os.path.join(os.path.dirname(os.path.abspath(__file__)), "score.py")
     cmd = " ".join(shlex.quote(x) for x in (sys.executable, here, d))
-    print(f"a page for yourself (it holds the recording; don't publish it): {cmd}")
+    print(f"make the page and open it for the person now (it holds the recording; don't publish it): {cmd} --open")
     if m:
         print(f"a page to share (no audio in it; it follows this YouTube video): {cmd} --youtube {m.group(1)}")
         print("  publish only the share folder it writes; add --url ADDRESS (where it will live) for link previews")

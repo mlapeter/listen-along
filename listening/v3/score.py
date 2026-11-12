@@ -55,6 +55,8 @@ import re
 import shutil
 import subprocess
 import sys
+import urllib.parse
+import webbrowser
 
 # ---------------------------------------------------------------------------------------------- geometry
 # Fallback for runs whose cache (and with it geometry.json) is gone: the two-picture layout as see.py rendered
@@ -252,6 +254,32 @@ def parse_seal_log(path):
 TIME = re.compile(r"(?<![\d:])(\d):([0-5]\d)(\.\d{1,3})?(?![\d:]|\.\d)")
 
 
+def headline(feel, words=32):
+    """The opening of a feel line that fits a window's reading time: whole sentences up to about `words` words.
+    Nothing is rewritten; a first sentence that is too long alone is cut at a comma and marked with an ellipsis."""
+    text = " ".join(feel.split())
+    sents = [x for x in re.split(r"(?<=[.!?])\s", text) if x]
+    if not sents:
+        return ""
+    head = sents[0]
+    for x in sents[1:]:
+        if len((head + " " + x).split()) > words:
+            break
+        head += " " + x
+    ws = head.split()
+    if len(ws) > words + 8:
+        cut = " ".join(ws[:words])
+        at = max(cut.rfind(c) for c in ",;:")
+        if at > 0 and len(cut[:at].split()) >= 12:
+            cut = cut[:at]
+        head = cut.rstrip(",;:") + "\u2026"
+    elif head != text:
+        head += " \u2026"
+    if head.count("**") % 2:
+        head = head.replace("**", "")
+    return head
+
+
 def inline(text, looks=()):
     """Escape, then **bold**, m:ss and m:ss.ss timestamps and "close-up NN" (made clickable by the page)."""
     s = html.escape(text, quote=False)
@@ -436,6 +464,7 @@ def read_listen(run, st, first_run=None, fix=lambda s: s, with_after=True):
             "k": k, "t0": k * win, "t1": min((k + 1) * win, dur),
             "span": f"{mmss(k * win)}-{mmss(min((k + 1) * win, dur))}",
             "feel": inline(n.get("feel", ""), nums), "feelPlain": n.get("feel", ""),
+            "head": inline(headline(n.get("feel", "")), nums),
             "expect": inline(n.get("expect", ""), nums), "first": inline(first),
             "cols": [inline(n.get(lab, ""), nums) for lab in labels],
             "opened": opened.get(k, ("", ""))[1], "sealed": sealed.get(k, ("", "", ""))[1],
@@ -743,8 +772,8 @@ header .lede { min-width: 0; }
 #map .unheard { position: absolute; top: 0; bottom: 0; right: 0; background: rgba(11,10,14,.6); border-left: 2px solid var(--cyan); }
 #map .tick { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,.14); }
 #map .mlook { position: absolute; top: 0; height: 4px; min-width: 2px; background: var(--warm); opacity: .9; }
-#seal { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); flex: none; user-select: none; cursor: pointer; }
-#seal input { accent-color: var(--cyan); margin: 0; }
+#seal, #full { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); flex: none; user-select: none; cursor: pointer; }
+#seal input, #full input { accent-color: var(--cyan); margin: 0; }
 #keys { flex: none; font-size: 12px; color: var(--muted); white-space: nowrap; user-select: none; }
 #keys kbd { font: 500 11px/1 var(--mono); color: var(--text); padding: 2px 6px; border: 1px solid #3a3745; border-radius: 4px; margin-right: 5px; }
 #hint { position: absolute; top: 34px; padding: 6px 11px; max-width: 46%; font-size: 12.5px; line-height: 1.4; color: var(--text); background: rgba(11,10,14,.9); border: 1px solid #3a3745; border-radius: 6px; pointer-events: none; transition: opacity .4s; }
@@ -809,6 +838,12 @@ header .lede { min-width: 0; }
 .expect { margin-top: 14px; padding: 10px 14px; background: var(--panel); border-radius: 6px; font-size: 13px; line-height: 1.5; color: #d3cdc3; text-wrap: pretty; }
 .expect span { color: var(--warm); }
 .expect.none { display: none; }
+#briefhint { display: none; margin: 14px 0 0; font-size: 12px; color: var(--dim); }
+#note.brief .prior, #note.brief .expect, #note.brief .cols { display: none; }
+#note.brief .grid { display: block; margin-top: 16px; }
+#note.brief .feel, #note.brief > .feel { font-size: clamp(22px, 2.1vw, 32px); line-height: 1.28; max-width: 1000px; }
+#note.brief #briefhint { display: block; }
+@media (min-height: 1px) { #stage > #note.brief > .grid { flex: none; } }
 button.t { font-family: var(--mono); font-size: .9em; color: var(--cyan); border-bottom: 1px dotted rgba(58,216,238,.5); border-radius: 2px; padding: 0 1px; transition: background .2s, color .2s; }
 button.t:hover { background: rgba(58,216,238,.16); }
 button.t.now { background: var(--cyan); color: var(--bg); border-bottom-color: transparent; }
@@ -847,7 +882,7 @@ button.t.ref.now { background: var(--warm); color: var(--bg); }
 }
 @media (max-width: 900px) {
   header { flex-direction: column; align-items: flex-start; gap: 10px; }
-  #top.yt { display: block; } #video { width: auto; max-width: 420px; margin: 0 16px 10px; } #keys, #vbig { display: none; } #hint { max-width: 60%; }
+  #top.yt { display: block; } #video { width: auto; max-width: 420px; margin: 0 16px 10px; } #keys, #vbig, #full { display: none; } #hint { max-width: 60%; }
   #transport { flex-wrap: wrap; } #map { flex-basis: 100%; order: 9; }
   #note .grid, #note .grid.again, .cols, .cols.n2, .cols.n4 { grid-template-columns: 1fr; gap: 16px; } #seal span { display: none; }
   #lcard { position: static; display: none; margin: 10px 16px 0; transform: none; } #lcard.open { display: flex; } #lhintkey { display: none; }
@@ -878,7 +913,8 @@ button.t.ref.now { background: var(--warm); color: var(--bg); }
   <div id="tabs" role="tablist" aria-label="Which listen" hidden></div>
   <div id="map" title="Click to jump"><div class="img"></div><div class="unheard"></div></div>
   <button id="vbig" aria-pressed="false" hidden>larger video</button>
-  <div id="keys"><kbd>space</kbd>pause to read</div>
+  <div id="keys"><kbd>space</kbd>pause for the full note</div>
+  <label id="full" title="While the song plays the page shows the opening of each note; paused, it shows all of it"><input type="checkbox"> <span>full notes while playing</span></label>
   <label id="seal" title="Each window stayed hidden until the note for the one before it was locked"><input type="checkbox" checked> <span>hide what I hadn't seen yet</span></label>
 </div>
 <div id="video" hidden></div>
@@ -902,6 +938,7 @@ button.t.ref.now { background: var(--warm); color: var(--bg); }
     </div>
     <div class="cols" id="cols"></div>
   </div>
+  <p id="briefhint">The opening of this window's note. Pause for all of it.</p>
 </section>
 </main>
 <section id="after"></section>
@@ -979,6 +1016,7 @@ const cols = W.map(n => {
 });
 const looksBox = el('div'); looksBox.id = 'looks'; strip.appendChild(looksBox);
 const hideOn = () => sealBox.checked;
+$('full').firstElementChild.addEventListener('change', setBrief);
 const lookOpen = (lk, k) => !(hideOn() && k < lk.win);   // a close-up stays hidden until the window it was made in is open
 
 let marks = [];   // the left overlay: track names and axis ticks, placed by layout()
@@ -1066,6 +1104,13 @@ function gather() {
   times = [...document.querySelectorAll('#note button.t, #lcard button.t')];
   times.forEach(b => { b._c = b.dataset.look ? null : +b.dataset.c; b._w = String(b.dataset.t).includes('.') ? 0.8 : 1.6; });
 }
+let brief = false, playing = false;   // while the song plays: the opening of each note; paused, all of it
+function setBrief() {
+  const b = playing && !$('full').firstElementChild.checked;
+  if (b === brief) return;
+  brief = b; $('note').classList.toggle('brief', b);
+  if (shown >= 0) showNote(shown);
+}
 function showNote(k) {
   const l = LS[cur], n = l.wins[k]; shown = k;
   $('meta').innerHTML = '<span><b>window ' + pad(k, 3) + ' of ' + pad(D.nwin - 1, 3) + '</b> · ' + n.span + '</span>' +
@@ -1077,7 +1122,7 @@ function showNote(k) {
   const feel = $('feel');   // a second listen: the headline runs across the top, above the seal line
   if (l.kind === 'second') { if (feel.parentNode !== $('note')) $('note').insertBefore(feel, $('meta')); }
   else if (feel.parentNode === $('note')) $('prior').parentNode.after(feel);
-  feel.innerHTML = n.feel; $('expect').innerHTML = n.expect;
+  feel.innerHTML = brief ? n.head : n.feel; $('expect').innerHTML = n.expect;
   $('expectbox').classList.toggle('none', !n.expect);
   $('saidbox').hidden = !n.first; $('said').innerHTML = n.first;
   $('grid').classList.toggle('again', l.kind === 'second');
@@ -1148,8 +1193,8 @@ function seekLook(n) {   // to the start of a close-up, or with the veil on to t
   if (lk) { dismissed = -1; seek(Math.max(lk.t0, hideOn() ? lk.win * D.win : 0) + 0.02); }
 }
 function toggle() { clock.paused() ? clock.play() : clock.pause(); }
-function onPlay() { $('hint').classList.add('off'); $('playicon').setAttribute('d', 'M4 3h4v14H4zM12 3h4v14h-4z'); $('play').setAttribute('aria-label', 'Pause'); loop(); }
-function onPause() { $('playicon').setAttribute('d', 'M5 3l12 7-12 7z'); $('play').setAttribute('aria-label', 'Play'); draw(); }
+function onPlay() { playing = true; setBrief(); $('hint').classList.add('off'); $('playicon').setAttribute('d', 'M4 3h4v14H4zM12 3h4v14h-4z'); $('play').setAttribute('aria-label', 'Pause'); loop(); }
+function onPause() { playing = false; setBrief(); $('playicon').setAttribute('d', 'M5 3l12 7-12 7z'); $('play').setAttribute('aria-label', 'Play'); draw(); }
 const startAt = parseFloat(query.get('t')) || 0;
 
 // ---- the clock: a local audio file, or an embedded YouTube player followed over postMessage
@@ -1244,6 +1289,8 @@ def main():
     ap.add_argument("--note", default="", help="a sentence for the intro, e.g. what the listener already knew of the song")
     ap.add_argument("--url", default="", help="the page's public address, for link previews (og: tags); it also "
                     "writes card.jpg, the preview picture")
+    ap.add_argument("--open", action="store_true", help="open the finished page in the browser (the local page only; "
+                    "a --youtube page has to be served over http)")
     a = ap.parse_args()
     for flag, val in (("--link", a.link), ("--url", a.url)):
         if val and not re.match(r"https?://[^\s\"'<>]+$", val):
@@ -1254,9 +1301,16 @@ def main():
     if any(len(p) != 2 or not p[0] for p in pairs):
         ap.error("--redact takes NAME=REPLACEMENT")
     run = os.path.abspath(a.run)
-    print(build(run, os.path.abspath(a.out) if a.out else os.path.join(run, "share" if a.youtube else "score"),
+    out = os.path.abspath(a.out) if a.out else os.path.join(run, "share" if a.youtube else "score")
+    print(build(run, out,
                 a.audio, a.by, a.note, a.youtube, a.link, os.path.abspath(a.second) if a.second else "",
                 os.path.abspath(a.pictures) if a.pictures else "", a.redrawn, pairs, a.omit_second_after, a.url))
+    if a.open:
+        index = os.path.join(out, "index.html")
+        if a.youtube:
+            print("--open skipped: a page that follows YouTube can't play from a file; serve its folder over http")
+        elif not webbrowser.open("file://" + urllib.parse.quote(index)):
+            print(f"couldn't open a browser here; open this file yourself: {index}")
 
 
 if __name__ == "__main__":
