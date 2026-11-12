@@ -1002,6 +1002,8 @@ LS.forEach((l, j) => {
     const m = el('div', 'made'); m.textContent = D.made;
     if (D.link) { const x = el('a'); x.href = D.link; x.target = '_blank'; x.rel = 'noopener';
       x.textContent = 'The tool is free to use: have your own Claude listen to a song.'; m.append(' ', x); }
+    { const y = el('a'); y.href = 'https://counterparts.ai/'; y.target = '_blank'; y.rel = 'noopener'; y.textContent = 'Counterparts';
+      m.append(' Listening together works best when your AI has a memory of its own, so it remembers the songs it has heard and what you thought of them. ', y, ' gives it one.'); }
     a.appendChild(m);
   }
 });

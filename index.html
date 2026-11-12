@@ -47,6 +47,8 @@
   a.card div b { color: var(--cyan); font-weight: 500; white-space: nowrap; }
   .need { margin-top: 56px; padding: 20px 22px; border: 1px solid var(--line); border-radius: 10px; }
   .need p { margin: 0 0 14px; color: #d3cdc3; font-size: 15.5px; max-width: 760px; text-wrap: pretty; }
+  .need p.mem { margin: 18px 0 0; font-size: 14px; color: var(--muted); }
+  .need p.mem a { color: var(--cyan); text-underline-offset: 3px; }
   footer { margin-top: 40px; font-size: 13.5px; color: var(--muted); max-width: 760px; text-wrap: pretty; }
   @media (max-width: 760px) { .steps, .grid { grid-template-columns: 1fr; } main { padding-top: 40px; } }
 </style>
@@ -73,6 +75,7 @@
   <div class="need">
     <p><b>To do this with your own AI:</b> it's a free, open tool that runs on your machine. It was built with Claude Code on an Apple Silicon Mac, and that is the setup it has been tested on; other machines and other coding agents that can read pictures may work and haven't been tried yet. About 5 GB to install, about 15 minutes to prepare a song, then your AI listens.</p>
     <a class="cta" href="https://github.com/mlapeter/listen-along">Get the tool &rarr;</a>
+    <p class="mem">Listening together works best when your AI has a memory of its own, so it remembers the songs it has heard and what you thought of them. <a href="https://counterparts.ai/">Counterparts</a> gives it one.</p>
   </div>
   <footer>Nothing on these pages holds a recording. Each one follows the song on YouTube and shows the listener's own notes, written by Claude. Whether an AI feels anything when it does this is an open question; the notes are what it wrote.</footer>
 </main>
